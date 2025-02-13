@@ -1,4 +1,6 @@
-# PyRconShell
+# MCShell 
+
+This is a fork of jedie/PyRconShell:main
 
 Minecraft rcon shell in Python using:
 
