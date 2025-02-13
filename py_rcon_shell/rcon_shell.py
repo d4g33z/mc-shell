@@ -7,7 +7,7 @@ from dev_shell.base_cmd2_app import DevShellBaseApp
 from dev_shell.command_sets.dev_shell_commands import DevShellCommandSet as OriginDevShellCommandSet
 from dev_shell.command_sets.dev_shell_commands import run_linters
 from dev_shell.config import DevShellConfig
-from dev_shell.utils.colorful import blue, bright_blue, bright_yellow
+from dev_shell.utils.colorful import blue, bright_blue, bright_yellow, green, bright_green 
 from dev_shell.utils.subprocess_utils import verbose_check_call
 from poetry_publish.publish import poetry_publish
 
@@ -30,11 +30,16 @@ class RconShellCommandSet(CommandSet):
         """
         print(f'Send: {bright_yellow(statement.args)}')
         response = self.rcon_client.run(*statement.arg_list)
-        print(bright_blue('Response:'))
+        print(bright_green('Response:'))
         print('-' * 100)
-        print(blue(response))
-        print('-' * 100)
+        if statement.arg_list[0] != 'help':
+            print(green(response))
+        else:
+            _responses = response.split('/')
+            for _response in _responses:
+                print('\t' + green(_response))
 
+        print('-' * 100)
 
 class PyRconShellCmd2App(DevShellBaseApp):
     pass
