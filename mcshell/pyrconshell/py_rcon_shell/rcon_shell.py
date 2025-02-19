@@ -30,6 +30,7 @@ class RconShellCommandSet(CommandSet):
         """
         print(f'Send: {bright_yellow(statement.args)}')
         response = self.rcon_client.run(*statement.arg_list)
+        print(f'Args: {bright_yellow(statement.arg_list)}')
         print(bright_green('Response:'))
         print('-' * 100)
         if statement.arg_list[0] != 'help':
