@@ -30,6 +30,9 @@ class MCClient:
 
     def data(self,operation,*args):
         _response = self.run('data',operation,*args)
+        if _response.split()[0] == 'No':
+            print(_response)
+            return
         _response = _response[_response.index(':')+1:]
         return json.loads(self._fix_json(_response))
 

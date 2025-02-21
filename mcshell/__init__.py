@@ -8,7 +8,6 @@ except ModuleNotFoundError:
 
 from mcshell.mcclient import MCClient
 from mcshell.constants import *
-import uuid
 
 @magics_class
 class MCShell(Magics):
@@ -26,50 +25,71 @@ class MCShell(Magics):
             _mc_cmd_docs = make_docs()
 
         self.mc_cmd_docs = _mc_cmd_docs
+        self.rcon_commands = {}
 
+        self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
+        self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_help')
+
+    def run(self,*args):
         try:
-            self.rcon_commands = self._build_rcon_commands()
-            self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
-            self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_help')
+            _response = self.rcon_client.run(*args)
+            #print(f"[green]MCSHell running and connected to {SERVER_DATA['host']}[/]")
+            return _response
+        except ConnectionRefusedError as e:
+            print("[red bold]Unable to send command. Is the server running?[/]")
+            pprint(SERVER_DATA)
+            raise e
 
-        except Exception as e:
-            print(e)
-            print("Unable to start mcshell magics. Is the server running?")
-            print(SERVER_DATA)
-            return
+    def data(self, *args):
+        try:
+            _response = self.rcon_client.data(*args)
+            # print(f"[green]MCSHell running and connected to {SERVER_DATA['host']}[/]")
+            return _response
+        except ConnectionRefusedError as e:
+            print("[red bold]Unable to start mcshell magics. Is the server running?[/]")
+            pprint(SERVER_DATA)
+            raise e
 
-        print(f"MCSHell running and connected to {SERVER_DATA['host']}")
+    # def _build_rcon_commands(self):
+    @property
+    def commands(self):
+        if not self.rcon_commands:
+            try:
+                _help_text = self.run('help')
+            except ConnectionRefusedError:
+                return
 
-    def _build_rcon_commands(self):
-        _help_text = self.rcon_client.run(*['help'])
-        _help_data = list(filter(lambda x: x != '', map(lambda x: x.split(' '), _help_text.split('/'))))[1:]
-        _rcon_commands = {}
-        for _help_datum in _help_data:
-            _cmd = _help_datum[0]
-            _cmd_data = self.rcon_client.run(*['help',_cmd])
-            if not _cmd_data:
-                # found a shortcut command like xp -> experience
-                continue
-            _cmd_data = list(map(lambda x:x.split()[1:],_cmd_data.split('/')))
-            _sub_cmd_data = {}
-            for _sub_cmd_datum in _cmd_data[1:]:
-                if not _sub_cmd_datum[0][0]  in ('<','[','('):
-                    _sub_cmd_data.update({_sub_cmd_datum[0]: _sub_cmd_datum[1:]})
-                else:
-                    # TODO what about commands without sub-commands?
-                    _sub_cmd_data.update({' ': _sub_cmd_datum})
-                # _rcon_commands.update({_cmd: _sub_cmd_data})
-                _rcon_commands.update({_cmd.replace('-','_'): _sub_cmd_data})
+            _help_data = list(filter(lambda x: x != '', map(lambda x: x.split(' '), _help_text.split('/'))))[1:]
+            _rcon_commands = {}
+            for _help_datum in _help_data:
+                _cmd = _help_datum[0]
+                try:
+                    _cmd_data = self.run(*['help',_cmd])
+                except ConnectionRefusedError:
+                    return
+                if not _cmd_data:
+                    # found a shortcut command like xp -> experience
+                    continue
+                _cmd_data = list(map(lambda x:x.split()[1:],_cmd_data.split('/')))
+                _sub_cmd_data = {}
+                for _sub_cmd_datum in _cmd_data[1:]:
+                    if not _sub_cmd_datum[0][0]  in ('<','[','('):
+                        _sub_cmd_data.update({_sub_cmd_datum[0]: _sub_cmd_datum[1:]})
+                    else:
+                        # TODO what about commands without sub-commands?
+                        _sub_cmd_data.update({' ': _sub_cmd_datum})
+                    # _rcon_commands.update({_cmd: _sub_cmd_data})
+                    _rcon_commands.update({_cmd.replace('-','_'): _sub_cmd_data})
+            self.rcon_commands = _rcon_commands
+        return self.rcon_commands
 
-        return _rcon_commands
-
-    @needs_local_scope
     @line_magic
-    def mc_help(self,line,local_ns):
+    def mc_help(self,line):
         _cmd = ['help']
 
         _doc_line = ''
         _doc_url = ''
+        _doc_code_lines = ''
         if line:
             _line_parts = line.split()
             _doc_line,_doc_url,_doc_code_lines = self.mc_cmd_docs.get(_line_parts[0],('','',''))
@@ -85,7 +105,10 @@ class MCShell(Magics):
             for _doc_code_line in _doc_code_lines:
                 print(_doc_code_line)
         else:
-            _help_text = self.rcon_client.run(*_cmd)
+            try:
+                _help_text = self.run(*_cmd)
+            except ConnectionRefusedError:
+                return
             for _help_line in _help_text.split('/')[1:]:
                 _help_parts = _help_line.split()
                 _help_parts[0] = _help_parts[0].replace('-','_')
@@ -102,35 +125,41 @@ class MCShell(Magics):
         ipyshell.user_ns.update(dict(rcon_event=event))
 
         if len(parts) == 1: # showing commands
-            arg_matches = [c for c in self.rcon_commands.keys()]
+            arg_matches = [c for c in self.commands.keys()]
             ipyshell.user_ns.update({'rcon_matches':arg_matches})
             return arg_matches
         elif len(parts) == 2 and text != '':  # completing commands
-            arg_matches = [c for c in self.rcon_commands.keys() if c.startswith(text)]
+            arg_matches = [c for c in self.commands.keys() if c.startswith(text)]
             ipyshell.user_ns.update({'rcon_matches':arg_matches})
             return arg_matches
 
     @line_magic
     def mc_run(self,line):
         '''
-        %mc_rcon RCON_COMMAND
+        %mc_run RCON_COMMAND
         '''
 
         _arg_list = line.split(' ')
         _arg_list[0] = _arg_list[0].replace('_','-')
         print(f"Send: {' '.join(_arg_list)}")
         try:
-            response = self.rcon_client.run(*_arg_list)
-        except Exception as e:
-            response = "Empty Response"
+            response = self.run(*_arg_list)
+        except ConnectionRefusedError:
+            return
         print('Response:')
         print('-' * 100)
-        if _arg_list[0] != 'help':
-            print(response)
-        else:
+        if _arg_list[0] == 'help':
             _responses = response.split('/')
             for _response in _responses:
                 print('\t' + _response)
+        elif response.split()[0] == 'Unknown':
+            print("[red]Error in usage:[/]")
+            self.mc_help(line)
+            # print(f"{response[:response.index('command') + 7]}:")
+
+
+        else:
+            print(response)
 
         print('-' * 100)
 
@@ -150,7 +179,10 @@ class MCShell(Magics):
         print(f"requested data will be available as {_var_name} locally")
         # async is broken due to truncated server output
         # asyncio.run(self.rcon_client.data(_var_name,local_ns,*_arg_list))
-        _data = self.rcon_client.data(*_arg_list)
+        try:
+            _data = self.data(*_arg_list)
+        except:
+            return
         local_ns.update({_var_name:_data})
 
 
@@ -176,26 +208,26 @@ class MCShell(Magics):
 
         arg_matches = []
         if len(parts) == 1: # showing commands
-            arg_matches = [c for c in self.rcon_commands.keys()]
+            arg_matches = [c for c in self.commands.keys()]
         elif len(parts) == 2 and text_to_complete != '':  # completing commands
-            arg_matches = [c for c in self.rcon_commands.keys() if c.startswith(text_to_complete)]
+            arg_matches = [c for c in self.commands.keys() if c.startswith(text_to_complete)]
         elif len(parts) == 2 and text_to_complete == '':  # showing subcommands
             command = parts[1]
-            sub_commands = list(self.rcon_commands[command].keys())
+            sub_commands = list(self.commands[command].keys())
             arg_matches = [sub_command for sub_command in sub_commands]
         elif len(parts) == 3 and text_to_complete != '':  # completing subcommands
             command = parts[1]
-            sub_commands = list(self.rcon_commands[command].keys())
+            sub_commands = list(self.commands[command].keys())
             arg_matches = [sub_command for sub_command in sub_commands if sub_command.startswith(text_to_complete)]
         elif len(parts) == 3 and text_to_complete == '':  # showing arguments
             command = parts[1]
             sub_command = parts[2]
-            sub_command_args = self.rcon_commands[command][sub_command]
+            sub_command_args = self.commands[command][sub_command]
             arg_matches = [sub_command_arg for sub_command_arg in sub_command_args]
         elif len(parts) > 3: # completing arguments
             command = parts[1]
             sub_command = parts[2]
-            sub_command_args = self.rcon_commands[command][sub_command]
+            sub_command_args = self.commands[command][sub_command]
             current_arg_index = len(parts) - 3# Index of current argument
             if text_to_complete == '': # showing next arguments
                 arg_matches = [arg for arg in sub_command_args[current_arg_index+1]]

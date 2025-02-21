@@ -7,6 +7,10 @@ import asyncio
 import pathlib
 import urlpath
 import pickle
+import sys
+import uuid
+from rich import print
+from rich.pretty import pprint
 
 MC_DOC_URL = urlpath.URL("https://minecraft.fandom.com/wiki/Commands")
 

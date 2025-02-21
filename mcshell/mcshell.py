@@ -1,4 +1,5 @@
 import click
+import sys
 class SpecialHelpOrderBase(click.Group):
     pass
 
@@ -75,10 +76,12 @@ def start():
     c.InteractiveShellApp.exec_lines += [
         'from mcshell import *',
     ]
-    try:
-        import IPython
-        IPython.start_ipython(config=c, argv=[])
-    except ModuleNotFoundError as e:
-        # not interactive IPython shell
-        print(e)
+    # try:
+    import IPython
+    IPython.start_ipython(config=c, argv=[])
+    # except ModuleNotFoundError as e:
+    #     # not interactive IPython shell
+    #     print(e)
+    # except:
+    #     sys.exit(1)
 
