@@ -14,7 +14,6 @@ class MCShell(Magics):
 
         self.ip = IPython.get_ipython()
 
-
         try:
             _mc_cmd_docs = pickle.load(MC_DOC_PATH.open('rb'))
         except FileNotFoundError:
@@ -32,12 +31,18 @@ class MCShell(Magics):
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_help')
 
-    def run(self,*args):
+
+    def _send(self,kind,*args):
+        assert kind in ('run','data')
+
         if self.SERVER_DATA is None:
             self.mc_login('reset')
         _rcon_client = MCClient(**self.SERVER_DATA)
         try:
-            _response = _rcon_client.run(*args)
+            if kind == 'run':
+                _response = _rcon_client.run(*args)
+            elif kind == 'data':
+                _response = _rcon_client.data(*args)
             #print(f"[green]MCSHell running and connected to {SERVER_DATA['host']}[/]")
             return _response
         except ConnectionRefusedError as e:
@@ -48,25 +53,11 @@ class MCShell(Magics):
             print("[red bold]The password is wrong. Use %mc_login reset[/]")
             raise e
 
+    def run(self,*args):
+        return self._send('run',*args)
+    def data(self,*args):
+        return self._send('data',*args)
 
-    def data(self, *args):
-        if self.SERVER_DATA is None:
-            self.mc_login('reset')
-        _rcon_client = MCClient(**self.SERVER_DATA)
-        try:
-            _response = _rcon_client.data(*args)
-            # print(f"[green]MCSHell running and connected to {SERVER_DATA['host']}[/]")
-            return _response
-        except ConnectionRefusedError as e:
-            print("[red bold]Unable to start mcshell magics. Is the server running?[/]")
-            pprint(self.SERVER_DATA)
-            raise e
-        except (WrongPassword,IncorrectPasswordError) as e:
-            print("[red bold]The password is wrong. Use %mc_login reset[/]")
-            raise e
-
-
-    # def _build_rcon_commands(self):
     @property
     def commands(self):
         _rcon_commands = {}
@@ -110,14 +101,12 @@ class MCShell(Magics):
             self.SERVER_DATA['password'] = Prompt.ask('Server Password:',password=True)
             pickle.dump(self.SERVER_DATA,MC_CREDS_PATH.open('wb'))
 
-
-
-
-
-
-
     @line_magic
     def mc_help(self,line):
+        '''
+        %mc_help [COMMAND]
+        '''
+
         _cmd = ['help']
 
         _doc_line = ''
@@ -147,10 +136,6 @@ class MCShell(Magics):
                 _help_parts[0] = _help_parts[0].replace('-','_')
                 print(f'{" ".join(_help_parts)}')
 
-    # local_ns.update(dict(rcon_help=_help_text))
-        # _help_data = self._build_rcon_commands()
-        # local_ns.update(dict(rcon_help_data=_help_data))
-
     def _complete_mc_help(self, ipyshell, event):
         ipyshell.user_ns.update(dict(rcon_event=event))
         text = event.symbol
@@ -169,7 +154,7 @@ class MCShell(Magics):
     @line_magic
     def mc_run(self,line):
         '''
-        %mc_run RCON_COMMAND
+        %mc_run COMMAND
         '''
 
         _arg_list = line.split(' ')
@@ -189,12 +174,8 @@ class MCShell(Magics):
         elif response.split()[0] == 'Unknown':
             print("[red]Error in usage:[/]")
             self.mc_help(line)
-            # print(f"{response[:response.index('command') + 7]}:")
-
-
         else:
             print(response)
-
         print('-' * 100)
 
 
@@ -202,6 +183,7 @@ class MCShell(Magics):
     @line_magic
     def mc_data(self, line,local_ns):
         '''
+        %mc_data OPERATION ARGUMENTS
         '''
 
         _arg_list = line.split(' ')
@@ -223,19 +205,10 @@ class MCShell(Magics):
     def _complete_mc_run(self, ipyshell, event):
         ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
 
-        # ipyshell.user_ns.update(dict(rcon_event=event))
-
         text_to_complete = event.symbol
         line = event.line
 
         parts = line.split()
-
-        # if not text:
-        #     text_to_complete = ''
-        # elif text.endswith('-'): # Corrected condition: Check if text ENDS with '-'
-        #     text_to_complete = text[:-1]
-        # else:
-        #     text_to_complete = text
 
         ipyshell.user_ns.update(dict(rcon_text_to_complete=text_to_complete)) # Capture text_to_complete
         ipyshell.user_ns.update(dict(rcon_parts=parts)) # Capture parts
