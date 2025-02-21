@@ -1,10 +1,8 @@
-try:
-    import IPython
-    from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
-    from IPython.core.completer import IPCompleter,Completer
-except ModuleNotFoundError:
-    # not interactive IPython shell
-    pass
+import IPython
+from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
+from IPython.core.completer import IPCompleter,Completer
+
+from rich.prompt import Prompt
 
 from mcshell.mcclient import MCClient
 from mcshell.constants import *
@@ -16,7 +14,6 @@ class MCShell(Magics):
 
         self.ip = IPython.get_ipython()
 
-        self.rcon_client = MCClient(**SERVER_DATA)
 
         try:
             _mc_cmd_docs = pickle.load(MC_DOC_PATH.open('rb'))
@@ -27,45 +24,64 @@ class MCShell(Magics):
         self.mc_cmd_docs = _mc_cmd_docs
         self.rcon_commands = {}
 
+        if MC_CREDS_PATH.exists():
+            self.SERVER_DATA = pickle.load(MC_CREDS_PATH.open('rb'))
+        else:
+            self.SERVER_DATA = None
+
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_help')
 
     def run(self,*args):
+        if self.SERVER_DATA is None:
+            self.mc_login('reset')
+        _rcon_client = MCClient(**self.SERVER_DATA)
         try:
-            _response = self.rcon_client.run(*args)
+            _response = _rcon_client.run(*args)
             #print(f"[green]MCSHell running and connected to {SERVER_DATA['host']}[/]")
             return _response
         except ConnectionRefusedError as e:
             print("[red bold]Unable to send command. Is the server running?[/]")
-            pprint(SERVER_DATA)
+            pprint(self.SERVER_DATA)
+            raise e
+        except (WrongPassword, IncorrectPasswordError) as e:
+            print("[red bold]The password is wrong. Use %mc_login reset[/]")
             raise e
 
+
     def data(self, *args):
+        if self.SERVER_DATA is None:
+            self.mc_login('reset')
+        _rcon_client = MCClient(**self.SERVER_DATA)
         try:
-            _response = self.rcon_client.data(*args)
+            _response = _rcon_client.data(*args)
             # print(f"[green]MCSHell running and connected to {SERVER_DATA['host']}[/]")
             return _response
         except ConnectionRefusedError as e:
             print("[red bold]Unable to start mcshell magics. Is the server running?[/]")
-            pprint(SERVER_DATA)
+            pprint(self.SERVER_DATA)
             raise e
+        except (WrongPassword,IncorrectPasswordError) as e:
+            print("[red bold]The password is wrong. Use %mc_login reset[/]")
+            raise e
+
 
     # def _build_rcon_commands(self):
     @property
     def commands(self):
+        _rcon_commands = {}
         if not self.rcon_commands:
             try:
                 _help_text = self.run('help')
-            except ConnectionRefusedError:
-                return
+            except:
+                return _rcon_commands
 
             _help_data = list(filter(lambda x: x != '', map(lambda x: x.split(' '), _help_text.split('/'))))[1:]
-            _rcon_commands = {}
             for _help_datum in _help_data:
                 _cmd = _help_datum[0]
                 try:
                     _cmd_data = self.run(*['help',_cmd])
-                except ConnectionRefusedError:
+                except:
                     return
                 if not _cmd_data:
                     # found a shortcut command like xp -> experience
@@ -78,10 +94,27 @@ class MCShell(Magics):
                     else:
                         # TODO what about commands without sub-commands?
                         _sub_cmd_data.update({' ': _sub_cmd_datum})
-                    # _rcon_commands.update({_cmd: _sub_cmd_data})
                     _rcon_commands.update({_cmd.replace('-','_'): _sub_cmd_data})
             self.rcon_commands = _rcon_commands
         return self.rcon_commands
+
+    @line_magic
+    def mc_login(self,line):
+        '''
+        %mc_login [reset]
+        '''
+        if not self.SERVER_DATA or  line.strip() == 'reset':
+            self.SERVER_DATA = {}
+            self.SERVER_DATA['host'] = Prompt.ask('Server Address:',default='localhost')
+            self.SERVER_DATA['port'] = Prompt.ask('Server Port:',default='25575')
+            self.SERVER_DATA['password'] = Prompt.ask('Server Password:',password=True)
+            pickle.dump(self.SERVER_DATA,MC_CREDS_PATH.open('wb'))
+
+
+
+
+
+
 
     @line_magic
     def mc_help(self,line):
@@ -107,7 +140,7 @@ class MCShell(Magics):
         else:
             try:
                 _help_text = self.run(*_cmd)
-            except ConnectionRefusedError:
+            except:
                 return
             for _help_line in _help_text.split('/')[1:]:
                 _help_parts = _help_line.split()
@@ -144,8 +177,9 @@ class MCShell(Magics):
         print(f"Send: {' '.join(_arg_list)}")
         try:
             response = self.run(*_arg_list)
-        except ConnectionRefusedError:
+        except:
             return
+
         print('Response:')
         print('-' * 100)
         if _arg_list[0] == 'help':

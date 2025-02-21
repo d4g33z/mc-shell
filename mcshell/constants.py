@@ -1,5 +1,8 @@
 from rcon import Client
-# from aiomcrcon import Client as AioClient
+from aiomcrcon import Client as AioClient
+
+from rcon.errorhandler import WrongPassword
+from aiomcrcon.errors import IncorrectPasswordError
 
 import re
 import json
@@ -16,12 +19,14 @@ MC_DOC_URL = urlpath.URL("https://minecraft.fandom.com/wiki/Commands")
 
 MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
 MC_DOC_PATH = MC_DATA_DIR.joinpath('command_docs.pkl')
+MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
 
-SERVER_DATA = {
-    'host': 'azeus.local',
-    'port': '25575',
-    'password': 'BnmHhjN',
-}
+# SERVER_DATA = {
+#     'host': 'azeus.local',
+#     'port': '25575',
+#     # 'password': 'BnmHhjN',
+#     'password': '',
+# }
 
 
 RE_NON_JSON_VALUE = r"(?<!\")\b(?:[0-9]+[a-zA-Z]+|[0-9]+(?:\.[0-9]+)?[a-zA-Z]+|true|false|null)\b(?!\")"

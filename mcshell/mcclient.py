@@ -1,7 +1,5 @@
 from mcshell.constants import *
 
-# from rcon.source import rcon as AioClient
-from aiomcrcon import Client as AioClient
 
 class MCClient:
     def __init__(self,host,port,password):
