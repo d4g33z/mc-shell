@@ -8,3 +8,9 @@ htmlcov
 
 /dist/
 publish.log
+
+# mcshell
+env
+*.egg-info
+oldmc
+kano

@@ -6,32 +6,39 @@ except ModuleNotFoundError:
     # not interactive IPython shell
     pass
 
-from mcshell.rconclient import LazyRconClient
-
-SERVER_DATA = {
-    'host': 'azeus.local',
-    'port': '25575',
-    'password': 'BnmHhjN',
-}
-
+from mcshell.mcclient import MCClient
+from mcshell.constants import *
+import uuid
 
 @magics_class
 class MCShell(Magics):
     def __init__(self,shell):
         super(MCShell,self).__init__(shell)
+
         self.ip = IPython.get_ipython()
-        self.rcon_client = LazyRconClient(**SERVER_DATA)
+
+        self.rcon_client = MCClient(**SERVER_DATA)
+
+        try:
+            _mc_cmd_docs = pickle.load(MC_DOC_PATH.open('rb'))
+        except FileNotFoundError:
+            from mcshell.mcscraper import make_docs
+            _mc_cmd_docs = make_docs()
+
+        self.mc_cmd_docs = _mc_cmd_docs
+
         try:
             self.rcon_commands = self._build_rcon_commands()
-            print("rcon_commands keys:", list(self.rcon_commands.keys()))  # ADD THIS LINE HERE
-            self.ip.set_hook('complete_command', self._complete_mc_rcon, re_key='%mc_rcon')
-            self.ip.set_hook('complete_command', self._complete_mc_rcon, re_key='%mc_help')
+            self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
+            self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_help')
 
         except Exception as e:
             print(e)
             print("Unable to start mcshell magics. Is the server running?")
             print(SERVER_DATA)
             return
+
+        print(f"MCSHell running and connected to {SERVER_DATA['host']}")
 
     def _build_rcon_commands(self):
         _help_text = self.rcon_client.run(*['help'])
@@ -61,19 +68,30 @@ class MCShell(Magics):
     def mc_help(self,line,local_ns):
         _cmd = ['help']
 
+        _doc_line = ''
+        _doc_url = ''
         if line:
             _line_parts = line.split()
+            _doc_line,_doc_url,_doc_code_lines = self.mc_cmd_docs.get(_line_parts[0],('','',''))
             _line_parts[0] = _line_parts[0].replace('_', '-')
             _cmd += [' '.join(_line_parts)]
 
-        _help_text = self.rcon_client.run(*_cmd)
-        for _help_line in _help_text.split('/')[1:]:
-            _help_parts = _help_line.split()
-            _help_parts[0] = _help_parts[0].replace('-','_')
-            print(f'{" ".join(_help_parts)}')
+        if _doc_line and _doc_url:
+            print(_doc_line)
+            print(_doc_url)
 
+        print()
+        if _doc_code_lines:
+            for _doc_code_line in _doc_code_lines:
+                print(_doc_code_line)
+        else:
+            _help_text = self.rcon_client.run(*_cmd)
+            for _help_line in _help_text.split('/')[1:]:
+                _help_parts = _help_line.split()
+                _help_parts[0] = _help_parts[0].replace('-','_')
+                print(f'{" ".join(_help_parts)}')
 
-        # local_ns.update(dict(rcon_help=_help_text))
+    # local_ns.update(dict(rcon_help=_help_text))
         # _help_data = self._build_rcon_commands()
         # local_ns.update(dict(rcon_help_data=_help_data))
 
@@ -93,7 +111,7 @@ class MCShell(Magics):
             return arg_matches
 
     @line_magic
-    def mc_rcon(self,line):
+    def mc_run(self,line):
         '''
         %mc_rcon RCON_COMMAND
         '''
@@ -101,7 +119,10 @@ class MCShell(Magics):
         _arg_list = line.split(' ')
         _arg_list[0] = _arg_list[0].replace('_','-')
         print(f"Send: {' '.join(_arg_list)}")
-        response = self.rcon_client.run(*_arg_list)
+        try:
+            response = self.rcon_client.run(*_arg_list)
+        except Exception as e:
+            response = "Empty Response"
         print('Response:')
         print('-' * 100)
         if _arg_list[0] != 'help':
@@ -113,7 +134,27 @@ class MCShell(Magics):
 
         print('-' * 100)
 
-    def _complete_mc_rcon(self, ipyshell, event):
+
+    @needs_local_scope
+    @line_magic
+    def mc_data(self, line,local_ns):
+        '''
+        '''
+
+        _arg_list = line.split(' ')
+        # supported data ops
+        assert _arg_list[0] in ('get','modify','merge','remove')
+        print(f"Requesting data: {' '.join(_arg_list)}")
+        _uuid = str(uuid.uuid1())[:4]
+        _var_name = f"data_{_arg_list[0]}_{_uuid}"
+        print(f"requested data will be available as {_var_name} locally")
+        # async is broken due to truncated server output
+        # asyncio.run(self.rcon_client.data(_var_name,local_ns,*_arg_list))
+        _data = self.rcon_client.data(*_arg_list)
+        local_ns.update({_var_name:_data})
+
+
+    def _complete_mc_run(self, ipyshell, event):
         ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
 
         # ipyshell.user_ns.update(dict(rcon_event=event))
