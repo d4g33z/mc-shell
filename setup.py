@@ -18,8 +18,10 @@ setup(
     include_package_data=True,
     install_requires=[
         'rcon',
+        'aio-mc-rcon',
         'ipython',
         'pickleshare', # for %store
+        'urlpath',
         'rich',
         'Click',
     ],
