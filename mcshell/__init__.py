@@ -162,6 +162,8 @@ class MCShell(Magics):
         print(f"Send: {' '.join(_arg_list)}")
         try:
             response = self.run(*_arg_list)
+            if response == '':
+                return
         except:
             return
 
