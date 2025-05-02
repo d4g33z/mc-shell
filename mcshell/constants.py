@@ -4,6 +4,7 @@ from aiomcrcon import Client as AioClient
 from rcon.errorhandler import WrongPassword
 from aiomcrcon.errors import IncorrectPasswordError
 
+import os
 import re
 import json
 import asyncio

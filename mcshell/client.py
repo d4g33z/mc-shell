@@ -2,11 +2,12 @@ from mcshell.constants import *
 
 
 class MCClient:
-    def __init__(self,host,port,password):
+    def __init__(self,host,port,password,vanilla=False):
 
         self.host = host
         self.port = int(port)
         self.password = password
+        self.vanilla = vanilla
 
     def run(self, *args):
         with  Client(self.host, self.port, passwd=self.password) as client:
@@ -27,12 +28,13 @@ class MCClient:
         # return _response
 
     def data(self,operation,*args):
-        _response = self.run('data',operation,*args)
+        _data_cmd = 'data' if self.vanilla else 'minecraft:data'
+        _response = self.run(_data_cmd,operation,*args)
         if _response.split()[0] == 'No':
             print(_response)
             return
         _response = _response[_response.index(':')+1:]
-        return json.loads(self._fix_json(_response))
+        return json.loads(self._fix_json(_response.strip()))
 
     def _fix_nbt_values(self, _text):
         """Removes NBT suffixes and converts to appropriate Python types."""
@@ -52,4 +54,5 @@ class MCClient:
         _fixed_string = self._fix_nbt_values(_fixed_string)
         _fixed_string = re.sub(rf"\s*:({RE_NON_JSON_VALUE})", r':"\1"',_fixed_string)
         _fixed_string = _fixed_string.replace('False','false').replace('True','true').replace("\'","")
+        _fixed_string = _fixed_string.replace('-false','false').replace('-true','true').replace("\'","")
         return _fixed_string

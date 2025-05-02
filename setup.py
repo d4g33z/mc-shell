@@ -17,6 +17,10 @@ setup(
     packages=find_packages(include=['mcshell'],exclude=['tests','tests.*']),
     include_package_data=True,
     install_requires=[
+        'aio-mc-rcon',
+        'flask',
+        'flask-cors',
+        'urlpath',
         'rcon',
         'aio-mc-rcon',
         'ipython',

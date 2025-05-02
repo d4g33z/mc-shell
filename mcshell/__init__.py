@@ -1,11 +1,13 @@
 import IPython
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
+from IPython.utils.capture import capture_output
 from IPython.core.completer import IPCompleter,Completer
 
 from rich.prompt import Prompt
 
-from mcshell.mcclient import MCClient
+from mcshell.client import MCClient
 from mcshell.constants import *
+from mcshell.mcserver import start_flask_server,stop_flask_server
 
 @magics_class
 class MCShell(Magics):
@@ -13,6 +15,7 @@ class MCShell(Magics):
         super(MCShell,self).__init__(shell)
 
         self.ip = IPython.get_ipython()
+        self.vanilla = True if os.environ['MC_VANILLIA'] == 1 else False
 
         try:
             _mc_cmd_docs = pickle.load(MC_DOC_PATH.open('rb'))
@@ -29,7 +32,8 @@ class MCShell(Magics):
             self.SERVER_DATA = None
 
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
-        self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_help')
+        self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
+        self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
 
 
     def _send(self,kind,*args):
@@ -37,7 +41,7 @@ class MCShell(Magics):
 
         if self.SERVER_DATA is None:
             self.mc_login('reset')
-        _rcon_client = MCClient(**self.SERVER_DATA)
+        _rcon_client = MCClient(**self.SERVER_DATA,vanilla=self.vanilla)
         try:
             if kind == 'run':
                 _response = _rcon_client.run(*args)
@@ -63,13 +67,15 @@ class MCShell(Magics):
         _rcon_commands = {}
         if not self.rcon_commands:
             try:
-                _help_text = self.run('help')
+                _help_text = self.run('minecraft:help')
             except:
                 return _rcon_commands
 
             _help_data = list(filter(lambda x: x != '', map(lambda x: x.split(' '), _help_text.split('/'))))[1:]
             for _help_datum in _help_data:
                 _cmd = _help_datum[0]
+                if 'minecraft:' in _cmd:
+                    _cmd = _cmd.split(':')[1]
                 try:
                     _cmd_data = self.run(*['help',_cmd])
                 except:
@@ -107,13 +113,15 @@ class MCShell(Magics):
         %mc_help [COMMAND]
         '''
 
-        _cmd = ['help']
+        _cmd = ['minecraft:help']
 
         _doc_line = ''
         _doc_url = ''
         _doc_code_lines = ''
         if line:
             _line_parts = line.split()
+            if 'minecraft:' in _line_parts[0]:
+                _line_parts[0] = _line_parts[0].split(':')[1]
             _doc_line,_doc_url,_doc_code_lines = self.mc_cmd_docs.get(_line_parts[0],('','',''))
             _line_parts[0] = _line_parts[0].replace('_', '-')
             _cmd += [' '.join(_line_parts)]
@@ -142,14 +150,15 @@ class MCShell(Magics):
         parts = event.line.split()
         ipyshell.user_ns.update(dict(rcon_event=event))
 
+        arg_matches= []
         if len(parts) == 1: # showing commands
             arg_matches = [c for c in self.commands.keys()]
             ipyshell.user_ns.update({'rcon_matches':arg_matches})
-            return arg_matches
         elif len(parts) == 2 and text != '':  # completing commands
             arg_matches = [c for c in self.commands.keys() if c.startswith(text)]
             ipyshell.user_ns.update({'rcon_matches':arg_matches})
-            return arg_matches
+
+        return arg_matches
 
     @line_magic
     def mc_run(self,line):
@@ -166,7 +175,9 @@ class MCShell(Magics):
                 return
         except:
             return
-
+        if not response:
+            return
+        
         print('Response:')
         print('-' * 100)
         if _arg_list[0] == 'help':
@@ -190,17 +201,21 @@ class MCShell(Magics):
 
         _arg_list = line.split(' ')
         # supported data ops
-        assert _arg_list[0] in ('get','modify','merge','remove')
+        try:
+            assert _arg_list[0] in ('get','modify','merge','remove')
+        except AssertionError:
+            print(f"Wrong arguments!")
+            return
         print(f"Requesting data: {' '.join(_arg_list)}")
         _uuid = str(uuid.uuid1())[:4]
         _var_name = f"data_{_arg_list[0]}_{_uuid}"
         print(f"requested data will be available as {_var_name} locally")
         # async is broken due to truncated server output
         # asyncio.run(self.rcon_client.data(_var_name,local_ns,*_arg_list))
-        try:
-            _data = self.data(*_arg_list)
-        except:
-            return
+        #try:
+        _data = self.data(*_arg_list)
+        #except:
+        #    return
         local_ns.update({_var_name:_data})
 
 
@@ -214,27 +229,30 @@ class MCShell(Magics):
 
         ipyshell.user_ns.update(dict(rcon_text_to_complete=text_to_complete)) # Capture text_to_complete
         ipyshell.user_ns.update(dict(rcon_parts=parts)) # Capture parts
-
+        if len(parts) >= 2:
+            command = parts[1]
+            if 'minecraft:' in command:
+                command = command.split(':')[1]
         arg_matches = []
         if len(parts) == 1: # showing commands
             arg_matches = [c for c in self.commands.keys()]
         elif len(parts) == 2 and text_to_complete != '':  # completing commands
             arg_matches = [c for c in self.commands.keys() if c.startswith(text_to_complete)]
         elif len(parts) == 2 and text_to_complete == '':  # showing subcommands
-            command = parts[1]
+            # command = parts[1]
             sub_commands = list(self.commands[command].keys())
             arg_matches = [sub_command for sub_command in sub_commands]
         elif len(parts) == 3 and text_to_complete != '':  # completing subcommands
-            command = parts[1]
+            # command = parts[1]
             sub_commands = list(self.commands[command].keys())
             arg_matches = [sub_command for sub_command in sub_commands if sub_command.startswith(text_to_complete)]
         elif len(parts) == 3 and text_to_complete == '':  # showing arguments
-            command = parts[1]
+            # command = parts[1]
             sub_command = parts[2]
             sub_command_args = self.commands[command][sub_command]
             arg_matches = [sub_command_arg for sub_command_arg in sub_command_args]
         elif len(parts) > 3: # completing arguments
-            command = parts[1]
+            # command = parts[1]
             sub_command = parts[2]
             sub_command_args = self.commands[command][sub_command]
             current_arg_index = len(parts) - 3# Index of current argument
@@ -248,6 +266,45 @@ class MCShell(Magics):
 
         ipyshell.user_ns.update({'rcon_matches': arg_matches})
         return arg_matches # Fallback
+
+    @needs_local_scope
+    @line_magic
+    def mc_create_script(self,line,local_ns):
+        _uuid = str(uuid.uuid1())[:4]
+        _var_name = f"power_{_uuid}"
+        _script_path = pathlib.Path('powers/blockcode').joinpath(f'{_var_name}.py')
+        _script_path.write_text(line)
+        local_ns.update({_var_name: line})
+        print(f"requested will be available as {_var_name}.py locally")
+
+    @line_magic
+    def mc_use_power(self,line):
+        _power_name = line
+        _script_path = pathlib.Path('powers').joinpath(f'{_power_name}.py')
+        if _script_path.exists():
+            self.ip.run_line_magic('run',str(_script_path))
+        else:
+            print('error!')
+
+    def _complete_mc_use_power(self,ipyshell,event):
+        ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
+
+        _powers = pathlib.Path('powers').glob('*.py')
+        text_to_complete = event.symbol
+        line = event.line
+        return [p.name.split('.')[0] for p in _powers if str(p.name).startswith(text_to_complete)]
+
+    @line_magic
+    def mc_start_server(self, line):
+        """Starts the Flask mcserver in a separate thread."""
+        start_flask_server()
+        return "Flask mcserver started in a thread."
+
+    @line_magic
+    def mc_stop_server(self, line):
+        """Stops the Flask mcserver thread."""
+        stop_flask_server()
+        return "Stopping Flask mcserver thread..."
 
 def load_ipython_extension(ip):
     ip.register_magics(MCShell)

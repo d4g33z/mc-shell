@@ -1,5 +1,5 @@
 from mcshell.constants import *
-from mcshell.mcclient import MCClient
+from mcshell.client import MCClient
 
 class MCPlayer(MCClient):
     def __init__(self,name):

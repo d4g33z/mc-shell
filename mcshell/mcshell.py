@@ -70,12 +70,15 @@ start an ipython session with mcshell magics
 """)
 def start():
     c = initialize_config()
-    c.InteractiveShellApp.extensions += [
-        'mcshell',
-    ]
+
     c.InteractiveShellApp.exec_lines += [
         'from mcshell import *',
     ]
+
+    c.InteractiveShellApp.extensions += [
+        'mcshell',
+    ]
+
     # try:
     import IPython
     IPython.start_ipython(config=c, argv=[])
