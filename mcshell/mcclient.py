@@ -1,40 +1,64 @@
+from mcshell.api import Minecraft
 from mcshell.constants import *
 
+class _DEBUG:
+    data = False
+
+class MCClientException(Exception):
+    pass
 
 class MCClient:
-    def __init__(self,host,port,password,vanilla=False):
+    def __init__(self,host,port,password,server_type):
 
         self.host = host
         self.port = int(port)
         self.password = password
-        self.vanilla = vanilla
+        self.server_type = server_type
+
 
     def run(self, *args):
+        if not args:
+            raise MCClientException("Arguments required!")
         with  Client(self.host, self.port, passwd=self.password) as client:
             _response = client.run(*args)
         return _response
 
-    # this is broken; long server responses are truncated
+    def help(self,*args):
+        if self.server_type == 'paper':
+            _help_cmd = 'minecraft:help'
+        elif self.server_type == 'vanilla':
+            _help_cmd = 'help'
+        else:
+            raise MCClientException("unknown server_type")
+        _response = self.run(_help_cmd,*args)
+        return _response
+
+    def data(self, operation, *args):
+        _response = self.run('data', operation, *args)
+        try:
+            _response = _response[_response.index(':') + 1:]
+            return json.loads(self._fix_json(_response.strip()))
+        except Exception as e:
+            if _DEBUG.data:
+                print(e)
+                print(_response)
+            return {}
+
     async def data_async(self,varname,namespace,operation,*args):
         async with AioClient(host=self.host,port=self.port,password=self.password) as client:
             _response = await client.send_cmd(' '.join(['data',operation,*args]))
-        # _response = await AioClient(*['data',operation,*args],host=self.host,port=self.port,passwd=self.password)
         if isinstance(_response,tuple):
             _response = _response[0]
-            _response = _response[_response.index(':')+1:]
-            namespace.update({varname:json.loads(self._fix_json(_response))})
+            try:
+                _response = _response[_response.index(':')+1:]
+                namespace.update({varname:json.loads(self._fix_json(_response))})
+            except Exception as e:
+                if _DEBUG.data:
+                    print(e)
+                    print(_response)
         else:
             namespace.update({varname:_response})
-        # return _response
 
-    def data(self,operation,*args):
-        _data_cmd = 'data' if self.vanilla else 'minecraft:data'
-        _response = self.run(_data_cmd,operation,*args)
-        if _response.split()[0] == 'No':
-            print(_response)
-            return
-        _response = _response[_response.index(':')+1:]
-        return json.loads(self._fix_json(_response.strip()))
 
     def _fix_nbt_values(self, _text):
         """Removes NBT suffixes and converts to appropriate Python types."""
