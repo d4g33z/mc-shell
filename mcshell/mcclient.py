@@ -1,5 +1,6 @@
-from mcshell.api import Minecraft
+from pyncraft.minecraft import Minecraft
 from mcshell.constants import *
+
 
 class _DEBUG:
     data = False
@@ -8,15 +9,26 @@ class MCClientException(Exception):
     pass
 
 class MCClient:
-    def __init__(self,host,port,password,server_type):
+    def __init__(self, host=MC_SERVER_HOST, port=MC_SERVER_PORT, password=None, server_type=MC_SERVER_TYPE, fruit_juice_port=FJ_SERVER_PORT):
 
         self.host = host
-        self.port = int(port)
+        self.port = port
         self.password = password
         self.server_type = server_type
+        self.fruit_juice_port  = fruit_juice_port
 
+    def py_client(self,player_name=None):
+        if self.server_type != 'paper':
+            print('pyncraft client is only available on paper type servers')
+            return None
+        player_name = '' if player_name is None else player_name
+        return Minecraft.create(address=self.host,port=self.fruit_juice_port,playerName=player_name)
 
     def run(self, *args):
+        if not self.password:
+            print('A password is required!')
+            return
+
         if not args:
             raise MCClientException("Arguments required!")
         with  Client(self.host, self.port, passwd=self.password) as client:
@@ -24,6 +36,10 @@ class MCClient:
         return _response
 
     def help(self,*args):
+        if not self.password:
+            print('A password is required!')
+            return
+
         if self.server_type == 'paper':
             _help_cmd = 'minecraft:help'
         elif self.server_type == 'vanilla':
@@ -34,6 +50,10 @@ class MCClient:
         return _response
 
     def data(self, operation, *args):
+        if not self.password:
+            print('A password is required!')
+            return
+
         _response = self.run('data', operation, *args)
         try:
             _response = _response[_response.index(':') + 1:]
@@ -45,6 +65,9 @@ class MCClient:
             return {}
 
     async def data_async(self,varname,namespace,operation,*args):
+        if not self.password:
+            print('A password is required!')
+            return
         async with AioClient(host=self.host,port=self.port,password=self.password) as client:
             _response = await client.send_cmd(' '.join(['data',operation,*args]))
         if isinstance(_response,tuple):
