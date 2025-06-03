@@ -1,3 +1,5 @@
+import os
+
 import IPython
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
 from IPython.utils.capture import capture_output
@@ -5,9 +7,15 @@ from IPython.core.completer import IPCompleter,Completer
 
 from rich.prompt import Prompt
 
-from mcshell.client import MCClient
+from mcshell.mcclient import MCClient
 from mcshell.constants import *
+from mcshell.mcplayer import MCPlayer
 from mcshell.mcserver import start_flask_server,stop_flask_server
+from mcshell.mcactions import *
+
+#pycraft.settings
+SHOW_DEBUG=False
+SHOW_Log=False
 
 @magics_class
 class MCShell(Magics):
@@ -15,7 +23,7 @@ class MCShell(Magics):
         super(MCShell,self).__init__(shell)
 
         self.ip = IPython.get_ipython()
-        self.vanilla = True if os.environ['MC_VANILLIA'] == 1 else False
+        # self.vanilla = True if os.environ['MC_VANILLIA'] == 1 else False
 
         try:
             _mc_cmd_docs = pickle.load(MC_DOC_PATH.open('rb'))
@@ -26,40 +34,54 @@ class MCShell(Magics):
         self.mc_cmd_docs = _mc_cmd_docs
         self.rcon_commands = {}
 
-        if MC_CREDS_PATH.exists():
-            self.SERVER_DATA = pickle.load(MC_CREDS_PATH.open('rb'))
-        else:
-            self.SERVER_DATA = None
+        if not MC_CREDS_PATH.exists():
+            pickle.dump(SERVER_DATA,MC_CREDS_PATH.open('wb'))
+
+        self.server_data = pickle.load(MC_CREDS_PATH.open('rb'))
 
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
         self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
 
+        self.mc_login()
+
 
     def _send(self,kind,*args):
-        assert kind in ('run','data')
+        assert kind in ('help','run','data')
 
-        if self.SERVER_DATA is None:
-            self.mc_login('reset')
-        _rcon_client = MCClient(**self.SERVER_DATA,vanilla=self.vanilla)
+        _rcon_client = self.get_client()
         try:
             if kind == 'run':
                 _response = _rcon_client.run(*args)
             elif kind == 'data':
                 _response = _rcon_client.data(*args)
+            elif kind == 'help':
+                _response = _rcon_client.help(*args)
             #print(f"[green]MCSHell running and connected to {SERVER_DATA['host']}[/]")
             return _response
         except ConnectionRefusedError as e:
             print("[red bold]Unable to send command. Is the server running?[/]")
-            pprint(self.SERVER_DATA)
+            pprint(self.server_data)
             raise e
         except (WrongPassword, IncorrectPasswordError) as e:
             print("[red bold]The password is wrong. Use %mc_login reset[/]")
             raise e
 
+    def get_client(self):
+        if self.server_data is None:
+            self.mc_login()
+        return MCClient(**self.server_data)
+
+    def get_player(self,name):
+        if self.server_data is None:
+            self.mc_login()
+        return MCPlayer(name, **self.server_data)
+
+    def help(self,*args):
+        return self._send('help', *args)
     def run(self,*args):
         return self._send('run',*args)
-    def data(self,*args):
+    def data(self,*args,**server_data):
         return self._send('data',*args)
 
     @property
@@ -67,7 +89,10 @@ class MCShell(Magics):
         _rcon_commands = {}
         if not self.rcon_commands:
             try:
-                _help_text = self.run('minecraft:help')
+                # TODO: see self.mc_help
+                # _help_text = self.run('minecraft:help')
+                # _help_text = self.run('help')
+                _help_text = self.help()
             except:
                 return _rcon_commands
 
@@ -77,7 +102,8 @@ class MCShell(Magics):
                 if 'minecraft:' in _cmd:
                     _cmd = _cmd.split(':')[1]
                 try:
-                    _cmd_data = self.run(*['help',_cmd])
+                    # _cmd_data = self.run(*['help',_cmd])
+                    _cmd_data = self.help(_cmd)
                 except:
                     return
                 if not _cmd_data:
@@ -96,16 +122,30 @@ class MCShell(Magics):
         return self.rcon_commands
 
     @line_magic
-    def mc_login(self,line):
+    def mc_login(self,line=''):
         '''
-        %mc_login [reset]
+        %mc_login
         '''
-        if not self.SERVER_DATA or  line.strip() == 'reset':
-            self.SERVER_DATA = {}
-            self.SERVER_DATA['host'] = Prompt.ask('Server Address:',default='localhost')
-            self.SERVER_DATA['port'] = Prompt.ask('Server Port:',default='25575')
-            self.SERVER_DATA['password'] = Prompt.ask('Server Password:',password=True)
-            pickle.dump(self.SERVER_DATA,MC_CREDS_PATH.open('wb'))
+
+        server_data = {}
+        server_data['host'] = Prompt.ask('Server Address:',default=self.server_data['host'])
+        server_data['port'] = int(Prompt.ask('Server Port:',default=str(self.server_data['port'])))
+        server_data['password'] = Prompt.ask('Server Password:',password=True)
+        server_data['server_type'] = Prompt.ask('Server Type:',default=self.server_data['server_type'])
+
+        pickle.dump(server_data,MC_CREDS_PATH.open('wb'))
+
+        self.server_data = server_data
+
+        try:
+            self.get_client().help()
+        except:
+            print("[red bold]login failed[/]")
+
+    @line_magic
+    def mc_server_info(self,line):
+        _mcc = self.get_client()
+        pprint(self.server_data)
 
     @line_magic
     def mc_help(self,line):
@@ -113,8 +153,12 @@ class MCShell(Magics):
         %mc_help [COMMAND]
         '''
 
-        _cmd = ['minecraft:help']
-
+        # TODO:
+        # for paper
+        # _cmd = ['minecraft:help']
+        # for vanilla
+        # _cmd = ['help']
+        _cmd = []
         _doc_line = ''
         _doc_url = ''
         _doc_code_lines = ''
@@ -126,19 +170,21 @@ class MCShell(Magics):
             _line_parts[0] = _line_parts[0].replace('_', '-')
             _cmd += [' '.join(_line_parts)]
 
-        if _doc_line and _doc_url:
-            print(_doc_line)
-            print(_doc_url)
+            if _doc_line and _doc_url:
+                print(_doc_line)
+                print(_doc_url)
+                print()
 
-        print()
         if _doc_code_lines:
             for _doc_code_line in _doc_code_lines:
                 print(_doc_code_line)
         else:
-            try:
-                _help_text = self.run(*_cmd)
-            except:
-                return
+            # try:
+                # _help_text = self.run(*_cmd)
+            _help_text = self.help(*_cmd)
+            # except:
+            #     print('hwat happend?')
+            #     return
             for _help_line in _help_text.split('/')[1:]:
                 _help_parts = _help_line.split()
                 _help_parts[0] = _help_parts[0].replace('-','_')
@@ -191,36 +237,14 @@ class MCShell(Magics):
             print(response)
         print('-' * 100)
 
-
-    @needs_local_scope
-    @line_magic
-    def mc_data(self, line,local_ns):
-        '''
-        %mc_data OPERATION ARGUMENTS
-        '''
-
-        _arg_list = line.split(' ')
-        # supported data ops
-        try:
-            assert _arg_list[0] in ('get','modify','merge','remove')
-        except AssertionError:
-            print(f"Wrong arguments!")
-            return
-        print(f"Requesting data: {' '.join(_arg_list)}")
-        _uuid = str(uuid.uuid1())[:4]
-        _var_name = f"data_{_arg_list[0]}_{_uuid}"
-        print(f"requested data will be available as {_var_name} locally")
-        # async is broken due to truncated server output
-        # asyncio.run(self.rcon_client.data(_var_name,local_ns,*_arg_list))
-        #try:
-        _data = self.data(*_arg_list)
-        #except:
-        #    return
-        local_ns.update({_var_name:_data})
-
-
     def _complete_mc_run(self, ipyshell, event):
-        ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
+        ipyshell.user_ns.update(
+            dict(
+                rcon_event=event,
+                rcon_symbol=event.symbol,
+                rcon_line=event.line,
+                rcon_cursor_pos=event.text_until_cursor)
+        ) # Capture ALL event data IMMEDIATELY
 
         text_to_complete = event.symbol
         line = event.line
@@ -229,6 +253,7 @@ class MCShell(Magics):
 
         ipyshell.user_ns.update(dict(rcon_text_to_complete=text_to_complete)) # Capture text_to_complete
         ipyshell.user_ns.update(dict(rcon_parts=parts)) # Capture parts
+
         if len(parts) >= 2:
             command = parts[1]
             if 'minecraft:' in command:
@@ -269,6 +294,50 @@ class MCShell(Magics):
 
     @needs_local_scope
     @line_magic
+    def mc_data(self, line,local_ns):
+        '''
+        %mc_data OPERATION ARGUMENTS
+        '''
+
+        _arg_list = line.split(' ')
+        # supported data ops
+        try:
+            assert _arg_list[0] in ('get','modify','merge','remove')
+        except AssertionError:
+            print(f"Wrong arguments!")
+            return
+        print(f"Requesting data: {' '.join(_arg_list)}")
+        _uuid = str(uuid.uuid1())[:4]
+        _var_name = f"data_{_arg_list[0]}_{_uuid}"
+        print(f"requested data will be available as {_var_name} locally")
+        # async is broken due to truncated server output
+        # asyncio.run(self.rcon_client.data(_var_name,local_ns,*_arg_list))
+        #try:
+        _data = self.data(*_arg_list)
+        #except:
+        #    return
+        local_ns.update({_var_name:_data})
+
+    @needs_local_scope
+    @line_magic
+    def mc_client(self,line,local_ns):
+        _uuid = str(uuid.uuid1())[:4]
+        _var_name = f"mcc_{_uuid}"
+        print(f"requested client will be available as {_var_name} locally")
+        local_ns[_var_name] = self.get_client()
+
+    @needs_local_scope
+    @line_magic
+    def mc_player(self, line, local_ns):
+
+        _line_parts = line.strip().split()
+        assert len(_line_parts) == 1
+        _player_name = _line_parts.pop()
+        print(f"requested player will be available as the variable {_player_name} locally")
+        local_ns[_player_name] = MCPlayer(_player_name,**self.server_data).build()
+
+    @needs_local_scope
+    @line_magic
     def mc_create_script(self,line,local_ns):
         _uuid = str(uuid.uuid1())[:4]
         _var_name = f"power_{_uuid}"
@@ -279,12 +348,17 @@ class MCShell(Magics):
 
     @line_magic
     def mc_use_power(self,line):
-        _power_name = line
+        _line_parts = line.strip().split(' ')
+        _player_name = _line_parts[0]
+        _power_name = _line_parts[1]
         _script_path = pathlib.Path('powers').joinpath(f'{_power_name}.py')
-        if _script_path.exists():
-            self.ip.run_line_magic('run',str(_script_path))
-        else:
-            print('error!')
+        _run_line = f"{_script_path} {' '.join(_line_parts[2:])}"
+        print(_run_line)
+        _run_args = f"--address {self.server_data['host']} --name {_player_name}"
+        # if _script_path.exists():
+        self.ip.run_line_magic('run',f"{_script_path} {_run_args} {' '.join(_line_parts[2:])}")
+        # else:
+        #     print('error!')
 
     def _complete_mc_use_power(self,ipyshell,event):
         ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY

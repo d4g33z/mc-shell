@@ -33,32 +33,34 @@ def execute_ipython_magic_api():
     except Exception as e:
         return jsonify({"error": f"Error executing magic: {str(e)}"}), 500
 
-server_thread = None # Global variable to hold the server thread
+# TODO: create a paper server control
+
+flask_server_thread = None # Global variable to hold the server thread
 
 def start_flask_server():
     """Starts the Flask development server in a separate thread."""
-    global server_thread # Access the global server_thread variable
-    if server_thread is None or not server_thread.is_alive():
-        server_thread = threading.Thread(target=app.run, kwargs={'debug': True, 'use_reloader': False}) # Run app.run in thread, disable reloader!
-        server_thread.daemon = True # Allow main thread to exit even if server thread is running
-        server_thread.start()
+    global flask_server_thread # Access the global server_thread variable
+    if flask_server_thread is None or not flask_server_thread.is_alive():
+        flask_server_thread = threading.Thread(target=app.run, kwargs={'debug': True, 'use_reloader': False}) # Run app.run in thread, disable reloader!
+        flask_server_thread.daemon = True # Allow main thread to exit even if server thread is running
+        flask_server_thread.start()
     else:
         pass
 
 
 def stop_flask_server():
     """Gracefully stops the Flask development server."""
-    global server_thread
-    if server_thread and server_thread.is_alive():
+    global flask_server_thread
+    if flask_server_thread and flask_server_thread.is_alive():
         # Flask's dev server doesn't have a clean stop method, so we use shutdown_server (from Flask examples)
         func = request.environ.get('werkzeug.server.shutdown') # Get shutdown function from Werkzeug environment
         if func:
             func() # Call shutdown function if available
         else:
             pass
-        server_thread.join(timeout=2) # Wait for thread to finish briefly
-        if server_thread.is_alive():
+        flask_server_thread.join(timeout=2) # Wait for thread to finish briefly
+        if flask_server_thread.is_alive():
             pass
-        server_thread = None # Reset server_thread
+        flask_server_thread = None # Reset server_thread
     else:
         pass
