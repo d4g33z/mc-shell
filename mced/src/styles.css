@@ -1,0 +1,51 @@
+/* src/styles.css */
+
+/* Make the body and html take up the full viewport height */
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: sans-serif;
+    display: flex; /* Use flexbox for the main layout */
+    flex-direction: column; /* Stack items vertically */
+}
+
+/* The main container for the two columns */
+.editor-container {
+    display: flex; /* This is the key! It makes children align in a row. */
+    flex-direction: row; /* Explicitly set the direction to a row (this is the default) */
+    flex-grow: 1; /* Allow this container to grow and fill the available space */
+    min-height: 0; /* Important for flex children to scroll correctly */
+    padding: 10px;
+    gap: 10px; /* Adds a nice 10px space between the two columns */
+    box-sizing: border-box; /* Include padding in the element's total width and height */
+}
+
+/* Style for the Blockly container */
+#blocklyDiv {
+    flex: 2; /* Take up 2 "parts" of the available space */
+    height: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Style for the Python code textarea */
+#pythonCodeDisplay {
+    flex: 1; /* Take up 1 "part" of the available space */
+    height: 100%;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 14px;
+    white-space: pre; /* Preserve whitespace and prevent wrapping */
+    box-sizing: border-box; /* Consistent sizing */
+    padding: 8px;
+    resize: none; /* Disable user resizing of the textarea */
+}
+
+/* Style for the control button area */
+#controls {
+    padding: 10px;
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0; /* Prevent this container from shrinking */
+}

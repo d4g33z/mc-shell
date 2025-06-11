@@ -1,0 +1,7 @@
+node_modules/
+.idea/
+kano/
+.parcel-cache/
+dist/
+*.bk.mjs
+package-lock.json

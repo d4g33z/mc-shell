@@ -1,0 +1,364 @@
+{
+  "blocks": {
+    "languageVersion": 0,
+    "blocks": [
+      {
+        "type": "variables_set",
+        "id": "o2qwQ:ApjrzdJW,Ifw2`",
+        "x": 330,
+        "y": 70,
+        "fields": {
+          "VAR": {
+            "id": "ei/A/%-[!@WcQs1o55=f"
+          }
+        },
+        "inputs": {
+          "VALUE": {
+            "block": {
+              "type": "minecraft_position_here",
+              "id": ",T~/3I2x|l[fG7]9JSkM"
+            }
+          }
+        },
+        "next": {
+          "block": {
+            "type": "minecraft_action_create_digital_tube",
+            "id": "NU^I[qFl~D${b8|s[H:2",
+            "inputs": {
+              "POINT1": {
+                "shadow": {
+                  "type": "minecraft_vector_3d",
+                  "id": "i+7b`M0zgA=7)1nxLvkK",
+                  "fields": {
+                    "X": "0",
+                    "Y": "0",
+                    "Z": "0"
+                  }
+                },
+                "block": {
+                  "type": "variables_get",
+                  "id": "u%mF|C0P3?~:Ocza2H)9",
+                  "fields": {
+                    "VAR": {
+                      "id": "ei/A/%-[!@WcQs1o55=f"
+                    }
+                  }
+                }
+              },
+              "POINT2": {
+                "shadow": {
+                  "type": "minecraft_vector_3d",
+                  "id": "!;vV)bpy3U6z[3*9X1h}",
+                  "fields": {
+                    "X": "0",
+                    "Y": "4",
+                    "Z": "0"
+                  }
+                },
+                "block": {
+                  "type": "minecraft_vector_arithmetic",
+                  "id": "j.mNkABHFHa~{R,]mVsA",
+                  "fields": {
+                    "OP": "ADD"
+                  },
+                  "inputs": {
+                    "A": {
+                      "shadow": {
+                        "type": "minecraft_vector_3d",
+                        "id": "hAA$j6Sw`lc3Ml/*^QHq",
+                        "fields": {
+                          "X": "0",
+                          "Y": "0",
+                          "Z": "0"
+                        }
+                      },
+                      "block": {
+                        "type": "variables_get",
+                        "id": "2?j_p)$HT4;z7wOlhlB~",
+                        "fields": {
+                          "VAR": {
+                            "id": "ei/A/%-[!@WcQs1o55=f"
+                          }
+                        }
+                      }
+                    },
+                    "B": {
+                      "shadow": {
+                        "type": "minecraft_vector_3d",
+                        "id": "m}2[=||iiIUj[nAp7qQI",
+                        "fields": {
+                          "X": "1",
+                          "Y": "0",
+                          "Z": "0"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "OUTER_THICKNESS": {
+                "shadow": {
+                  "type": "math_number",
+                  "id": "E1`IcNUOZhAlaGS3(8g5",
+                  "fields": {
+                    "NUM": 20
+                  }
+                }
+              },
+              "BLOCK_TYPE": {
+                "shadow": {
+                  "type": "minecraft_picker_miscellaneous",
+                  "id": "c6Ly*gqe(V16cabhfFoQ",
+                  "fields": {
+                    "MATERIAL_ID": "ACACIA_BOAT"
+                  }
+                },
+                "block": {
+                  "type": "minecraft_picker_stone_bricks",
+                  "id": "@EfoW7H.G6dP}i19~Id0",
+                  "fields": {
+                    "MATERIAL_ID": "DEEPSLATE_BRICKS"
+                  }
+                }
+              },
+              "INNER_THICKNESS": {
+                "shadow": {
+                  "type": "math_number",
+                  "id": "EKx[cy#Bh]K:)R2+GJX@",
+                  "fields": {
+                    "NUM": 19
+                  }
+                }
+              }
+            },
+            "next": {
+              "block": {
+                "type": "variables_set",
+                "id": "X:rGDz~#odE4IFwLK@vw",
+                "fields": {
+                  "VAR": {
+                    "id": "o7#{9E#;V[Z.QC%ySqa4"
+                  }
+                },
+                "inputs": {
+                  "VALUE": {
+                    "block": {
+                      "type": "minecraft_vector_arithmetic",
+                      "id": "DsGmD8aKVn|}/:[1x4k9",
+                      "fields": {
+                        "OP": "ADD"
+                      },
+                      "inputs": {
+                        "A": {
+                          "shadow": {
+                            "type": "minecraft_vector_3d",
+                            "id": "hAA$j6Sw`lc3Ml/*^QHq",
+                            "fields": {
+                              "X": "0",
+                              "Y": "0",
+                              "Z": "0"
+                            }
+                          },
+                          "block": {
+                            "type": "variables_get",
+                            "id": "2RLuV!XXF8At3g7W97x.",
+                            "fields": {
+                              "VAR": {
+                                "id": "ei/A/%-[!@WcQs1o55=f"
+                              }
+                            }
+                          }
+                        },
+                        "B": {
+                          "shadow": {
+                            "type": "minecraft_vector_3d",
+                            "id": "v8]xH}wzlT5jdtb,N6lG",
+                            "fields": {
+                              "X": "5",
+                              "Y": "0",
+                              "Z": "0"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "next": {
+                  "block": {
+                    "type": "controls_repeat_ext",
+                    "id": "U|vK?Y5(+t+iaXQ[}i|6",
+                    "inputs": {
+                      "TIMES": {
+                        "shadow": {
+                          "type": "math_number",
+                          "id": "@,|VhG;#JoZlz{TW@;+_",
+                          "fields": {
+                            "NUM": 10
+                          }
+                        }
+                      },
+                      "DO": {
+                        "block": {
+                          "type": "minecraft_action_spawn_entity",
+                          "id": "zlZZ-:x?kG?i]KEgB]cV",
+                          "inputs": {
+                            "ENTITY_TYPE": {
+                              "shadow": {
+                                "type": "minecraft_picker_entity_passive_mobs",
+                                "id": "b~`jmKiLq7r$5ux(BWR3",
+                                "fields": {
+                                  "ENTITY_ID": "SHEEP"
+                                }
+                              },
+                              "block": {
+                                "type": "minecraft_picker_entity_hostile_mobs",
+                                "id": ";xMbr~btA/An|hv1}50g",
+                                "fields": {
+                                  "ENTITY_ID": "HUSK"
+                                }
+                              }
+                            },
+                            "POSITION": {
+                              "shadow": {
+                                "type": "minecraft_vector_3d",
+                                "id": "#*|8Dkv[[Bbj]2(O]`J!",
+                                "fields": {
+                                  "X": "0",
+                                  "Y": "0",
+                                  "Z": "0"
+                                }
+                              },
+                              "block": {
+                                "type": "variables_get",
+                                "id": "di1/m+@/?YrkzgSsY9.1",
+                                "fields": {
+                                  "VAR": {
+                                    "id": "o7#{9E#;V[Z.QC%ySqa4"
+                                  }
+                                }
+                              }
+                            }
+                          },
+                          "next": {
+                            "block": {
+                              "type": "variables_set",
+                              "id": "`,mB~*Ut#R1NaP#!PlwC",
+                              "fields": {
+                                "VAR": {
+                                  "id": "o7#{9E#;V[Z.QC%ySqa4"
+                                }
+                              },
+                              "inputs": {
+                                "VALUE": {
+                                  "block": {
+                                    "type": "minecraft_vector_arithmetic",
+                                    "id": "},X`n//]i,SdC~y+;1qe",
+                                    "fields": {
+                                      "OP": "ADD"
+                                    },
+                                    "inputs": {
+                                      "A": {
+                                        "shadow": {
+                                          "type": "minecraft_vector_3d",
+                                          "id": "hAA$j6Sw`lc3Ml/*^QHq",
+                                          "fields": {
+                                            "X": "0",
+                                            "Y": "0",
+                                            "Z": "0"
+                                          }
+                                        },
+                                        "block": {
+                                          "type": "variables_get",
+                                          "id": "lACV2W?K$TCi_|(vI}6;",
+                                          "fields": {
+                                            "VAR": {
+                                              "id": "o7#{9E#;V[Z.QC%ySqa4"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "B": {
+                                        "shadow": {
+                                          "type": "minecraft_vector_3d",
+                                          "id": ",?Jk]Xcr-u(e_q!,(=B_",
+                                          "fields": {
+                                            "X": "1",
+                                            "Y": "0",
+                                            "Z": "0"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "next": {
+                      "block": {
+                        "type": "minecraft_action_spawn_entity",
+                        "id": ":LUtS!h?;PcJG,bXQw0k",
+                        "inputs": {
+                          "ENTITY_TYPE": {
+                            "shadow": {
+                              "type": "minecraft_picker_entity_passive_mobs",
+                              "id": "Jg7.5`Jya`V_{PTM-J^B",
+                              "fields": {
+                                "ENTITY_ID": "SHEEP"
+                              }
+                            },
+                            "block": {
+                              "type": "minecraft_picker_entity_miscellaneous_entities",
+                              "id": "Xx!1kTHIQHef`J*`g+Pd",
+                              "fields": {
+                                "ENTITY_ID": "IRON_GOLEM"
+                              }
+                            }
+                          },
+                          "POSITION": {
+                            "shadow": {
+                              "type": "minecraft_vector_3d",
+                              "id": "HNdyA3Iene4%g0!!FE6,",
+                              "fields": {
+                                "X": "0",
+                                "Y": "0",
+                                "Z": "0"
+                              }
+                            },
+                            "block": {
+                              "type": "variables_get",
+                              "id": "Wl_[%@J=XwDa_GhbZ]=/",
+                              "fields": {
+                                "VAR": {
+                                  "id": "ei/A/%-[!@WcQs1o55=f"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "variables": [
+    {
+      "name": "spawn_point",
+      "id": "o7#{9E#;V[Z.QC%ySqa4"
+    },
+    {
+      "name": "area_center",
+      "id": "ei/A/%-[!@WcQs1o55=f"
+    }
+  ]
+}
