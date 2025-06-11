@@ -1,6 +1,6 @@
 from pyncraft.minecraft import Minecraft
 from mcshell.constants import *
-
+from functools import lru_cache
 
 class _DEBUG:
     data = False
@@ -17,6 +17,7 @@ class MCClient:
         self.server_type = server_type
         self.fruit_juice_port  = fruit_juice_port
 
+    @lru_cache(maxsize=None)
     def py_client(self,player_name=None):
         if self.server_type != 'paper':
             print('pyncraft client is only available on paper type servers')

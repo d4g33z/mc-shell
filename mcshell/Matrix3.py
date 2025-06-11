@@ -2,7 +2,8 @@
 import numpy as np # Make sure numpy is available in the student's Python environment
 import math
 
-from pyncraft.minecraft import Vec3
+# from pyncraft.minecraft import Vec3
+from mcshell.Vec3 import Vec3
 
 class Matrix3:
     def __init__(self, elements=None):
@@ -22,6 +23,21 @@ class Matrix3:
 
     def __repr__(self):
         return f"Matrix3(\n{self.matrix}\n)"
+
+    def __matmul__(self, other):
+        """
+        Matrix multiplication using the @ operator.
+        Supports: Matrix @ Vector -> Vector
+                  Matrix @ Matrix -> Matrix
+        """
+        if isinstance(other, Vec3):
+            # Matrix @ Vector -> returns a new transformed Vec3
+            result_np = self.matrix @ np.array([other.x, other.y, other.z])
+            return Vec3(result_np[0], result_np[1], result_np[2])
+        if isinstance(other, Matrix3):
+            # Matrix @ Matrix -> returns a new combined Matrix3
+            return Matrix3(self.matrix @ other.matrix)
+        return NotImplemented
 
     def to_numpy(self):
         return self.matrix

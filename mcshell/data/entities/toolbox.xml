@@ -1,0 +1,8 @@
+  <category name="Entities" colour="#5b5ba5">
+    <block type="minecraft_picker_entity_hostile_mobs"></block>
+    <block type="minecraft_picker_entity_minecarts"></block>
+    <block type="minecraft_picker_entity_miscellaneous_entities"></block>
+    <block type="minecraft_picker_entity_passive_mobs"></block>
+    <block type="minecraft_picker_entity_projectiles"></block>
+    <block type="minecraft_picker_entity_utility_and_special"></block>
+  </category>

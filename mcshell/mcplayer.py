@@ -1,10 +1,7 @@
-from mcshell.constants import *
-from mcshell.utils import *
 from mcshell.mcclient import MCClient
-import math
+from mcshell.constants import *
 
 
-MC_PORT = 4711
 # Define a tolerance for floating-point comparisons near zero
 DEFAULT_TOLERANCE = 1e-9
 
@@ -59,7 +56,7 @@ class MCPlayer(MCClient):
     @property
     def position(self):
         self.build()
-        return self.state.get('Pos')
+        return Vec3(*self.state.get('Pos'))
 
     @property
     def cardinal_direction(self):
@@ -67,14 +64,25 @@ class MCPlayer(MCClient):
 
     @property
     def direction(self):
-        return self.pc.player.getDirection()
+        # note the cast from pyncraft.vec3.Vec3 to mcshell.Vec3.Vec3
+        return Vec3(*self.pc.player.getDirection())
 
     @property
     def here(self):
-        return self.get_sword_hit_position()
+        return Vec3(*self.get_sword_hit_position())
+
 
     def get_sword_hit_position(self):
+        '''
+            The following sword hits will all be detected:
+        	DIAMOND_SWORD,
+			GOLDEN_SWORD,
+			IRON_SWORD,
+			STONE_SWORD,
+			WOODEN_SWORD
+        '''
         print('Waiting for a sword strike...')
+
         while True:
             _hits = self.pc.events.pollBlockHits()
             if _hits:

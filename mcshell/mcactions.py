@@ -1,111 +1,35 @@
-from mcshell import MCPlayer
-from mcshell.constants import BLOCK_ID_MAP,Vec3
+import ast
+from mcshell.mcplayer import MCPlayer
+from mcshell.constants import *
 
-from mcshell.mcvoxel import (generate_digital_tetrahedron_voxels,
-                             generate_digital_tube_voxels,
-                             generate_digital_plane_voxels,
-                             generate_digital_ball_coordinates,
-                             generate_digital_cube_coordinates,
-                             generate_digital_sphere_coordinates)
+from mcshell.mcvoxel import (
+    generate_digital_tetrahedron_coordinates,
+    generate_digital_tube_coordinates,
+    generate_digital_plane_coordinates,
+    generate_digital_ball_coordinates,
+    generate_digital_cube_coordinates,
+    generate_digital_disc_coordinates,
+    generate_digital_line_coordinates,
+    generate_digital_sphere_coordinates)
 
 class MCActionBase:
-    def __init__(self,mcplayer:MCPlayer):
-        self.mcplayer = mcplayer
-
-        self.block_id_map = BLOCK_ID_MAP
-        self.reverse_block_id_map = {v: k for k, v in self.block_id_map.items() if k is not None}
-        # Ensure TINTED_GLASS_BLOCK correctly reverses if it was also in the color picker
-        if "minecraft:tinted_glass" in self.reverse_block_id_map and self.block_id_map.get("TINTED_GLASS_BLOCK") == "minecraft:tinted_glass":
-            self.reverse_block_id_map["minecraft:tinted_glass"] = "TINTED_GLASS_BLOCK"
-
-    def _parse_block_type(self, blockly_id):
-        if isinstance(blockly_id, str):
-            # Direct lookup from our map (this will now include *_STAINED_GLASS IDs)
-            mc_id = self.block_id_map.get(blockly_id)
-            if mc_id:
-                return mc_id
-
-            # If it already looks like a Minecraft ID
-            if ":" in blockly_id:
-                return blockly_id
-
-            # Fallback for unmapped simple strings (e.g., 'STONE' directly)
-            print(f"Warning: Unmapped Blockly ID string '{blockly_id}'. Attempting 'minecraft:{blockly_id.lower()}'.")
-            return f"minecraft:{blockly_id.lower()}"
-
-        # The dictionary handling for {'type': 'GLASS', ...} is no longer needed for glass blocks
-        # if minecraft_block_glass always outputs a string ID.
-        # You might keep dictionary handling if other blocks generate such structures.
-        elif isinstance(blockly_id, dict) and 'type' in blockly_id:
-            block_spec_type = blockly_id['type']
-            # This section would now be for *other* blocks that might output dictionaries,
-            # but NOT for how minecraft_block_glass works anymore.
-            print(f"Warning: Received a dictionary structure for block type: {blockly_id}. Handling as generic type.")
-            return f"minecraft:{block_spec_type.lower()}" # Generic handling for other dict types
-
-        print(f"Warning: Unexpected block_type_val format: {blockly_id}. Defaulting to minecraft:stone.")
-        return "minecraft:stone"
-
-    def get_minecraft_id_from_blockly_id(self, blockly_id_or_struct): # Renamed to match user's intent
-        """ Alias for _parse_block_type for clarity in tests """
-        return self._parse_block_type(blockly_id_or_struct)
-
-    def get_blockly_id_from_minecraft_id(self, minecraft_id_to_find):
+    def __init__(self, mc_player_instance:MCPlayer,delay_between_blocks:float): # Added mc_version parameter
         """
-        Takes a Minecraft ID (e.g., "minecraft:oak_planks") and returns the
-        corresponding Blockly-generated string ID (e.g., "OAK_PLANKS").
-        Returns None if no direct mapping is found.
+        Initializes the action base.
+
+        Args:
+            mc_player_instance: An instance of a player connection class (e.g., MCPlayer).
+            mc_version (str): The Minecraft version to load data for. This should match
+                              the version of the server you are connecting to.
         """
-        # Direct lookup in the pre-computed reverse map
-        blockly_id = self.reverse_block_id_map.get(minecraft_id_to_find)
-        if blockly_id:
-            return blockly_id
+        self.mcplayer = mc_player_instance
 
-        # Fallback for unmapped IDs: if "minecraft:SOMETHING" -> try "SOMETHING"
-        if minecraft_id_to_find and minecraft_id_to_find.startswith("minecraft:"):
-            potential_blockly_id = minecraft_id_to_find.split(":", 1)[1].upper()
-            # Check if this derived ID would correctly map back
-            if self.block_id_map.get(potential_blockly_id) == minecraft_id_to_find:
-                return potential_blockly_id
+        # Initialize mapping dictionaries
+        self.bukkit_to_entity_id_map = {}
+        self._initialize_entity_id_map()
 
-        print(f"Warning: Could not find a Blockly ID for Minecraft ID '{minecraft_id_to_find}'.")
-        return None
-
-    def translate_by_n(self,v, direction, n):
-        _v = v.clone()
-        if direction == 'NORTH':
-            _v.z -= n
-        elif direction == 'SOUTH':
-            _v.z += n
-        elif direction == 'EAST':
-            _v.x += n
-        elif direction == 'WEST':
-            _v.x -= n
-        return _v
-
-# This would be part of the student's environment or a library you provide.
-# It uses your low-level geometry functions.
-
-# --- Import your low-level geometry functions ---
-# Assume your geometry functions are in a file named `digital_geometry.py`
-# from .digital_geometry import ( # Use relative import if in the same package
-#     generate_digital_ball_coordinates,
-#     generate_digital_tube_voxels,
-#     generate_digital_plane_voxels,
-#     generate_digital_cube_coordinates,
-#     generate_digital_tetrahedron_voxels
-# )
-# For this example, I'll assume they are globally available or defined above.
-
-# Assume MCActionBase is defined as we discussed previously,
-# with _parse_block_type, _initialize_block_id_maps, etc.
-# class MCActionBase: ... (from previous responses)
-
-class MCActions(MCActionBase): # Inherits from MCActionBase
-    def __init__(self, mc_player_instance):
-        super().__init__(mc_player_instance) # Call parent constructor
-        self.default_material_id = 1 # Example: material ID for stone in voxelmap
-                                     # Or map block_type to material_id
+        # allow a delay for between visuals
+        self.delay_between_blocks = delay_between_blocks
 
     def _place_blocks_from_coords(self, coords_list, block_type_from_blockly,
                                   placement_offset_vec3=None):
@@ -117,35 +41,50 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
             print("No coordinates generated, nothing to place.")
             return
 
-        # TODO Block IDs are deeply confused
-        # minecraft_block_id = self._parse_block_type(block_type_from_blockly)
+        # we use Bukkit IDs which are output in mc-ed
         minecraft_block_id = block_type_from_blockly
 
-        _cardinal_direction, _face = self.mcplayer.cardinal_direction
-        print(f"Attempting to place {len(coords_list)} blocks of type '{minecraft_block_id}' facing {_cardinal_direction} looking at a {_face}")
+        print(f"Attempting to place {len(coords_list)} blocks of type '{minecraft_block_id}'")
 
         offset_x, offset_y, offset_z = (0,0,0)
         if placement_offset_vec3: # If a Vec3 object is given for overall placement
             offset_x, offset_y, offset_z = int(placement_offset_vec3.x), int(placement_offset_vec3.y), int(placement_offset_vec3.z)
 
         for x, y, z in coords_list:
-            # The coordinates from generate_digital_* are often relative to their shape's center.
-            # The 'position' input to the Blockly block (which becomes center for many shapes)
-            # should define the world offset.
-            # Here, we assume coords_list are already in world space if 'center' was used
-            # correctly in the generate_digital_* calls.
-            # If generate_digital_* functions return coords relative to (0,0,0),
-            # then the 'center' or 'position' from Blockly needs to be added here.
-            # Let's assume the generate_digital_* functions ALREADY incorporate their 'center' argument.
+
             final_x = x + offset_x
             final_y = y + offset_y
             final_z = z + offset_z
-            # print(f"Setting block: ({final_x}, {final_y}, {final_z}) to {minecraft_block_id}")
-            self.mcplayer.pc.setBlock(int(final_x), int(final_y), int(final_z), minecraft_block_id,_face,_cardinal_direction)
-            # block ids are screwed up
-            # self.mcplayer.pc.setBlock(int(final_x), int(final_y), int(final_z), block_type_from_blockly)
+            self.mcplayer.pc.setBlock(int(final_x), int(final_y), int(final_z), minecraft_block_id)
+
+            # Pause execution for a fraction of a second
+            if self.delay_between_blocks > 0:
+                time.sleep(self.delay_between_blocks)
+
         print(f"Placed {len(coords_list)} blocks.")
 
+
+    def _initialize_entity_id_map(self):
+        self.bukkit_to_entity_id_map = pickle.load(MC_ENTITY_ID_MAP_PATH.open('rb'))
+
+    def _get_entity_id_from_bukkit_name(self, bukkit_enum_string: str) -> Optional[int]:
+        """
+        Converts a Bukkit enum string (e.g., 'WITHER_SKELETON') to its Minecraft numeric ID.
+
+        Args:
+            bukkit_enum_string: The uppercase, underscore-separated entity name.
+
+        Returns:
+            The integer ID of the entity, or None if not found.
+        """
+        # Use .get() for a safe lookup that returns None if the key doesn't exist
+        return self.bukkit_to_entity_id_map.get(bukkit_enum_string)
+
+class MCActions(MCActionBase): # Inherits from MCActionBase
+    def __init__(self, mc_player_instance,delay_between_blocks=0.01):
+        super().__init__(mc_player_instance,delay_between_blocks) # Call parent constructor
+        self.default_material_id = 1 # Example: material ID for stone in voxelmap
+                                     # Or map block_type to material_id
 
     # --- Methods matching Blockly generated calls ---
 
@@ -159,7 +98,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         """
         print(f"MCActions: create_digital_ball request at {center_vec3} with radius {radius}, inner {inner_radius}")
         coords = generate_digital_ball_coordinates(
-            center=tuple(center_vec3),
+            center=center_vec3.to_tuple(),
             radius=float(radius),
             inner_radius=float(inner_radius)
         )
@@ -174,40 +113,35 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         inner_thickness: float (for hollow tube)
         """
         print(f"MCActions: create_digital_tube request from {point1_vec3} to {point2_vec3}, thickness {outer_thickness}, inner {inner_thickness}")
-        coords = generate_digital_tube_voxels(
-            p1=tuple(point1_vec3),
-            p2=tuple(point2_vec3),
+        coords = generate_digital_tube_coordinates(
+            p1=point1_vec3.to_tuple(),
+            p2=point2_vec3.to_tuple(),
             outer_thickness=float(outer_thickness),
             inner_thickness=float(inner_thickness)
+
         )
         self._place_blocks_from_coords(coords, block_type)
 
-    # def create_digital_plane(self, normal_vec3, point_on_plane_vec3, block_type,
-    #                            plane_thickness=1.0,
-    #                            outer_radius_in_plane=float('inf'),
-    #                            inner_radius_in_plane=0.0,
-    #                            outer_rect_dims_tuple=None, # e.g., (10, 20)
-    #                            inner_rect_dims_tuple=None,
-    #                            rect_center_offset_vec3=None): # Vec3 for offset of rect center from point_on_plane
-    #     """
-    #     Blockly action to create a digital plane.
-    #     normal_vec3, point_on_plane_vec3: Vec3 instances.
-    #     outer_rect_dims_tuple, inner_rect_dims_tuple: tuple[float, float] or None
-    #     rect_center_offset_vec3: Vec3 instance or None
-    #     """
-    #     print(f"MCActions: create_digital_plane request")
-    #     offset_tuple = rect_center_offset_vec3.to_tuple() if rect_center_offset_vec3 else (0.0,0.0,0.0)
-    #     coords = generate_digital_plane_voxels(
-    #         normal=normal_vec3.to_tuple(),
-    #         point_on_plane=point_on_plane_vec3.to_tuple(),
-    #         plane_thickness=float(plane_thickness),
-    #         outer_radius_in_plane=float(outer_radius_in_plane),
-    #         inner_radius_in_plane=float(inner_radius_in_plane),
-    #         outer_rect_dims=outer_rect_dims_tuple, # Already a tuple
-    #         inner_rect_dims=inner_rect_dims_tuple, # Already a tuple
-    #         rect_center_offset=offset_tuple
-    #     )
-    #     self._place_blocks_from_coords(coords, block_type)
+    def create_digital_line(self, point1_vec3, point2_vec3, block_type):
+        """
+        Blockly action to create a 1-voxel thick digital line.
+        point1_vec3, point2_vec3: Vec3 instances.
+        block_type: string (Blockly ID like 'STONE')
+        """
+        print(f"MCActions: create_digital_line request from {point1_vec3} to {point2_vec3}")
+
+        # Convert Vec3 inputs to integer tuples for the geometry function
+        p1_tuple = (int(round(point1_vec3.x)), int(round(point1_vec3.y)), int(round(point1_vec3.z)))
+        p2_tuple = (int(round(point2_vec3.x)), int(round(point2_vec3.y)), int(round(point2_vec3.z)))
+
+        # Call the low-level coordinate generation function
+        coords = generate_digital_line_coordinates(
+            p1=p1_tuple,
+            p2=p2_tuple
+        )
+
+        # Use the existing helper to place the blocks
+        self._place_blocks_from_coords(coords, block_type)
 
     def create_digital_cube(self, center_vec3, side_length, rotation_matrix3, block_type, inner_offset_factor=0.0):
         """
@@ -220,7 +154,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         """
         print(f"MCActions: create_digital_cube request at {center_vec3}, side {side_length}, factor {inner_offset_factor}")
         coords = generate_digital_cube_coordinates(
-            center=tuple(center_vec3), # Your func expects tuple
+            center=center_vec3.to_tuple(), # Your func expects tuple
             side_length=float(side_length),
             rotation_matrix=rotation_matrix3.to_numpy(), # Your func expects np.ndarray
             inner_offset_factor=float(inner_offset_factor)
@@ -239,107 +173,102 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
             return
 
         # Convert list of Vec3 objects to list of tuples for your geometry function
-        vertex_tuples = [tuple(v) for v in vertices_list_of_vec3]
+        vertex_tuples = [v.to_tuple() for v in vertices_list_of_vec3]
 
         print(f"MCActions: create_digital_tetrahedron request with {len(vertex_tuples)} vertices, factor {inner_offset_factor}")
-        coords = generate_digital_tetrahedron_voxels(
+        coords = generate_digital_tetrahedron_coordinates(
             vertices=vertex_tuples,
             inner_offset_factor=float(inner_offset_factor)
         )
         self._place_blocks_from_coords(coords, block_type)
-
     def create_digital_plane(self, normal_vec3, point_on_plane_vec3, block_type,
-                                   plane_thickness=1.0,
-                                   outer_radius_in_plane=float('inf'), # Default in Python signature
-                                   inner_radius_in_plane=0.0,    # Default in Python signature
-                                   outer_rect_dims_tuple=None,     # Default in Python signature
-                                   inner_rect_dims_tuple=None,     # Default in Python signature
-                                   rect_center_offset_vec3=None):  # Default in Python signature
-            """
-            Blockly action to create a digital plane.
-            normal_vec3, point_on_plane_vec3, rect_center_offset_vec3: Vec3 instances.
-            outer_rect_dims_tuple, inner_rect_dims_tuple: tuple[float, float] or None.
-            """
-            print(f"MCActions: create_digital_plane request with normal {normal_vec3}, point {point_on_plane_vec3}")
+                               outer_rect_dims_tuple, # Now mandatory in Blockly block
+                               plane_thickness=1.0,
+                               inner_rect_dims_tuple=None,
+                               rect_center_offset_vec3=None): # Default to Vec3(0,0,0) if None in generator
+        print(f"MCActions: create_digital_plane request with normal {normal_vec3}, point {point_on_plane_vec3}")
 
-            # Convert Vec3 inputs to tuples for your geometry library function
-            normal_tuple = tuple(normal_vec3)
-            point_on_plane_tuple = tuple(point_on_plane_vec3)
+        normal_tuple = (normal_vec3.x, normal_vec3.y, normal_vec3.z)
+        point_on_plane_tuple = (point_on_plane_vec3.x, point_on_plane_vec3.y, point_on_plane_vec3.z)
 
-            # Handle rect_center_offset: if it's a Vec3, convert; if None from generator, use default for geometry function
-            rect_center_offset_tuple = \
-                tuple(rect_center_offset_vec3) \
-                    if rect_center_offset_vec3 and isinstance(rect_center_offset_vec3,Vec3) else (0.0, 0.0, 0.0)
+        rect_center_offset_actual_tuple = (0.0, 0.0, 0.0)
+        if rect_center_offset_vec3 and hasattr(rect_center_offset_vec3, 'x'): # Check if it's Vec3-like
+            rect_center_offset_actual_tuple = (rect_center_offset_vec3.x, rect_center_offset_vec3.y, rect_center_offset_vec3.z)
 
-            # outer_rect_dims_tuple and inner_rect_dims_tuple are already expected as tuples or None
-            # The generator provides "None" (string) which will become None object by ast.literal_eval
-            # if your Vec3 generator returns a string. If Vec3 generator returns a Vec3 object,
-            # then you might need to adjust how 'None' is handled for these tuple types.
-            # For now, assuming the generator gives Python code that results in tuple or None.
-
-            # Ensure numeric types are float
+        # outer_rect_dims_tuple comes as a Python tuple string e.g. "(10, 10)" from the generator if minecraft_vector_2d is used.
+        # It needs to be parsed if it's a string. If it's already a tuple (e.g. from direct Python call), use as is.
+        final_outer_rect_dims = None
+        if isinstance(outer_rect_dims_tuple, str):
             try:
-                plane_thickness_float = float(plane_thickness)
-                outer_radius_float = float(outer_radius_in_plane) # float('inf') is already a float
-                inner_radius_float = float(inner_radius_in_plane)
-            except ValueError:
-                print("Error: Thickness or radius values are not valid numbers.")
-                return
+                final_outer_rect_dims = ast.literal_eval(outer_rect_dims_tuple)
+                if not (isinstance(final_outer_rect_dims, tuple) and len(final_outer_rect_dims) == 2):
+                    print(f"Warning: outer_rect_dims_tuple '{outer_rect_dims_tuple}' not a valid 2D tuple. Using None.")
+                    final_outer_rect_dims = None # Or a default like (10,10)
+            except:
+                print(f"Warning: Could not parse outer_rect_dims_tuple '{outer_rect_dims_tuple}'. Using None.")
+                final_outer_rect_dims = None
+        elif isinstance(outer_rect_dims_tuple, tuple) and len(outer_rect_dims_tuple) == 2:
+            final_outer_rect_dims = outer_rect_dims_tuple
+        else:
+            print(f"Warning: outer_rect_dims type unexpected ({type(outer_rect_dims_tuple)}). Must be tuple or string rep. of tuple. Using (10,10) default.")
+            final_outer_rect_dims = (10,10) # Fallback default if no valid outer_rect_dims provided
 
-            coords = generate_digital_plane_voxels(
-                normal=normal_tuple,
-                point_on_plane=point_on_plane_tuple,
-                plane_thickness=plane_thickness_float,
-                outer_radius_in_plane=outer_radius_float,
-                inner_radius_in_plane=inner_radius_float,
-                outer_rect_dims=outer_rect_dims_tuple, # Pass directly
-                inner_rect_dims=inner_rect_dims_tuple, # Pass directly
-                rect_center_offset=rect_center_offset_tuple
-            )
-            self._place_blocks_from_coords(coords, block_type)
+        final_inner_rect_dims = None
+        if isinstance(inner_rect_dims_tuple, str) and inner_rect_dims_tuple.lower() != 'none':
+            try:
+                final_inner_rect_dims = ast.literal_eval(inner_rect_dims_tuple)
+                if not (isinstance(final_inner_rect_dims, tuple) and len(final_inner_rect_dims) == 2):
+                    final_inner_rect_dims = None
+            except:
+                final_inner_rect_dims = None
+        elif isinstance(inner_rect_dims_tuple, tuple) and len(inner_rect_dims_tuple) == 2:
+            final_inner_rect_dims = inner_rect_dims_tuple
 
-#     # Add your existing methods like create_column, set_block etc. here,
-#     # ensuring they also call self._parse_block_type and self._parse_position (if still needed for them)
-#     # or directly expect Vec3 for positions.
-#     def create_column(self, position, width, height, block_type, axis, filled):
-#         # Assuming position is already a Vec3 from the generator for this block
-#         parsed_block_type_id = self._parse_block_type(block_type)
-#         width_val = int(width)
-#         height_val = int(height)
-#         print(f"ACTION: Creating COLUMN: pos={position}, w={width_val}, h={height_val}, type={parsed_block_type_id}, axis='{axis}', filled={filled}")
-#         # Your column building logic using self.mc_player.setBlock(int(pos.x), int(pos.y), ... parsed_block_type_id)
-#         # Example:
-#         x_start, y_start, z_start = int(position.x), int(position.y), int(position.z)
-#         if axis.lower() == 'y':
-#             for dy in range(height_val):
-#                 for dx_offset in range(-(width_val // 2), width_val // 2 + (width_val % 2)):
-#                     for dz_offset in range(-(width_val // 2), width_val // 2 + (width_val % 2)):
-#                         if filled:
-#                              self.mc_player.setBlock(x_start + dx_offset, y_start + dy, z_start + dz_offset, parsed_block_type_id)
-#         # ... Implement other axes
-#         pass
-#
-# class MCActionsGeometric(MCActionBase):
-#     def create_column(self,position, width, height, block_type, axis, filled):
-#         _current_position = position.clone()
-#         _direction, _face = self.mcplayer.cardinal_direction
-#
-#         # block_type is Blockly ID like constants.BLOCK_ID_MAP
-#         if block_type.get('type') == 'GENERIC_MINECRAFT_BLOCK':
-#             _mc_block_id = self.mcplayer.pc.getBlock(*_current_position)
-#         else:
-#             _mc_block_id = self.get_minecraft_id_from_blockly_id(block_type)
-#
-#
-#         while True:
-#             _v0 = _current_position.clone()
-#             for _i in range(height):
-#                 _v0.y += 1
-#                 _v1 = self.translate_by_n(_v0,_direction,width)
-#                 self.mcplayer.pc.setBlocks(*_v0, *_v1, _mc_block_id)
-#
-#
-#
-#     def create_cube(self,position, block_type,filled,size):
-#         ...
-#
+
+        coords = generate_digital_plane_coordinates( # Call your refactored function
+            normal=normal_tuple,
+            point_on_plane=point_on_plane_tuple,
+            outer_rect_dims=final_outer_rect_dims, # Pass the parsed/validated tuple
+            plane_thickness=float(plane_thickness),
+            inner_rect_dims=final_inner_rect_dims, # Pass the parsed/validated tuple
+            rect_center_offset=rect_center_offset_actual_tuple
+        )
+        self._place_blocks_from_coords(coords, block_type)
+
+    def create_digital_disc(self, normal_vec3, center_point_vec3, outer_radius,
+                              block_type, disc_thickness=1.0, inner_radius=0.0):
+        print(f"MCActions: create_digital_disc request with normal {normal_vec3}, center {center_point_vec3}")
+
+        normal_tuple = (normal_vec3.x, normal_vec3.y, normal_vec3.z)
+        center_point_tuple = (center_point_vec3.x, center_point_vec3.y, center_point_vec3.z)
+
+        coords = generate_digital_disc_coordinates( # Call your new function
+            normal=normal_tuple,
+            center_point=center_point_tuple,
+            outer_radius=float(outer_radius),
+            disc_thickness=float(disc_thickness),
+            inner_radius=float(inner_radius)
+        )
+        self._place_blocks_from_coords(coords, block_type)
+
+    def spawn_entity(self, position_vec3, entity_type):
+        """
+        Blockly action to spawn a Minecraft entity. It now uses the helper method
+        to convert the Blockly entity ID string to a numerical ID.
+
+        Args:
+            position_vec3 (Vec3): A Vec3 instance for the spawn location.
+            entity_type (str): The Blockly-generated Bukkit enum string (e.g., 'PIG', 'ZOMBIE').
+        """
+        # Convert the Bukkit enum string to its required integer ID
+        entity_id_int = self._get_entity_id_from_bukkit_name(entity_type)
+
+        if entity_id_int is None:
+            print(f"Warning: Could not find a numerical ID for entity type '{entity_type}'. Cannot spawn.")
+            return
+
+        print(f"ACTION: Spawning entity '{entity_type}' (ID: {entity_id_int}) at position {position_vec3}")
+
+        # Now call pyncraft with the correct integer ID 1 unit above the requested position for safety
+        self.mcplayer.pc.spawnEntity(position_vec3.x, position_vec3.y + 1, position_vec3.z, entity_id_int)
+
