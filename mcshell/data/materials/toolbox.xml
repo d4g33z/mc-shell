@@ -1,0 +1,103 @@
+  <category name="Materials" colour="#777777">
+    <block type="minecraft_material_wool">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_terracotta">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_stained_glass">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_stained_glass_pane">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_concrete">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_concrete_powder">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_candle">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_bed">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_banner">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_shulker_box">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_carpet">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_glazed_terracotta">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <sep></sep>
+    <block type="minecraft_picker_boats"></block>
+    <block type="minecraft_picker_chest_boats"></block>
+    <block type="minecraft_picker_minecarts"></block>
+    <block type="minecraft_picker_passive_mobs"></block>
+    <block type="minecraft_picker_hostile_mobs"></block>
+    <block type="minecraft_picker_projectiles"></block>
+    <block type="minecraft_picker_utility_and_special"></block>
+    <block type="minecraft_picker_stairs"></block>
+    <block type="minecraft_picker_slabs"></block>
+    <block type="minecraft_picker_fences"></block>
+    <block type="minecraft_picker_gates"></block>
+    <block type="minecraft_picker_doors"></block>
+    <block type="minecraft_picker_trapdoors"></block>
+    <block type="minecraft_picker_walls"></block>
+    <sep></sep>
+    <block type="minecraft_picker_miscellaneous"></block>
+  </category>

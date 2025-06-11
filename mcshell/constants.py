@@ -8,28 +8,57 @@ import os
 import re
 import json
 import copy
+import math
 import asyncio
 import pathlib
 import urlpath
 import pickle
+import time
 import sys
 import uuid
+from typing import Optional
+
 from rich import print
 from rich.pretty import pprint
 
-from pyncraft.vec3 import Vec3
 from mcshell.Matrix3 import Matrix3
+from mcshell.Vec3 import Vec3
+
+try:
+    from icecream import ic
+    ic.configureOutput(includeContext=True)
+except ImportError:  # Graceful fallback if IceCream isn't installed.
+    ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
 FJ_SERVER_PORT = 4711
 MC_SERVER_PORT = 25575
 MC_SERVER_HOST = 'localhost'
 MC_SERVER_TYPE = 'paper'
 
+MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
+
+MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
 
 MC_DOC_URL = urlpath.URL("https://minecraft.fandom.com/wiki/Commands")
-MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
-MC_DOC_PATH = MC_DATA_DIR.joinpath('command_docs.pkl')
-MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
+MC_DOC_DIR = MC_DATA_DIR.joinpath('doc')
+MC_DOC_PATH = MC_DOC_DIR.joinpath('command_docs.pkl')
+
+MC_MATERIAL_URL = urlpath.URL('https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html')
+MC_MATERIALS_PATH = MC_DATA_DIR.joinpath('materials/materials.pkl')
+MC_COLOURABLE_MATERIALS_DATA_PATH = MC_DATA_DIR.joinpath('materials/colourables.json')
+MC_PICKER_MATERIALS_DATA_PATH = MC_DATA_DIR.joinpath('materials/pickers.json')
+MC_SINGLE_MATERIALS_DATA_PATH = MC_DATA_DIR.joinpath('materials/singles.json')
+
+# here is the source of truth for Entity IDs like in pyncraft.entity
+MC_ENTITY_TYPE_URL = urlpath.URL("https://raw.githubusercontent.com/PaperMC/Paper/refs/heads/main/paper-api/src/main/java/org/bukkit/entity/EntityType.java")
+MC_ENTITY_ID_MAP_PATH = MC_DATA_DIR.joinpath('entities/entity_id_map.pkl')
+MC_ENTITY_PICKERS_PATH = MC_DATA_DIR.joinpath('entities/pickers.json')
+
+MC_APP_DIR = MC_DATA_DIR.joinpath('app')
+#No, we scrape the actual paper sources to get EntityTypes
+# this is a pure html source of entity  names without IDS
+#MC_ENTITY_URL = urlpath.URL('https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html')
+#MC_ENTITIES_PATH = MC_DATA_DIR.joinpath('entities/entities.pkl')
 
 SERVER_DATA = {
     'host': MC_SERVER_HOST,
@@ -141,6 +170,7 @@ RECIPE_BOOK_DATA_PATHS = [
     'isSmokerFilteringCraftable'
 ]
 
+# TODO: this is deprecated; use Bukkit Material IDs now
 BLOCK_ID_MAP = {
             # World Blocks
             "DIRT": "minecraft:dirt",

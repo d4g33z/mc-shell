@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 import IPython
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
@@ -10,7 +11,8 @@ from rich.prompt import Prompt
 from mcshell.mcclient import MCClient
 from mcshell.constants import *
 from mcshell.mcplayer import MCPlayer
-from mcshell.mcserver import start_flask_server,stop_flask_server
+from mcshell.mcdebugger import start_debug_server,stop_debug_server,debug_server_thread
+from mcshell.mcserver import start_app_server,stop_app_server,app_server_thread
 from mcshell.mcactions import *
 
 #pycraft.settings
@@ -41,7 +43,10 @@ class MCShell(Magics):
 
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
-        self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
+        # self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
+
+        self.debug_server_thread = debug_server_thread
+        self.app_server_thread = app_server_thread
 
         self.mc_login()
 
@@ -128,10 +133,11 @@ class MCShell(Magics):
         '''
 
         server_data = {}
+
         server_data['host'] = Prompt.ask('Server Address:',default=self.server_data['host'])
         server_data['port'] = int(Prompt.ask('Server Port:',default=str(self.server_data['port'])))
-        server_data['password'] = Prompt.ask('Server Password:',password=True)
         server_data['server_type'] = Prompt.ask('Server Type:',default=self.server_data['server_type'])
+        server_data['password'] = Prompt.ask('Server Password:',password=True)
 
         pickle.dump(server_data,MC_CREDS_PATH.open('wb'))
 
@@ -339,44 +345,72 @@ class MCShell(Magics):
     def mc_create_script(self,line,local_ns):
         _uuid = str(uuid.uuid1())[:4]
         _var_name = f"power_{_uuid}"
-        _script_path = pathlib.Path('powers/blockcode').joinpath(f'{_var_name}.py')
+        _script_dir = pathlib.Path('.').absolute().joinpath('powers')
+        print(_script_dir)
+        if not _script_dir.exists():
+            print(f"Creating a directory {_script_dir} to hold powers for debugging")
+            _script_dir.mkdir(exist_ok=True)
+        _script_path = pathlib.Path('./powers').joinpath(f'{_var_name}.py')
+        print(f"Saving your new power as {_script_path}")
         _script_path.write_text(line)
-        local_ns.update({_var_name: line})
-        print(f"requested will be available as {_var_name}.py locally")
+        # local_ns.update({_var_name: line})
+
+    # @line_magic
+    # def mc_use_power(self,line):
+    #     _line_parts = line.strip().split(' ')
+    #     _player_name = _line_parts[0]
+    #     _power_name = _line_parts[1]
+    #     _script_path = pathlib.Path('powers').joinpath(f'{_power_name}.py')
+    #     _run_line = f"{_script_path} {' '.join(_line_parts[2:])}"
+    #     print(_run_line)
+    #     _run_args = f"--address {self.server_data['host']} --name {_player_name}"
+    #     # if _script_path.exists():
+    #     self.ip.run_line_magic('run',f"{_script_path} {_run_args} {' '.join(_line_parts[2:])}")
+    #     # else:
+    #     #     print('error!')
+
+    # def _complete_mc_use_power(self,ipyshell,event):
+    #     ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
+    #
+    #     _powers = pathlib.Path('powers').glob('*.py')
+    #     text_to_complete = event.symbol
+    #     line = event.line
+    #     return [p.name.split('.')[0] for p in _powers if str(p.name).startswith(text_to_complete)]
 
     @line_magic
-    def mc_use_power(self,line):
-        _line_parts = line.strip().split(' ')
-        _player_name = _line_parts[0]
-        _power_name = _line_parts[1]
-        _script_path = pathlib.Path('powers').joinpath(f'{_power_name}.py')
-        _run_line = f"{_script_path} {' '.join(_line_parts[2:])}"
-        print(_run_line)
-        _run_args = f"--address {self.server_data['host']} --name {_player_name}"
-        # if _script_path.exists():
-        self.ip.run_line_magic('run',f"{_script_path} {_run_args} {' '.join(_line_parts[2:])}")
-        # else:
-        #     print('error!')
-
-    def _complete_mc_use_power(self,ipyshell,event):
-        ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
-
-        _powers = pathlib.Path('powers').glob('*.py')
-        text_to_complete = event.symbol
-        line = event.line
-        return [p.name.split('.')[0] for p in _powers if str(p.name).startswith(text_to_complete)]
+    def mc_start_debug(self, line):
+        """Starts the debug mcserver in a separate thread."""
+        start_debug_server()
 
     @line_magic
-    def mc_start_server(self, line):
-        """Starts the Flask mcserver in a separate thread."""
-        start_flask_server()
-        return "Flask mcserver started in a thread."
+    def mc_stop_debug(self, line):
+        """Stops the debug mcserver thread."""
+        stop_debug_server()
 
     @line_magic
-    def mc_stop_server(self, line):
-        """Stops the Flask mcserver thread."""
-        stop_flask_server()
-        return "Stopping Flask mcserver thread..."
+    def mc_start_app(self, line):
+        """Starts the app mcserver in a separate thread."""
+        start_app_server(self.server_data)
+
+    @line_magic
+    def mc_stop_app(self, line):
+        """Stops the app mcserver thread."""
+        stop_app_server()
+
+    @line_magic
+    def mc_server_status(self,line):
+        '''Check if servers are running'''
+        if self.app_server_thread and self.app_server_thread.is_alive():
+            print("The application server is running")
+        else:
+            print("The application server is not running")
+        if self.debug_server_thread and self.debug_server_thread.is_alive():
+            print("The debugging server is running")
+        else:
+            print("The debugging server is not running")
+
+print("The editor application is running")
+
 
 def load_ipython_extension(ip):
     ip.register_magics(MCShell)

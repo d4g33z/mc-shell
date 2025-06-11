@@ -1,5 +1,4 @@
 import click
-import sys
 class SpecialHelpOrderBase(click.Group):
     pass
 
