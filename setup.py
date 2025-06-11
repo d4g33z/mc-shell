@@ -17,17 +17,18 @@ setup(
     packages=find_packages(include=['mcshell'],exclude=['tests','tests.*']),
     include_package_data=True,
     install_requires=[
+        'rcon',
         'aio-mc-rcon',
         'flask',
         'flask-cors',
+        'flask-socketio',
+        'flask-socketio[client]',
         'urlpath',
-        'rcon',
-        'aio-mc-rcon',
         'ipython',
         'pickleshare', # for %store
-        'urlpath',
         'rich',
         'Click',
+        'numpy',
     ],
     entry_points = {
         'console_scripts':[
