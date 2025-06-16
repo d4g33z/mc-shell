@@ -138,12 +138,14 @@ def handle_shutdown_request():
 
 # --- CORRECTED Thread Management Functions ---
 
-def start_app_server(server_data):
+def start_app_server(mc_name,server_data):
     """Starts the main Flask-SocketIO application server in a separate thread."""
     # Attach the server_data dict to the Flask app's config object.
     # This makes the data available anywhere we have access to the app context.
-
+    # --- Inject the AUTHORITATIVE data into the Flask app config ---
+    # The Flask server will now start with the correct, non-spoofable identity.
     app.config['MCSHELL_SERVER_DATA'] = server_data
+    app.config['MINECRAFT_PLAYER_NAME'] = mc_name
 
     global app_server_thread
     if app_server_thread and app_server_thread.is_alive():
