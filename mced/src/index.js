@@ -396,14 +396,11 @@ async function init() {
             statusSpan.textContent = 'Status: Dispatching...';
             statusSpan.style.color = 'orange';
 
-            const playerSelector = document.getElementById('playerSelector');
-            const selectedPlayer = playerSelector.value;
-
             try {
                 const response = await fetch('/execute_power', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: codeToRun, playerName: selectedPlayer }), // Send code
+                    body: JSON.stringify({ code: codeToRun }), // Send code
                 });
                 const result = await response.json();
 

@@ -1,3 +1,4 @@
+import ast
 import threading
 from threading import Thread, Event
 
@@ -24,7 +25,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_m
 RUNNING_POWERS = {}
 
 # --- Helper function that will be the target of our thread ---
-def execute_power_thread(code_to_execute, player_name, power_id, cancel_event,server_data):
+def execute_power_thread_old(code_to_execute, player_name, power_id, cancel_event,server_data):
     """
     This function runs in a separate thread. It instantiates the necessary
     classes and executes the generated Blockly code.
@@ -70,6 +71,77 @@ def execute_power_thread(code_to_execute, player_name, power_id, cancel_event,se
         if power_id in RUNNING_POWERS:
             del RUNNING_POWERS[power_id]
 
+# In mcshell/mcserver.py
+
+def execute_power_thread(code_to_execute, player_name, power_id, cancel_event, server_data):
+    """
+    This function now securely instantiates all objects before executing
+    the received code.
+    """
+    print(f"[{power_id}] Thread started for player {player_name}.")
+    socketio.emit('power_status', {'id': power_id, 'status': 'running'})
+    try:
+        # --- FIX: Convert server_data string to a dictionary ---
+        parsed_server_data = {}
+        if isinstance(server_data, str):
+            try:
+                # ast.literal_eval safely evaluates a string containing a Python literal
+                parsed_server_data = ast.literal_eval(server_data)
+                if not isinstance(parsed_server_data, dict):
+                    raise TypeError("Parsed server_data is not a dictionary.")
+            except (ValueError, SyntaxError, TypeError) as e:
+                print(f"[{power_id}] CRITICAL ERROR: Could not parse server_data string: {e}")
+                raise RuntimeError("Server data configuration is malformed.") from e
+        elif isinstance(server_data, dict):
+            # If it's already a dictionary, use it directly
+            parsed_server_data = server_data
+        else:
+             raise TypeError(f"server_data must be a dict or a string representation of a dict, but got {type(server_data)}")
+
+        # --- SERVER-SIDE IDENTITY ENFORCEMENT ---
+        # 1. Instantiate the player using the AUTHORITATIVE player_name.
+        #    The **server_data unpacks host, port, etc.
+        mc_player = MCPlayer(player_name, **parsed_server_data)
+
+        # 2. Instantiate the action implementer with the trusted player object.
+        action_implementer = MCActions(mc_player)
+
+        # 3. Prepare the execution scope and execute the received code string.
+        #    This only DEFINES the BlocklyProgramRunner class in the scope.
+        execution_scope = {}
+        exec(code_to_execute, execution_scope)
+
+        # 4. Get the class definition that was just created.
+        BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
+
+        if BlocklyProgramRunner:
+            # 5. Instantiate the runner, passing our SECURELY created action_implementer.
+            runner = BlocklyProgramRunner(action_implementer)
+
+            # 6. Run the program. The logic from the blocks will now call methods
+            #    on the secure action_implementer instance.
+            runner.run_program()
+
+            # ... (rest of the success/error/cancellation logic) ...
+            # Check for cancellation periodically within long-running Python loops if possible
+            # (This is an advanced feature for your geometry functions)
+            if cancel_event.is_set():
+                print(f"[{power_id}] Execution cancelled during run.")
+                socketio.emit('power_status', {'id': power_id, 'status': 'cancelled'})
+                return
+
+            print(f"[{power_id}] Execution completed successfully.")
+            socketio.emit('power_status', {'id': power_id, 'status': 'finished'})
+        else:
+            raise RuntimeError("BlocklyProgramRunner class not found in generated code.")
+
+    except Exception as e:
+        print(f"[{power_id}] Error during execution: {e}")
+        socketio.emit('power_status', {'id': power_id, 'status': 'error', 'message': str(e)})
+    finally:
+        # Clean up the power from our tracking dictionary
+        if power_id in RUNNING_POWERS:
+            del RUNNING_POWERS[power_id]
 
 # --- API Endpoints ---
 
@@ -81,6 +153,8 @@ def execute_power():
 
     # --- Get the server data from the app's config ---
     server_data_for_thread = app.config.get('MCSHELL_SERVER_DATA')
+    print(server_data_for_thread)
+
     if not python_code:
         return jsonify({"error": "No code provided"}), 400
 
@@ -138,7 +212,7 @@ def handle_shutdown_request():
 
 # --- CORRECTED Thread Management Functions ---
 
-def start_app_server(mc_name,server_data):
+def start_app_server(server_data,mc_name):
     """Starts the main Flask-SocketIO application server in a separate thread."""
     # Attach the server_data dict to the Flask app's config object.
     # This makes the data available anywhere we have access to the app context.
