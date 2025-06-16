@@ -1,19 +1,8 @@
 import * as Blockly from 'blockly'; // import all of blockly
-import {blocks} from 'blockly/blocks'; // Assuming standard built-in blocks
-
-// Merge the built-in blocks with Blockly's Blocks object.
-// This step is crucial if you are not using the default blockly import
-// that includes all standard blocks.
-// Blockly.Blocks = {
-//   ...Blockly.Blocks,
-//   ...blocks
-// };
+import { io } from "socket.io-client";
 
 import { pythonGenerator, Order } from 'blockly/python';
 
-// test code
-import { defineGreetingBlock } from './blocks/greeting.mjs'; // Import defineGreetingPython
-import { installGreetingGenerator } from './generators/python/greeting.mjs'; // Import defineGreetingPython
 import { installMCGenerator} from "./generators/python/mc.mjs";
 import { installMCMaterialsGenerator} from "./generators/python/materials.mjs";
 import { installMCEntityGenerator } from "./generators/python/entities.mjs";
@@ -23,10 +12,6 @@ import {defineMineCraftConstants} from "./lib/constants.mjs";
 import {defineMineCraftBlocks} from "./blocks/mc.mjs";
 import {defineMineCraftMaterialBlocks} from "./blocks/materials.mjs";
 import {defineMinecraftEntityBlocks} from "./blocks/entities.mjs";
-
-// we should have everything we need in predefined blocks
-// import {defineMathBlocks} from "./blocks/math.mjs";
-// import {installMathGenerators} from "./generators/python/math.mjs";
 
 // Define the structure of a blank workspace
 const BLANK_WORKSPACE_JSON = {
@@ -40,11 +25,6 @@ const BLANK_WORKSPACE_JSON = {
 import defaultWorkspaceJson from './workspace.json';
 const AUTOSAVE_KEY = 'blocklyMinecraftAutosave'; // Key for localStorage
 
-// Global workspace variable so it's accessible by save/load functions
-// let workspace;
-
-// At the top of src/index.js
-import { io } from "socket.io-client";
 
 // --- Connect to the WebSocket server ---
 // The { transports: ['websocket'] } part can help avoid some connection issues.
@@ -74,18 +54,16 @@ socket.on('power_status', (data) => {
         }
     }
 });
+
 async function init() {
 
-    // defineMathBlocks(Blockly);
-
-    defineMineCraftBlocklyUtils(Blockly);
     defineMineCraftConstants(Blockly);
+    defineMineCraftBlocklyUtils(Blockly);
+
     defineMineCraftBlocks(Blockly);
     defineMineCraftMaterialBlocks(Blockly);
     defineMinecraftEntityBlocks(Blockly);
 
-    defineGreetingBlock(Blockly)
-    installGreetingGenerator(pythonGenerator);
     installMCGenerator(pythonGenerator,Order);
     installMCMaterialsGenerator(pythonGenerator)
     installMCEntityGenerator(pythonGenerator)
@@ -114,35 +92,10 @@ async function init() {
     // --- Setup Autosave on Page Unload/Reload ---
     window.addEventListener('beforeunload', function (e) {
         autosaveWorkspace();
-        // Standard way to try and show a confirmation dialog (browser support varies)
-        // e.preventDefault(); // If you want to try to prevent immediate close
-        // e.returnValue = ''; // Necessary for some browsers
     });
 
     workspace.clear(); // Clear the workspace
     Blockly.serialization.workspaces.load(initialWorkspaceJson,workspace); // Load the JSON data
-
-    // window.saveWorkspaceToJson = function () {
-    //     // 1. Serialize workspace to JSON object
-    //     const workspaceJson = Blockly.serialization.workspaces.save(workspace);
-    //
-    //     // 2. Convert JSON object to a JSON string
-    //     const jsonText = JSON.stringify(workspaceJson, null, 2); // Use null, 2 for pretty printing
-    //
-    //     // 3. Create a download link for the JSON file
-    //     const filename = 'workspace.json'; // Updated filename extension
-    //
-    //     const element = document.createElement('a');
-    //     element.setAttribute('href', 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonText)); // Updated MIME type
-    //     element.setAttribute('download', filename);
-    //
-    //     element.style.display = 'none';
-    //     document.body.appendChild(element);
-    //
-    //     element.click();
-    //
-    //     document.body.removeChild(element);
-    // }
 
     function clearPythonCodeDisplay() {
         // 1. Find the textarea element in the document by its ID.
@@ -162,7 +115,8 @@ async function init() {
         workspace.clear();
         clearPythonCodeDisplay();
     }
-// --- Function to Save Workspace to localStorage ---
+
+    // --- Function to Save Workspace to localStorage ---
     window.autosaveWorkspace = function () {
         if (workspace) {
             try {
@@ -176,7 +130,7 @@ async function init() {
         }
     }
 
-// --- Function to Load Workspace from localStorage ---
+    // --- Function to Load Workspace from localStorage ---
     function loadAutosavedWorkspace () {
         try {
             const savedJsonText = localStorage.getItem(AUTOSAVE_KEY);
@@ -239,7 +193,6 @@ async function init() {
 
             } else {
                 // Fallback for browsers that don't support showSaveFilePicker()
-                // (This is your original download link method)
                 console.warn('showSaveFilePicker API not supported. Falling back to direct download.');
                 const filename = suggestedName;
                 const element = document.createElement('a');
@@ -259,6 +212,7 @@ async function init() {
             }
         }
     };
+
     // --- Function to Load Workspace from a User-Selected JSON File ---
     window.loadWorkspaceFromJson = async function () {
         if (!workspace) {
@@ -383,7 +337,7 @@ async function init() {
         }
     }
 
-// Example of calling this function when a button is clicked or a Blockly event occurs:
+    // Example of calling this function when a button is clicked or a Blockly event occurs:
     window.callPythonFromBlockly = async function () { // Example - make it global for button onClick
         console.log("Inside callPythonFromBlockly")
         const commandToExecute = '%ls'; // Example magic command - list files
@@ -442,14 +396,11 @@ async function init() {
             statusSpan.textContent = 'Status: Dispatching...';
             statusSpan.style.color = 'orange';
 
-            const playerSelector = document.getElementById('playerSelector');
-            const selectedPlayer = playerSelector.value;
-
             try {
                 const response = await fetch('/execute_power', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: codeToRun, playerName: selectedPlayer }), // Send code
+                    body: JSON.stringify({ code: codeToRun }), // Send code
                 });
                 const result = await response.json();
 
