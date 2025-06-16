@@ -4,6 +4,7 @@ from threading import Thread, Event
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_socketio import SocketIO
+from flask import Flask, render_template_string # Import render_template_string
 
 
 from mcshell.mcactions import MCActions
@@ -185,6 +186,70 @@ def cancel_power():
     else:
         return jsonify({"error": "Invalid or unknown power_id"}), 404
 
+
+# --- NEW Endpoint to get the list of powers as HTML widgets ---
+@app.route('/api/get_powers')
+def get_powers():
+    """
+    Fetches the list of saved powers and renders them as HTML widgets
+    for the htmx-powered control panel.
+    """
+    # For now, we'll use a hardcoded list of powers for demonstration.
+    # Later, this will come from your PowerRepository.
+    # powers_list = power_repo.list_powers(player_id)
+    powers_list = [
+        {"name": "Build Bridge", "id": "power-1"},
+        {"name": "Create Tower", "id": "power-2"},
+        {"name": "Fill Area", "id": "power-3"},
+        {"name": "Explode TNT", "id": "power-4"}
+    ]
+
+    # This Jinja2 template defines a single widget.
+    widget_template = """
+    <div class="power-widget" id="{{ power.id }}">
+        <span class="power-name">{{ power.name }}</span>
+        <span class="status">Status: Idle</span>
+        <button class="execute-btn"
+                hx-post="/execute_power_by_name"
+                hx-vals='{"power_name": "{{ power.name }}"}'
+                hx-target="#{{ power.id }} .status"
+                hx-swap="innerHTML">
+            Execute
+        </button>
+    </div>
+    """
+
+    # Render a widget for each power and join them into a single HTML string
+    html_response = "".join([render_template_string(widget_template, power=p) for p in powers_list])
+
+    return html_response
+
+# You will also need a new endpoint for execution by name,
+# which would load the code and then call the existing execute_power_thread.
+@app.route('/execute_power_by_name', methods=['POST'])
+def execute_power_by_name():
+    power_name = request.form.get('power_name')
+    print(f"Received request to execute power by name: {power_name}")
+
+    # 1. Load the power's code from your repository
+    # python_code = power_repo.load_power(player_id, power_name)
+    # For now, just a placeholder:
+    python_code = f"# This is the placeholder code for '{power_name}'"
+
+    # 2. Reuse the existing threading logic to execute the code
+    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
+    server_data = app.config.get('MCSHELL_SERVER_DATA')
+    power_id = str(uuid.uuid4())
+    cancel_event = Event()
+
+    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event, server_data))
+    thread.daemon = True
+    thread.start()
+
+    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
+
+    # Return the initial status update for the widget
+    return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
 # --- Static File Serving ---
 
 @app.route('/')
@@ -274,7 +339,7 @@ def stop_app_server():
 
     app_server_thread = None
 
-if __name__ == '__main__':
-    start_app_server()
-    time.sleep(10)
-    stop_app_server()
+# if __name__ == '__main__':
+#     start_app_server()
+#     time.sleep(10)
+#     stop_app_server()
