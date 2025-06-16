@@ -389,10 +389,45 @@ class MCShell(Magics):
         """Stops the debug mcserver thread."""
         stop_debug_server()
 
+    # @line_magic
+    # def mc_start_app(self, line):
+    #     """Starts the app mcserver in a separate thread."""
+    #     start_app_server(self.server_data)
     @line_magic
     def mc_start_app(self, line):
-        """Starts the app mcserver in a separate thread."""
-        start_app_server(self.server_data)
+        """
+        Starts the mc-ed application server, getting the authorized Minecraft user
+        name from the central configuration file.
+        """
+        # Define the central, system-wide configuration file path
+        CENTRAL_CONFIG_FILE = pathlib.Path("/etc/mc-shell/user_map.json")
+
+        try:
+            linux_user = os.getlogin()
+        except OSError:
+            linux_user = os.environ.get('USER')
+
+        if not linux_user:
+            return "Fatal Error: Could not determine Linux username."
+
+        if not CENTRAL_CONFIG_FILE.exists():
+            return f"Fatal Error: Server configuration file not found at {CENTRAL_CONFIG_FILE}. Please contact your administrator."
+
+        try:
+            with open(CENTRAL_CONFIG_FILE, 'r') as f:
+                user_map = json.load(f)
+        except (IOError, json.JSONDecodeError) as e:
+            return f"Fatal Error: Could not read or parse server configuration file: {e}"
+
+        # Get the authorized Minecraft name for the current Linux user
+        minecraft_name = user_map.get(linux_user)
+
+        if not minecraft_name:
+            return f"Error: Your Linux user '{linux_user}' is not registered to a Minecraft player. Please contact your administrator."
+
+        print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
+        start_app_server(self.server_data,minecraft_name)
+        return f"mc-ed application server started for player '{minecraft_name}'."
 
     @line_magic
     def mc_stop_app(self, line):
