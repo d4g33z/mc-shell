@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MC-ED Control</title>
+
+    <link rel="stylesheet" href="./control.css">
+
+    <script src="https://unpkg.com/htmx.org@1.9.12" integrity="sha384-HvrKAgxBtVECDXoFc4VQFACEbRxa8/eYI3qLGDWEI2qN7OkOBKiWAIoH4OQPEwY/" crossorigin="anonymous"></script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script type="module" src="./control.js"></script>
+</head>
+<body>
+    <header>
+        <h1>MC-ED Control Panel</h1>
+        </header>
+
+    <main>
+        <div id="power-grid"
+             hx-get="/api/get_powers"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+
+            <div class="loading-indicator">Loading Powers...</div>
+        </div>
+    </main>
+</body>
+</html>

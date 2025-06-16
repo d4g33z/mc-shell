@@ -5,6 +5,7 @@
   "source": "src/index.html",
   "scripts": {
     "start": "parcel",
+    "start:control": "parcel src/control.html",
     "build": "parcel build"
   },
   "dependencies": {
