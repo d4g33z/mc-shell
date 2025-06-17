@@ -20,6 +20,21 @@ const BLANK_WORKSPACE_JSON = {
 // A module-scoped variable to hold the main workspace instance
 let workspace;
 
+/**
+ * A helper function that takes a function and returns a new version of it
+ * that will only run after a specified delay of inactivity.
+ * @param {Function} func The function to debounce.
+ * @param {number} timeout The delay in milliseconds.
+ * @return {Function} The new debounced function.
+ */
+function debounce(func, timeout = 500) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
+
 async function init() {
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
@@ -784,6 +799,35 @@ async function init() {
         },
         json: BLANK_WORKSPACE_JSON
     });
+
+    // --- LIVE GENERATION & HIGHLIGHTING LOGIC ---
+
+    // Get a reference to the code display element
+    const codeDisplayElement = document.getElementById('pythonCodeDisplay');
+
+    // Create a debounced version of our update function
+    const debouncedCodeUpdate = debounce(() => {
+        // Generate the Python code from the current workspace
+        const code = pythonGenerator.workspaceToCode(workspace);
+
+        if (codeDisplayElement) {
+            // Update the text content of the <code> element
+            codeDisplayElement.textContent = code;
+
+            // Tell Prism to re-highlight the element
+            if (window.Prism) {
+                Prism.highlightElement(codeDisplayElement);
+            }
+        }
+    });
+
+    // Add a listener to the workspace.
+    // This will call our debounced function whenever a change occurs.
+    workspace.addChangeListener(debouncedCodeUpdate);
+
+    // Trigger an initial generation to populate the view
+    debouncedCodeUpdate();
+
 
     // --- 5. Wire up UI Buttons ---
     const clearButton = document.getElementById('clearWorkspaceButton');
