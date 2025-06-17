@@ -62,7 +62,7 @@ class PowerRepository(ABC):
         pass
 
 class JsonFileRepository(PowerRepository):
-    def __init__(self, storage_path: str = "./player_powers"):
+    def __init__(self, storage_path: str):
         self.storage_path = pathlib.Path(storage_path)
         self.storage_path.mkdir(exist_ok=True)
 

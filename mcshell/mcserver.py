@@ -20,10 +20,6 @@ class ServerShutdownException(Exception):
 app = Flask(__name__, static_folder=str(MC_APP_DIR)) # Serve files from Parcel's build output
 socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_mode='threading')
 
-# --- Instantiate the chosen repository ---
-# You can later make this configurable (e.g., via an environment variable)
-# to switch between JsonFileRepository, SqliteRepository, etc.
-power_repo = JsonFileRepository()
 
 # --- State Management for Running Powers ---
 # This dictionary will hold the state of each running power
@@ -141,6 +137,7 @@ def execute_power():
     data = request.get_json()
     power_id = data.get('power_id')
     player_name = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_LIBRARY')
 
     if not all([power_id, player_name]):
         return jsonify({"error": "Missing power_id or not authorized"}), 400
@@ -159,6 +156,7 @@ def execute_power():
     # thread = Thread(target=execute_power_thread, args=(python_code, ...))
     # ...
     return jsonify({"status": "dispatched", "power_id": power_id})
+
 @app.route('/cancel_power', methods=['POST'])
 def cancel_power():
     data = request.get_json()
@@ -175,6 +173,7 @@ def cancel_power():
 def save_new_power():
     """Saves a new power from the editor."""
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_LIBRARY')
     if not player_id:
         return jsonify({"error": "No authorized player"}), 401
 
@@ -195,6 +194,7 @@ def get_powers_list_as_html():
     for the htmx-powered control panel.
     """
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_LIBRARY')
     if not player_id:
         # Return an empty response with an error header for htmx to potentially handle
         return make_response("", 204, {"HX-Trigger": "showError", "errorMessage": "No authorized player"})
@@ -239,6 +239,7 @@ def get_powers_list_as_html():
 # which would load the code and then call the existing execute_power_thread.
 @app.route('/execute_power_by_name', methods=['POST'])
 def execute_power_by_name():
+    power_repo = app.config.get('POWER_LIBRARY')
     power_name = request.form.get('power_name')
     print(f"Received request to execute power by name: {power_name}")
 
@@ -297,6 +298,12 @@ def start_app_server(server_data,mc_name):
     # The Flask server will now start with the correct, non-spoofable identity.
     app.config['MCSHELL_SERVER_DATA'] = server_data
     app.config['MINECRAFT_PLAYER_NAME'] = mc_name
+    # --- Instantiate the chosen repository ---
+    # You can later make this configurable (e.g., via an environment variable)
+    # to switch between JsonFileRepository, SqliteRepository, etc.
+    power_repo = JsonFileRepository(MC_POWER_LIBRARY_DIR.joinpath(f"{mc_name}.json"))
+    app.config['POWER_LIBRARY'] = power_repo
+
 
     global app_server_thread
     if app_server_thread and app_server_thread.is_alive():

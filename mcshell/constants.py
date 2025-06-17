@@ -55,6 +55,9 @@ MC_ENTITY_ID_MAP_PATH = MC_DATA_DIR.joinpath('entities/entity_id_map.pkl')
 MC_ENTITY_PICKERS_PATH = MC_DATA_DIR.joinpath('entities/pickers.json')
 
 MC_APP_DIR = MC_DATA_DIR.joinpath('app')
+
+MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
+
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS
 #MC_ENTITY_URL = urlpath.URL('https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html')
