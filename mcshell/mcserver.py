@@ -168,10 +168,19 @@ def get_powers():
     </div>
     """
 
-    # Render a widget for each power and join them into a single HTML string
-    html_response = "".join([render_template_string(widget_template, power=p) for p in powers_list])
+    html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_list])
 
-    return html_response
+    # --- THIS IS THE FIX ---
+    # 1. Create a response object from our HTML string.
+    response = make_response(html_response_string)
+
+    # 2. Add headers to prevent caching.
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache' # For HTTP/1.0 backward compatibility
+    response.headers['Expires'] = '0' # Expire immediately
+
+    # 3. Return the response object.
+    return response
 
 # You will also need a new endpoint for execution by name,
 # which would load the code and then call the existing execute_power_thread.
