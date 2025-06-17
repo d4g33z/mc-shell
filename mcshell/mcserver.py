@@ -204,13 +204,12 @@ def get_powers():
         {"name": "Explode TNT", "id": "power-4"}
     ]
 
-    # This Jinja2 template defines a single widget.
     widget_template = """
     <div class="power-widget" id="{{ power.id }}">
         <span class="power-name">{{ power.name }}</span>
         <span class="status">Status: Idle</span>
         <button class="execute-btn"
-                hx-post="/execute_power_by_name"
+                hx-post="/api/execute_power_by_name"
                 hx-vals='{"power_name": "{{ power.name }}"}'
                 hx-target="#{{ power.id }} .status"
                 hx-swap="innerHTML">
