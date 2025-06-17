@@ -1,4 +1,6 @@
 import * as Blockly from 'blockly';
+import * as Prism from 'prismjs';
+
 import { pythonGenerator } from 'blockly/python';
 
 import { installMCGenerator} from "./generators/python/mc.mjs";
@@ -802,11 +804,13 @@ async function init() {
 
     // --- LIVE GENERATION & HIGHLIGHTING LOGIC ---
 
-    // Get a reference to the code display element
+    // Get a reference to the <code> element where code will be displayed
     const codeDisplayElement = document.getElementById('pythonCodeDisplay');
 
     // Create a debounced version of our update function
     const debouncedCodeUpdate = debounce(() => {
+        if (!workspace || !pythonGenerator) return; // Safety check
+
         // Generate the Python code from the current workspace
         const code = pythonGenerator.workspaceToCode(workspace);
 
@@ -815,6 +819,7 @@ async function init() {
             codeDisplayElement.textContent = code;
 
             // Tell Prism to re-highlight the element
+            // window.Prism is correct because Prism attaches itself to the global window object
             if (window.Prism) {
                 Prism.highlightElement(codeDisplayElement);
             }
@@ -822,10 +827,15 @@ async function init() {
     });
 
     // Add a listener to the workspace.
-    // This will call our debounced function whenever a change occurs.
-    workspace.addChangeListener(debouncedCodeUpdate);
+    workspace.addChangeListener((event) => {
+        // Don't re-render for UI events like selecting a block or scrolling
+        if (event.isUiEvent) {
+            return;
+        }
+        debouncedCodeUpdate();
+    });
 
-    // Trigger an initial generation to populate the view
+    // Trigger an initial generation to populate the view on load
     debouncedCodeUpdate();
 
 
