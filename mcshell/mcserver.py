@@ -194,10 +194,13 @@ def get_powers_list_as_html():
     for the htmx-powered control panel.
     """
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-    power_repo = app.config.get('POWER_LIBRARY')
     if not player_id:
         # Return an empty response with an error header for htmx to potentially handle
         return make_response("", 204, {"HX-Trigger": "showError", "errorMessage": "No authorized player"})
+
+    power_repo = app.config.get('POWER_REPO')
+    if not power_repo:
+        return make_response("", 500, {"HX-Trigger": "showError", "errorMessage": "Power repository not configured"})
 
     # 1. Fetch the summary data from the repository
     powers_summary_list = power_repo.list_powers()
