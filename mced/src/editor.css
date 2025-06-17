@@ -123,3 +123,75 @@ html, body {
 /* Prism's own styles will handle the token colors */
 /* PrismJS theme might override background. Ensure it fits your design. */
 /* The 'okaidia' theme has a dark background which works well. */
+
+/* --- CORRECTED ALPINE.JS TRANSITION STYLES --- */
+
+/* Base style for the element that will be transitioned.
+   This defines the duration and easing-function for the animation. */
+.modal-content {
+    /* ... your other modal styles (position, background, padding, etc.) ... */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* State for the element BEFORE it enters the DOM.
+  It starts invisible and slightly scaled down.
+*/
+.x-transition-enter-start {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.95);
+}
+
+/*
+  State for the element AFTER it has finished entering.
+  It's fully visible and at its normal scale.
+*/
+.x-transition-enter-end {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/*
+  State for the element BEFORE it begins to leave the DOM.
+  It's fully visible and at its normal scale.
+*/
+.x-transition-leave-start {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/*
+  State for the element AFTER it has finished leaving.
+  It's invisible and scaled down.
+*/
+.x-transition-leave-end {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.95);
+}
+
+/* We now use Alpine's built-in classes.
+   The :enter, :enter-start, :enter-end, :leave, :leave-start, :leave-end
+   classes are automatically added and removed by Alpine.js when an element
+   with x-show and x-transition is shown or hidden.
+*/
+[x-transition\:enter] {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[x-transition\:enter-start] {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.95);
+}
+[x-transition\:enter-end] {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+[x-transition\:leave] {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[x-transition\:leave-start] {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+[x-transition\:leave-end] {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.95);
+}

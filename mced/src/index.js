@@ -40,6 +40,64 @@ function debounce(func, timeout = 500) {
     };
 }
 
+/**
+ * Gathers data from the editor and modal, then posts it to the server.
+ */
+async function handleSavePower() {
+    console.log("Handling save power...");
+
+    // 1. Get metadata from the modal form
+    const powerName = document.getElementById('powerName').value;
+    const powerDescription = document.getElementById('powerDescription').value;
+    const powerCategory = document.getElementById('powerCategory').value;
+
+    if (!powerName) {
+        alert("Please enter a name for your power.");
+        return;
+    }
+
+    // 2. Get the current state of the Blockly workspace
+    const blocklyJson = Blockly.serialization.workspaces.save(workspace);
+    const pythonCode = pythonGenerator.workspaceToCode(workspace);
+
+    // 3. Assemble the complete "Power Object"
+    const powerDataObject = {
+        name: powerName,
+        description: powerDescription,
+        category: powerCategory || "General", // Default category
+        blockly_json: blocklyJson,
+        python_code: pythonCode,
+        parameters: [] // Placeholder for now. We will implement parameter extraction later.
+    };
+
+    console.log("Sending power data to server:", powerDataObject);
+
+    // 4. POST the data to the new Flask endpoint
+    try {
+        const response = await fetch('/api/powers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(powerDataObject),
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log("Power saved successfully!", result);
+            alert(`Power "${powerName}" saved successfully!`);
+            // Close the modal after saving
+            document.querySelector('.modal-root').__x.data.isModalOpen = false;
+
+            // TODO: Refresh the power library list using htmx
+            // htmx.trigger('#power-library-panel', 'load');
+        } else {
+            console.error('Error saving power:', response.status, await response.text());
+            alert('Failed to save power. See console for details.');
+        }
+    } catch (error) {
+        console.error('Network error while saving power:', error);
+        alert('Network error. Could not save power.');
+    }
+}
 async function init() {
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
@@ -841,8 +899,13 @@ async function init() {
     // Trigger an initial generation to populate the view on load
     debouncedCodeUpdate();
 
+    // --- Wire up the "Save to Library" button inside the modal ---
+    const confirmSaveButton = document.getElementById('confirmSaveButton');
+    if (confirmSaveButton) {
+        confirmSaveButton.addEventListener('click', handleSavePower);
+    }
 
-    // --- 5. Wire up UI Buttons ---
+    // --- Wire up UI Buttons ---
     const clearButton = document.getElementById('clearWorkspaceButton');
     if (clearButton) {
         clearButton.addEventListener('click', () => {
