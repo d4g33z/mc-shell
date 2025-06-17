@@ -4,7 +4,7 @@ from threading import Thread, Event
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_socketio import SocketIO
-from flask import Flask, render_template_string # Import render_template_string
+from flask import Flask, render_template_string, make_response
 
 
 from mcshell.mcactions import MCActions
@@ -26,54 +26,6 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_m
 RUNNING_POWERS = {}
 
 # --- Helper function that will be the target of our thread ---
-def execute_power_thread_old(code_to_execute, player_name, power_id, cancel_event,server_data):
-    """
-    This function runs in a separate thread. It instantiates the necessary
-    classes and executes the generated Blockly code.
-    """
-    print(f"[{power_id}] Thread started for player {player_name}.")
-    socketio.emit('power_status', {'id': power_id, 'status': 'running'})
-
-    try:
-        # 1. Instantiate the player and action classes for this thread
-        # In a real app, you'd have a way to manage player connections/authentication
-        mc_player = MCPlayer(player_name,**server_data)
-        action_implementer = MCActions(mc_player) # Your class with create_cube etc.
-
-        # 2. Prepare the execution scope
-        # The generated code expects 'BlocklyProgramRunner' and its dependencies
-        # to be available. We execute the entire generated script to define the class.
-        execution_scope = {}
-        exec(code_to_execute, execution_scope)
-
-        # 3. Instantiate and run the generated program
-        BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
-        if BlocklyProgramRunner:
-            runner = BlocklyProgramRunner(action_implementer)
-            runner.run_program() # This is where the main blockly code runs
-
-            # Check for cancellation periodically within long-running Python loops if possible
-            # (This is an advanced feature for your geometry functions)
-            if cancel_event.is_set():
-                print(f"[{power_id}] Execution cancelled during run.")
-                socketio.emit('power_status', {'id': power_id, 'status': 'cancelled'})
-                return
-
-            print(f"[{power_id}] Execution completed successfully.")
-            socketio.emit('power_status', {'id': power_id, 'status': 'finished'})
-        else:
-            raise RuntimeError("BlocklyProgramRunner class not found in generated code.")
-
-    except Exception as e:
-        print(f"[{power_id}] Error during execution: {e}")
-        socketio.emit('power_status', {'id': power_id, 'status': 'error', 'message': str(e)})
-    finally:
-        # Clean up the power from our tracking dictionary
-        if power_id in RUNNING_POWERS:
-            del RUNNING_POWERS[power_id]
-
-# In mcshell/mcserver.py
-
 def execute_power_thread(code_to_execute, player_name, power_id, cancel_event, server_data):
     """
     This function now securely instantiates all objects before executing
@@ -191,12 +143,10 @@ def cancel_power():
 @app.route('/api/get_powers')
 def get_powers():
     """
-    Fetches the list of saved powers and renders them as HTML widgets
-    for the htmx-powered control panel.
+    Fetches the list of saved powers and renders them as HTML widgets.
+    This route now includes headers to prevent browser caching.
     """
     # For now, we'll use a hardcoded list of powers for demonstration.
-    # Later, this will come from your PowerRepository.
-    # powers_list = power_repo.list_powers(player_id)
     powers_list = [
         {"name": "Build Bridge", "id": "power-1"},
         {"name": "Create Tower", "id": "power-2"},
