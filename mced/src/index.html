@@ -7,9 +7,10 @@
     <link rel="stylesheet" href="./editor.css">
 
 </head>
-<body>
+<body x-data="{ isModalOpen: false }">
 
     <div class="editor-layout">
+
         <aside id="power-library-panel">
             <h2>Power Library</h2>
             <div id="power-list" hx-get="/api/powers" hx-trigger="load" hx-swap="innerHTML">
@@ -21,8 +22,7 @@
 
             <div id="controls">
                 <button id="newPowerButton">New Power</button>
-                <button id="savePowerAsButton" @click="$root.querySelector('.modal-root').__x.data.isModalOpen = true">Save Power As...</button>
-                <button id="savePowerButton">Save Power</button>
+                <button id="savePowerAsButton" @click="isModalOpen = true">Save Power As...</button>
                 <button id="executePowerButton">Execute (Debug)</button>
                 <button id="clearWorkspaceButton">Clear Workspace</button>
             </div>
@@ -36,7 +36,7 @@
 
     </div>
 
-    <div x-data="{ isModalOpen: false }" @keydown.escape.window="isModalOpen = false" class="modal-root">
+    <div @keydown.escape.window="isModalOpen = false" class="modal-root">
 
         <div x-show="isModalOpen" class="modal-overlay"
              x-transition:enter="transition ease-out duration-300"
@@ -52,7 +52,7 @@
              x-transition:enter-start="opacity-0 transform scale-95"
              x-transition:enter-end="opacity-100 transform scale-100"
              x-transition:leave="transition ease-in duration-200"
-             x_transition:leave-start="opacity-100 transform scale-100"
+             x-transition:leave-start="opacity-100 transform scale-100"
              x-transition:leave-end="opacity-0 transform scale-95">
 
             <h3>Save Power</h3>
@@ -75,12 +75,11 @@
 
             <div class="modal-actions">
                 <button class="btn-secondary" @click="isModalOpen = false">Cancel</button>
-
                 <button class="btn-primary" id="confirmSaveButton">Save to Library</button>
             </div>
         </div>
     </div>
 
-   <script type="module" src="./index.js"></script>
+    <script type="module" src="./index.js"></script>
 </body>
 </html>
