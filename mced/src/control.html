@@ -6,23 +6,21 @@
     <title>MC-ED Control</title>
 
     <link rel="stylesheet" href="./control.css">
-
-<!--    <script src="https://unpkg.com/htmx.org@2.0.0-beta2" integrity="sha384-5v3i2T2+2S2K94S9j1pPZY23X3MdIK5qG4p4o55i2qOr2I3U9w92z2s3Q9x7i43z" crossorigin="anonymous"></script>-->
     <script src="https://unpkg.com/htmx.org@2.0.0-beta2" integrity="sha384-FP5oxR+h6OKOZwrLWDch9vM2wRmGm8WJgupvf2jxMsA46mN8ZZiGITRilhRbNzVb" crossorigin="anonymous"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <script type="module" src="./control.js"></script>
+
 </head>
 <body>
     <header>
         <h1>MC-ED Control Panel</h1>
-        </header>
+    </header>
 
     <main>
         <div id="power-grid"
-             hx-get="/api/get_powers"
-             hx-trigger="load"
-             hx-swap="innerHTML">
+            hx-get="/api/get_powers"
+            hx-trigger="load"
+            hx-swap="innerHTML">
 
             <div class="loading-indicator">Loading Powers...</div>
         </div>
