@@ -143,7 +143,7 @@ def execute_power():
         return jsonify({"error": "Missing power_id or not authorized"}), 400
 
     # 1. Load the full power data, including the python_code
-    full_power_data = power_repo.get_full_power(player_name, power_id)
+    full_power_data = power_repo.get_full_power(power_id)
 
     if not full_power_data:
         return jsonify({"error": "Power not found"}), 404
@@ -181,7 +181,7 @@ def save_new_power():
     if not power_data or "name" not in power_data:
         return jsonify({"error": "Invalid power data"}), 400
 
-    power_id = power_repo.save_power(player_id, power_data)
+    power_id = power_repo.save_power(power_data)
     return jsonify({"success": True, "power_id": power_id}), 201
 
 
@@ -200,7 +200,7 @@ def get_powers_list_as_html():
         return make_response("", 204, {"HX-Trigger": "showError", "errorMessage": "No authorized player"})
 
     # 1. Fetch the summary data from the repository
-    powers_summary_list = power_repo.list_powers(player_id)
+    powers_summary_list = power_repo.list_powers()
     if not powers_summary_list:
         return "<p>No powers saved yet. Go to the editor to create one!</p>"
 

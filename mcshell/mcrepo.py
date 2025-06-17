@@ -14,7 +14,6 @@ class PowerRepository(ABC):
         """
         Saves a new power or updates an existing one for a specific player.
         Args:
-            player_id: The unique identifier for the player.
             power_data: A dictionary containing all data for the power.
         Returns:
             The unique ID of the saved power.
@@ -29,7 +28,6 @@ class PowerRepository(ABC):
         not the full blockly_json or python_code.
 
         Args:
-            player_id: The unique identifier for the player.
         Returns:
             A list of dictionaries, each a power summary.
         """
@@ -41,7 +39,6 @@ class PowerRepository(ABC):
         Loads the full data for a single power, including the code.
 
         Args:
-            player_id: The unique identifier for the player.
             power_id: The unique identifier for the power.
         Returns:
             A dictionary containing all data for the power, or None if not found.
@@ -54,7 +51,6 @@ class PowerRepository(ABC):
         Deletes a specific power for a player.
 
         Args:
-            player_id: The unique identifier for the player.
             power_id: The unique identifier for the power.
         Returns:
             True on success, False on failure.
