@@ -4,6 +4,7 @@ from threading import Thread, Event
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_socketio import SocketIO
+from flask import Flask, render_template_string, make_response
 
 
 from mcshell.mcactions import MCActions
@@ -25,54 +26,6 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_m
 RUNNING_POWERS = {}
 
 # --- Helper function that will be the target of our thread ---
-def execute_power_thread_old(code_to_execute, player_name, power_id, cancel_event,server_data):
-    """
-    This function runs in a separate thread. It instantiates the necessary
-    classes and executes the generated Blockly code.
-    """
-    print(f"[{power_id}] Thread started for player {player_name}.")
-    socketio.emit('power_status', {'id': power_id, 'status': 'running'})
-
-    try:
-        # 1. Instantiate the player and action classes for this thread
-        # In a real app, you'd have a way to manage player connections/authentication
-        mc_player = MCPlayer(player_name,**server_data)
-        action_implementer = MCActions(mc_player) # Your class with create_cube etc.
-
-        # 2. Prepare the execution scope
-        # The generated code expects 'BlocklyProgramRunner' and its dependencies
-        # to be available. We execute the entire generated script to define the class.
-        execution_scope = {}
-        exec(code_to_execute, execution_scope)
-
-        # 3. Instantiate and run the generated program
-        BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
-        if BlocklyProgramRunner:
-            runner = BlocklyProgramRunner(action_implementer)
-            runner.run_program() # This is where the main blockly code runs
-
-            # Check for cancellation periodically within long-running Python loops if possible
-            # (This is an advanced feature for your geometry functions)
-            if cancel_event.is_set():
-                print(f"[{power_id}] Execution cancelled during run.")
-                socketio.emit('power_status', {'id': power_id, 'status': 'cancelled'})
-                return
-
-            print(f"[{power_id}] Execution completed successfully.")
-            socketio.emit('power_status', {'id': power_id, 'status': 'finished'})
-        else:
-            raise RuntimeError("BlocklyProgramRunner class not found in generated code.")
-
-    except Exception as e:
-        print(f"[{power_id}] Error during execution: {e}")
-        socketio.emit('power_status', {'id': power_id, 'status': 'error', 'message': str(e)})
-    finally:
-        # Clean up the power from our tracking dictionary
-        if power_id in RUNNING_POWERS:
-            del RUNNING_POWERS[power_id]
-
-# In mcshell/mcserver.py
-
 def execute_power_thread(code_to_execute, player_name, power_id, cancel_event, server_data):
     """
     This function now securely instantiates all objects before executing
@@ -185,6 +138,76 @@ def cancel_power():
     else:
         return jsonify({"error": "Invalid or unknown power_id"}), 404
 
+
+# --- NEW Endpoint to get the list of powers as HTML widgets ---
+@app.route('/api/get_powers')
+def get_powers():
+    """
+    Fetches the list of saved powers and renders them as HTML widgets.
+    This route now includes headers to prevent browser caching.
+    """
+    # For now, we'll use a hardcoded list of powers for demonstration.
+    powers_list = [
+        {"name": "Build Bridge", "id": "power-1"},
+        {"name": "Create Tower", "id": "power-2"},
+        {"name": "Fill Area", "id": "power-3"},
+        {"name": "Explode TNT", "id": "power-4"}
+    ]
+
+    widget_template = """
+    <div class="power-widget" id="{{ power.id }}">
+        <span class="power-name">{{ power.name }}</span>
+        <span class="status">Status: Idle</span>
+        <button class="execute-btn"
+                hx-post="/api/execute_power_by_name"
+                hx-vals='{"power_name": "{{ power.name }}"}'
+                hx-target="#{{ power.id }} .status"
+                hx-swap="innerHTML">
+            Execute
+        </button>
+    </div>
+    """
+
+    html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_list])
+
+    # --- THIS IS THE FIX ---
+    # 1. Create a response object from our HTML string.
+    response = make_response(html_response_string)
+
+    # 2. Add headers to prevent caching.
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache' # For HTTP/1.0 backward compatibility
+    response.headers['Expires'] = '0' # Expire immediately
+
+    # 3. Return the response object.
+    return response
+
+# You will also need a new endpoint for execution by name,
+# which would load the code and then call the existing execute_power_thread.
+@app.route('/execute_power_by_name', methods=['POST'])
+def execute_power_by_name():
+    power_name = request.form.get('power_name')
+    print(f"Received request to execute power by name: {power_name}")
+
+    # 1. Load the power's code from your repository
+    # python_code = power_repo.load_power(player_id, power_name)
+    # For now, just a placeholder:
+    python_code = f"# This is the placeholder code for '{power_name}'"
+
+    # 2. Reuse the existing threading logic to execute the code
+    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
+    server_data = app.config.get('MCSHELL_SERVER_DATA')
+    power_id = str(uuid.uuid4())
+    cancel_event = Event()
+
+    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event, server_data))
+    thread.daemon = True
+    thread.start()
+
+    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
+
+    # Return the initial status update for the widget
+    return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
 # --- Static File Serving ---
 
 @app.route('/')
@@ -274,7 +297,7 @@ def stop_app_server():
 
     app_server_thread = None
 
-if __name__ == '__main__':
-    start_app_server()
-    time.sleep(10)
-    stop_app_server()
+# if __name__ == '__main__':
+#     start_app_server()
+#     time.sleep(10)
+#     stop_app_server()
