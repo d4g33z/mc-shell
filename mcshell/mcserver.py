@@ -169,22 +169,32 @@ def cancel_power():
     else:
         return jsonify({"error": "Invalid or unknown power_id"}), 404
 
+# --- New Endpoint to Save a Power ---
 @app.route('/api/powers', methods=['POST'])
 def save_new_power():
     """Saves a new power from the editor."""
+    # Get the trusted, authorized player ID from the server's configuration
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-    power_repo = app.config.get('POWER_LIBRARY')
     if not player_id:
         return jsonify({"error": "No authorized player"}), 401
 
+    # Get the repository instance from the app config
+    power_repo = app.config.get('POWER_REPO')
+    if not power_repo:
+        return jsonify({"error": "Power repository not configured"}), 500
+
+    # Get the full power object from the request body
     power_data = request.get_json()
-    if not power_data or "name" not in power_data:
-        return jsonify({"error": "Invalid power data"}), 400
+    if not power_data or not power_data.get("name") or not power_data.get("blockly_json"):
+        return jsonify({"error": "Invalid or incomplete power data"}), 400
 
-    power_id = power_repo.save_power(power_data)
-    return jsonify({"success": True, "power_id": power_id}), 201
-
-
+    try:
+        # Call the repository's save method
+        power_id = power_repo.save_power(power_data)
+        return jsonify({"success": True, "power_id": power_id}), 201 # 201 Created
+    except Exception as e:
+        print(f"Error saving power for player {player_id}: {e}")
+        return jsonify({"error": "An internal error occurred while saving the power."}), 500
 
 # --- This endpoint now returns HTML fragments, not JSON ---
 @app.route('/api/powers', methods=['GET'])
