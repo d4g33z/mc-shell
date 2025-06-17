@@ -1,6 +1,9 @@
 import * as Blockly from 'blockly';
 import * as Prism from 'prismjs';
 
+import 'prismjs/components/prism-python';
+import 'prismjs/themes/prism-okaidia.css';
+
 import { pythonGenerator } from 'blockly/python';
 
 import { installMCGenerator} from "./generators/python/mc.mjs";
