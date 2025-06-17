@@ -90,24 +90,34 @@ html, body {
     flex-grow: 1; /* Blockly editor takes up most of the space in this pane */
     position: relative; /* Needed for Blockly's UI elements */
 }
+/* In src/editor.css */
 
 #code-container {
-    height: 250px; /* Or whatever height you prefer */
+    height: 250px;
     flex-shrink: 0;
-    margin: 0; /* <pre> tags have default margins, remove them */
-    overflow: auto; /* IMPORTANT: This makes the code block scrollable */
-    background-color: #272822; /* Matches the Okaidia theme background */
-    color: #f8f8f2; /* Matches the Okaidia theme foreground text */
+    margin: 0;
+    overflow: auto; /* For vertical scrolling */
+    background-color: #272822;
+    color: #f8f8f2;
     border-top: 1px solid #444;
-    font-family: 'Fira Code', 'Dank Mono', monospace; /* A nice coding font */
+    font-family: 'Fira Code', 'Dank Mono', monospace;
     font-size: 14px;
     line-height: 1.5;
     padding: 1em;
     box-sizing: border-box;
 
-    /* --- ADD THESE TWO LINES TO FIX WRAPPING --- */
-    white-space: pre-wrap;   /* Allows wrapping while preserving whitespace */
-    word-break: break-all;     /* Breaks long words that would still overflow */
+    /* --- CORRECTED WRAPPING RULES --- */
+
+    /* 1. Primary rule: Preserve whitespace but wrap lines. */
+    white-space: pre-wrap;
+
+    /* 2. Preferred rule for breaking long words that would otherwise overflow. */
+    /* It will only break a word if the word itself is too long to fit on a line. */
+    overflow-wrap: break-word;
+
+    /* 3. A fallback/additional rule for compatibility. `break-all` is more aggressive */
+    /* but `break-word` is often a good companion to overflow-wrap. */
+    word-break: break-word;
 }
 
 /* Prism's own styles will handle the token colors */
