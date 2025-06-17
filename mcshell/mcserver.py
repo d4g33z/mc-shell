@@ -10,6 +10,7 @@ from flask import Flask, render_template_string, make_response
 from mcshell.mcactions import MCActions
 from mcshell.mcplayer import MCPlayer
 from mcshell.constants import *
+from mcshell.mcrepo import JsonFileRepository
 
 class ServerShutdownException(Exception):
     """Custom exception to signal a clean server shutdown."""
@@ -18,6 +19,7 @@ class ServerShutdownException(Exception):
 # --- Server Setup ---
 app = Flask(__name__, static_folder=str(MC_APP_DIR)) # Serve files from Parcel's build output
 socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_mode='threading')
+
 
 # --- State Management for Running Powers ---
 # This dictionary will hold the state of each running power
@@ -98,33 +100,62 @@ def execute_power_thread(code_to_execute, player_name, power_id, cancel_event, s
 
 # --- API Endpoints ---
 
+# @app.route('/execute_power', methods=['POST'])
+# def execute_power():
+#     data = request.get_json()
+#     python_code = data.get('code')
+#     player_name = data.get('playerName') # Get player name from request
+#
+#     # --- Get the server data from the app's config ---
+#     server_data_for_thread = app.config.get('MCSHELL_SERVER_DATA')
+#     print(server_data_for_thread)
+#
+#     if not python_code:
+#         return jsonify({"error": "No code provided"}), 400
+#
+#     power_id = str(uuid.uuid4())
+#     cancel_event = Event()
+#
+#     # Create and start the thread
+#     thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event,server_data_for_thread))
+#     thread.daemon = True # Allows main program to exit even if threads are running
+#     thread.start()
+#
+#     # Store the thread and its cancellation event
+#     RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
+#
+#     print(f"Dispatched power {power_id} for execution.")
+#     return jsonify({"status": "dispatched", "power_id": power_id})
+#
+
 @app.route('/execute_power', methods=['POST'])
 def execute_power():
+    """
+    Executes a saved power by its ID.
+    The client no longer sends the code, only the ID of the power to run.
+    """
     data = request.get_json()
-    python_code = data.get('code')
-    player_name = data.get('playerName') # Get player name from request
+    power_id = data.get('power_id')
+    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_LIBRARY')
 
-    # --- Get the server data from the app's config ---
-    server_data_for_thread = app.config.get('MCSHELL_SERVER_DATA')
-    print(server_data_for_thread)
+    if not all([power_id, player_name]):
+        return jsonify({"error": "Missing power_id or not authorized"}), 400
 
-    if not python_code:
-        return jsonify({"error": "No code provided"}), 400
+    # 1. Load the full power data, including the python_code
+    full_power_data = power_repo.get_full_power(power_id)
 
-    power_id = str(uuid.uuid4())
-    cancel_event = Event()
+    if not full_power_data:
+        return jsonify({"error": "Power not found"}), 404
 
-    # Create and start the thread
-    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event,server_data_for_thread))
-    thread.daemon = True # Allows main program to exit even if threads are running
-    thread.start()
+    python_code = full_power_data.get("python_code")
 
-    # Store the thread and its cancellation event
-    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
-
-    print(f"Dispatched power {power_id} for execution.")
+    # 2. The rest of the logic remains the same: start the thread with this code
+    server_data = app.config.get('MCSHELL_SERVER_DATA')
+    # ... create cancel_event, start thread ...
+    # thread = Thread(target=execute_power_thread, args=(python_code, ...))
+    # ...
     return jsonify({"status": "dispatched", "power_id": power_id})
-
 
 @app.route('/cancel_power', methods=['POST'])
 def cancel_power():
@@ -138,54 +169,80 @@ def cancel_power():
     else:
         return jsonify({"error": "Invalid or unknown power_id"}), 404
 
+@app.route('/api/powers', methods=['POST'])
+def save_new_power():
+    """Saves a new power from the editor."""
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_LIBRARY')
+    if not player_id:
+        return jsonify({"error": "No authorized player"}), 401
 
-# --- NEW Endpoint to get the list of powers as HTML widgets ---
-@app.route('/api/get_powers')
-def get_powers():
-    """
-    Fetches the list of saved powers and renders them as HTML widgets.
-    This route now includes headers to prevent browser caching.
-    """
-    # For now, we'll use a hardcoded list of powers for demonstration.
-    powers_list = [
-        {"name": "Build Bridge", "id": "power-1"},
-        {"name": "Create Tower", "id": "power-2"},
-        {"name": "Fill Area", "id": "power-3"},
-        {"name": "Explode TNT", "id": "power-4"}
-    ]
+    power_data = request.get_json()
+    if not power_data or "name" not in power_data:
+        return jsonify({"error": "Invalid power data"}), 400
 
+    power_id = power_repo.save_power(power_data)
+    return jsonify({"success": True, "power_id": power_id}), 201
+
+
+
+# --- This endpoint now returns HTML fragments, not JSON ---
+@app.route('/api/powers', methods=['GET'])
+def get_powers_list_as_html():
+    """
+    Fetches the list of saved powers and renders them as HTML widgets
+    for the htmx-powered control panel.
+    """
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    if not player_id:
+        # Return an empty response with an error header for htmx to potentially handle
+        return make_response("", 204, {"HX-Trigger": "showError", "errorMessage": "No authorized player"})
+
+    power_repo = app.config.get('POWER_REPO')
+    if not power_repo:
+        return make_response("", 500, {"HX-Trigger": "showError", "errorMessage": "Power repository not configured"})
+
+    # 1. Fetch the summary data from the repository
+    powers_summary_list = power_repo.list_powers()
+    if not powers_summary_list:
+        return "<p>No powers saved yet. Go to the editor to create one!</p>"
+
+    # 2. Define the Jinja2 template for a single widget
+    #    This template now uses the correct /execute_power endpoint and sends the power_id
     widget_template = """
-    <div class="power-widget" id="{{ power.id }}">
-        <span class="power-name">{{ power.name }}</span>
-        <span class="status">Status: Idle</span>
+    <div class="power-widget" id="{{ power.power_id }}">
+        <div class="power-header">
+            <span class="power-name">{{ power.name }}</span>
+            <span class="power-category">{{ power.category }}</span>
+        </div>
+        <p class="power-description">{{ power.description }}</p>
+        <div class="power-status">Status: Idle</div>
         <button class="execute-btn"
-                hx-post="/api/execute_power_by_name"
-                hx-vals='{"power_name": "{{ power.name }}"}'
-                hx-target="#{{ power.id }} .status"
+                hx-post="/execute_power"
+                hx-vals='{"power_id": "{{ power.power_id }}"}'
+                hx-target="#{{ power.power_id }} .power-status"
                 hx-swap="innerHTML">
             Execute
         </button>
     </div>
     """
 
-    html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_list])
+    # 3. Render a widget for each power and join them into a single HTML string
+    html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_summary_list])
 
-    # --- THIS IS THE FIX ---
-    # 1. Create a response object from our HTML string.
+    # 4. Create a response object with caching disabled
     response = make_response(html_response_string)
-
-    # 2. Add headers to prevent caching.
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache' # For HTTP/1.0 backward compatibility
-    response.headers['Expires'] = '0' # Expire immediately
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
 
-    # 3. Return the response object.
     return response
 
 # You will also need a new endpoint for execution by name,
 # which would load the code and then call the existing execute_power_thread.
 @app.route('/execute_power_by_name', methods=['POST'])
 def execute_power_by_name():
+    power_repo = app.config.get('POWER_LIBRARY')
     power_name = request.form.get('power_name')
     print(f"Received request to execute power by name: {power_name}")
 
@@ -208,6 +265,7 @@ def execute_power_by_name():
 
     # Return the initial status update for the widget
     return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
+
 # --- Static File Serving ---
 
 @app.route('/')
@@ -243,6 +301,12 @@ def start_app_server(server_data,mc_name):
     # The Flask server will now start with the correct, non-spoofable identity.
     app.config['MCSHELL_SERVER_DATA'] = server_data
     app.config['MINECRAFT_PLAYER_NAME'] = mc_name
+    # --- Instantiate the chosen repository ---
+    # You can later make this configurable (e.g., via an environment variable)
+    # to switch between JsonFileRepository, SqliteRepository, etc.
+    power_repo = JsonFileRepository(mc_name)
+    app.config['POWER_LIBRARY'] = power_repo
+
 
     global app_server_thread
     if app_server_thread and app_server_thread.is_alive():

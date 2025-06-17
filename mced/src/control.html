@@ -11,19 +11,16 @@
     <script type="module" src="./control.js"></script>
 
 </head>
-<body>
-    <header>
-        <h1>MC-ED Control Panel</h1>
-    </header>
+    <body>
+        <header>
+            <h1>MC-ED Control Panel</h1>
+        </header>
 
-    <main>
-        <div id="power-grid"
-            hx-get="/api/get_powers"
-            hx-trigger="load"
-            hx-swap="innerHTML">
-
-            <div class="loading-indicator">Loading Powers...</div>
-        </div>
-    </main>
-</body>
+        <main>
+            <div id="power-grid"
+                 hx-get="/api/powers" hx-trigger="load"    hx-swap="innerHTML">
+                <div class="loading-indicator">Loading Powers...</div>
+            </div>
+        </main>
+    </body>
 </html>
