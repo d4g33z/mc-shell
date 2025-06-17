@@ -1,7 +1,7 @@
 
 import {MCED} from "../../lib/constants.mjs"; //Importing here!
 
-export function installMCGenerator(pythonGenerator,Order) {
+export function installMCGenerator(pythonGenerator) {
     // Set the standard Python indent to 4 spaces
     pythonGenerator.INDENT = '    ';
 
@@ -192,7 +192,7 @@ ${indentedBlockCode}
         const zValue = block.getFieldValue('Z');
 
        let code = `Vec3(${xValue},${yValue},${zValue})`
-       return [code,Order.ATOMIC];
+       return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_vector_delta'] = function (block,generator) {
@@ -201,22 +201,22 @@ ${indentedBlockCode}
         const zValue = block.getFieldValue('Z');
 
         let code = `Vec3(${xValue},${yValue},${zValue})`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_position_get_direction'] = function (block,generator) {
         let code = `self.action_implementer.mcplayer.direction`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_position_player'] = function (block,generator) {
         let code = `self.action_implementer.mcplayer.position`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_position_here'] = function (block,generator) {
         let code = `self.action_implementer.mcplayer.here`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_vector_arithmetic'] = function(block, generator) {
