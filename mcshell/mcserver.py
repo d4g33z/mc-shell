@@ -301,7 +301,7 @@ def start_app_server(server_data,mc_name):
     # --- Instantiate the chosen repository ---
     # You can later make this configurable (e.g., via an environment variable)
     # to switch between JsonFileRepository, SqliteRepository, etc.
-    power_repo = JsonFileRepository(MC_POWER_LIBRARY_DIR.joinpath(f"{mc_name}.json"))
+    power_repo = JsonFileRepository(mc_name)
     app.config['POWER_LIBRARY'] = power_repo
 
 

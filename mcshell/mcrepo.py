@@ -10,7 +10,7 @@ class PowerRepository(ABC):
     """
 
     @abstractmethod
-    def save_power(self, player_id: str, power_data: Dict[str, Any]) -> str:
+    def save_power(self, power_data: Dict[str, Any]) -> str:
         """
         Saves a new power or updates an existing one for a specific player.
         Args:
@@ -22,7 +22,7 @@ class PowerRepository(ABC):
         pass
 
     @abstractmethod
-    def list_powers(self, player_id: str) -> List[Dict[str, Any]]:
+    def list_powers(self) -> List[Dict[str, Any]]:
         """
         Lists summary data for all saved powers for a player.
         Should return lightweight data (id, name, description, category),
@@ -36,7 +36,7 @@ class PowerRepository(ABC):
         pass
 
     @abstractmethod
-    def get_full_power(self, player_id: str, power_id: str) -> Optional[Dict[str, Any]]:
+    def get_full_power(self, power_id: str) -> Optional[Dict[str, Any]]:
         """
         Loads the full data for a single power, including the code.
 
@@ -49,7 +49,7 @@ class PowerRepository(ABC):
         pass
 
     @abstractmethod
-    def delete_power(self, player_id: str, power_id: str) -> bool:
+    def delete_power(self, power_id: str) -> bool:
         """
         Deletes a specific power for a player.
 
@@ -62,13 +62,15 @@ class PowerRepository(ABC):
         pass
 
 class JsonFileRepository(PowerRepository):
-    def __init__(self, storage_path: str):
-        self.storage_path = pathlib.Path(storage_path)
-        self.storage_path.mkdir(exist_ok=True)
+    def __init__(self, player_name: str):
+        # self.storage_path = pathlib.Path(storage_path)
+        # self.storage_path.mkdir(exist_ok=True)
+        self.player_name = player_name
+        MC_POWER_LIBRARY_DIR.mkdir(exist_ok=True)
 
-    def _get_player_data(self, player_id: str) -> Dict[str, Any]:
+    def _get_player_data(self) -> Dict[str, Any]:
         """Helper to load a player's entire power data file."""
-        player_file = self.storage_path / f"{player_id}_powers.json"
+        player_file = MC_POWER_LIBRARY_DIR.joinpath(f"{self.player_name}.json")
         if player_file.exists():
             with open(player_file, 'r') as f:
                 try:
@@ -77,25 +79,25 @@ class JsonFileRepository(PowerRepository):
                     return {} # Return empty dict if file is corrupt or empty
         return {}
 
-    def _save_player_data(self, player_id: str, data: Dict[str, Any]):
+    def _save_player_data(self,data: Dict[str, Any]):
         """Helper to save a player's entire power data file."""
-        player_file = self.storage_path / f"{player_id}_powers.json"
+        player_file = MC_POWER_LIBRARY_DIR.joinpath(f"{self.player_name}.json")
         with open(player_file, 'w') as f:
             json.dump(data, f, indent=4)
 
-    def save_power(self, player_id: str, power_data: Dict[str, Any]) -> str:
-        all_powers = self._get_player_data(player_id)
+    def save_power(self, power_data: Dict[str, Any]) -> str:
+        all_powers = self._get_player_data()
 
         # Assign a new ID if one doesn't exist
         power_id = power_data.get("power_id") or str(uuid.uuid4())
         power_data["power_id"] = power_id
 
         all_powers[power_id] = power_data
-        self._save_player_data(player_id, all_powers)
+        self._save_player_data(all_powers)
         return power_id
 
-    def list_powers(self, player_id: str) -> List[Dict[str, Any]]:
-        all_powers = self._get_player_data(player_id)
+    def list_powers(self) -> List[Dict[str, Any]]:
+        all_powers = self._get_player_data()
         # Return only a summary, not the heavy code fields
         summary_list = []
         for power_id, power_data in all_powers.items():
@@ -107,14 +109,14 @@ class JsonFileRepository(PowerRepository):
             })
         return summary_list
 
-    def get_full_power(self, player_id: str, power_id: str) -> Optional[Dict[str, Any]]:
-        all_powers = self._get_player_data(player_id)
+    def get_full_power(self, power_id: str) -> Optional[Dict[str, Any]]:
+        all_powers = self._get_player_data()
         return all_powers.get(power_id)
 
-    def delete_power(self, player_id: str, power_id: str) -> bool:
-        all_powers = self._get_player_data(player_id)
+    def delete_power(self, power_id: str) -> bool:
+        all_powers = self._get_player_data()
         if power_id in all_powers:
             del all_powers[power_id]
-            self._save_player_data(player_id, all_powers)
+            self._save_player_data(all_powers)
             return True
         return False
