@@ -226,11 +226,11 @@ def get_powers_list_as_html():
         # 3. Return the response with the correctly formatted header.
         return make_response("", 204, headers)
 
-    power_repo = app.config.get('POWER_REPO')
+    power_repo = app.config.get('POWER_LIBRARY')
     if not power_repo:
         trigger_data = {
             "showError": {
-                "errorMessage": "Server not fully configured: Missing Player ID or Power Repository."
+                "errorMessage": "Server not fully configured: Missing Player ID or Power Library."
             }
         }
         headers = {"HX-Trigger": json.dumps(trigger_data)}
@@ -345,6 +345,7 @@ def start_app_server(server_data,mc_name):
     # You can later make this configurable (e.g., via an environment variable)
     # to switch between JsonFileRepository, SqliteRepository, etc.
     power_repo = JsonFileRepository(mc_name)
+
     app.config['POWER_LIBRARY'] = power_repo
 
 
