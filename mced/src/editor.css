@@ -120,78 +120,62 @@ html, body {
     word-break: break-word;
 }
 
-/* Prism's own styles will handle the token colors */
-/* PrismJS theme might override background. Ensure it fits your design. */
-/* The 'okaidia' theme has a dark background which works well. */
+/* In src/editor.css */
 
-/* --- CORRECTED ALPINE.JS TRANSITION STYLES --- */
+/* --- MODAL STYLES --- */
 
-/* Base style for the element that will be transitioned.
-   This defines the duration and easing-function for the animation. */
+[x-cloak] {
+    display: none !important;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1000;
+}
+
 .modal-content {
-    /* ... your other modal styles (position, background, padding, etc.) ... */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    /* Start with the final transform state so transitions work correctly */
+    transform: translate(-50%, -50%) scale(1);
+    background-color: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    z-index: 1001;
+    width: 90%;
+    max-width: 500px;
+    /* Define the transition properties on the base class */
+    transition: all 0.2s ease-out;
 }
 
-/* State for the element BEFORE it enters the DOM.
-  It starts invisible and slightly scaled down.
-*/
-.x-transition-enter-start {
+
+/* --- CORRECTED ALPINE.JS TRANSITION CLASSES --- */
+/* These are the classes that Alpine v3 actually adds to the element */
+
+/* State BEFORE the element enters. It's invisible and slightly smaller. */
+.enter-start {
     opacity: 0;
-    transform: translate(-50%, -48%) scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
 }
-
-/*
-  State for the element AFTER it has finished entering.
-  It's fully visible and at its normal scale.
-*/
-.x-transition-enter-end {
+/* State AFTER the element has finished entering. Fully visible. */
+.enter-end {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
 }
-
-/*
-  State for the element BEFORE it begins to leave the DOM.
-  It's fully visible and at its normal scale.
-*/
-.x-transition-leave-start {
+/* State BEFORE the element starts to leave. Fully visible. */
+.leave-start {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
 }
-
-/*
-  State for the element AFTER it has finished leaving.
-  It's invisible and scaled down.
-*/
-.x-transition-leave-end {
+/* State AFTER the element has finished leaving. Invisible. */
+.leave-end {
     opacity: 0;
-    transform: translate(-50%, -48%) scale(0.95);
-}
-
-/* We now use Alpine's built-in classes.
-   The :enter, :enter-start, :enter-end, :leave, :leave-start, :leave-end
-   classes are automatically added and removed by Alpine.js when an element
-   with x-show and x-transition is shown or hidden.
-*/
-[x-transition\:enter] {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-[x-transition\:enter-start] {
-    opacity: 0;
-    transform: translate(-50%, -48%) scale(0.95);
-}
-[x-transition\:enter-end] {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
-[x-transition\:leave] {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-[x-transition\:leave-start] {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
-[x-transition\:leave-end] {
-    opacity: 0;
-    transform: translate(-50%, -48%) scale(0.95);
+    transform: translate(-50%, -50%) scale(0.95);
 }
