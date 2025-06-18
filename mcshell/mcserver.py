@@ -1,6 +1,7 @@
 import ast
 import threading
 from threading import Thread, Event
+from io import StringIO
 
 from flask import Flask, request, jsonify, send_from_directory
 from flask_socketio import SocketIO
@@ -347,6 +348,44 @@ def execute_power_by_name():
     # Return the initial status update for the widget
     return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
 
+@app.route('/api/ipython_magic', methods=['POST'])
+def execute_ipython_magic():
+    """Receives a magic command and its arguments to be executed in the shell."""
+    data = request.get_json()
+    command = data.get('command')
+    arguments = data.get('arguments', '') # Arguments are the rest of the line
+
+    if not command:
+        return jsonify({"error": "No command provided"}), 400
+
+    # Retrieve the shell instance we stored in the config
+    shell = app.config.get('IPYTHON_SHELL')
+    if not shell:
+        return jsonify({"error": "IPython shell not available in server."}), 500
+
+    # --- Capture stdout to send back to the client ---
+    old_stdout = sys.stdout
+    redirected_output = sys.stdout = StringIO()
+
+    try:
+        # Use run_line_magic to execute the command
+        # It takes the magic name (without %) and the rest of the line as an argument string
+        magic_name = command.lstrip('%')
+        shell.run_line_magic(magic_name, arguments)
+
+        # Get the output that was printed to the console
+        output = redirected_output.getvalue()
+        old_stdout.write(output)
+        return jsonify({"success": True, "output": output})
+
+    except Exception as e:
+        # If the magic itself throws an error, capture it
+        print(f"Error executing magic command '{command}': {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # ALWAYS restore stdout
+        sys.stdout = old_stdout
+
 # --- Static File Serving ---
 
 @app.route('/')
@@ -374,7 +413,7 @@ def handle_shutdown_request():
 
 # --- CORRECTED Thread Management Functions ---
 
-def start_app_server(server_data,mc_name):
+def start_app_server(server_data,mc_name,ipy_shell):
     """Starts the main Flask-SocketIO application server in a separate thread."""
     # Attach the server_data dict to the Flask app's config object.
     # This makes the data available anywhere we have access to the app context.
@@ -382,6 +421,8 @@ def start_app_server(server_data,mc_name):
     # The Flask server will now start with the correct, non-spoofable identity.
     app.config['MCSHELL_SERVER_DATA'] = server_data
     app.config['MINECRAFT_PLAYER_NAME'] = mc_name
+    app.config['IPYTHON_SHELL'] = ipy_shell # <--- ADD THIS LINE
+
     # --- Instantiate the chosen repository ---
     # You can later make this configurable (e.g., via an environment variable)
     # to switch between JsonFileRepository, SqliteRepository, etc.

@@ -45,6 +45,44 @@ let workspace;
 
 async function init() {
     /**
+     * Sends a command and its arguments to the Flask server's IPython endpoint.
+     * @param {string} command The magic command to run (e.g., '%mc_create_script').
+     * @param {string} commandArguments The string of arguments for the command.
+     * @returns {Promise<string|null>} The output from the command or null on error.
+    */
+    async function executeIPythonCommand(command, commandArguments) {
+        const apiEndpoint = '/api/ipython_magic'; // We can use a relative path thanks to the proxy
+        const requestData = { command: command, arguments: commandArguments };
+
+        try {
+            const response = await fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(requestData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.error) {
+                console.error("IPython Magic Error:", data.error);
+                alert(`IPython Command Error: ${data.error}`);
+                return null;
+            } else {
+                console.log("IPython Magic Output:", data.output);
+                return data.output;
+            }
+
+        } catch (error) {
+            console.error("Fetch error calling IPython API:", error);
+            alert("Error communicating with IPython process.");
+            return null;
+        }
+    }
+
+    /**
     * Handles opening a file picker and loading a workspace from a JSON file.
     */
     async function handleLoadPowerFromFile() {
@@ -1137,6 +1175,37 @@ async function init() {
     const loadButton = document.getElementById('loadPowerFromFileButton');
     if (loadButton) {
         loadButton.addEventListener('click', handleLoadPowerFromFile);
+    }
+
+       // --- Wire up the "Execute (Debug)" Button ---
+    const executeButton = document.getElementById('executePowerButton');
+    if (executeButton) {
+        executeButton.addEventListener('click', async () => {
+            console.log("Execute (Debug) button clicked.");
+
+            // 1. Get the current Python code from the display
+            const codeToExecute = pythonGenerator.workspaceToCode(workspace);
+            if (!codeToExecute) {
+                alert("Workspace is empty. Nothing to execute.");
+                return;
+            }
+
+            // For debugging, let's update the display immediately
+            const codeDisplay = document.getElementById('pythonCodeDisplay');
+            if (codeDisplay) {
+                codeDisplay.textContent = codeToExecute;
+                if(window.Prism) Prism.highlightElement(codeDisplay);
+            }
+
+            // 2. Define the magic command and pass the generated code as its arguments
+            const command = '%mc_create_script';
+            const output = await executeIPythonCommand(command, codeToExecute);
+
+            if (output) {
+                // Optionally, display the output from the shell
+                alert("Execution Output:\n\n" + output);
+            }
+        });
     }
 }
 
