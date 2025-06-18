@@ -23,8 +23,8 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_m
 import logging
 # --- Suppress Flask's Default Console Logging ---
 flask_logger = logging.getLogger('werkzeug') # Get Werkzeug logger (Flask's dev server)
-flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
-#flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+#flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WARNING (or higher)
 # Alternatively, to completely remove the default Werkzeug console handler:
 # flask_logger.handlers = [] # Remove all handlers, including console
 
@@ -187,7 +187,7 @@ def save_new_power():
         return jsonify({"error": "No authorized player"}), 401
 
     # Get the repository instance from the app config
-    power_repo = app.config.get('POWER_REPO')
+    power_repo = app.config.get('POWER_LIBRARY')
     if not power_repo:
         return jsonify({"error": "Power repository not configured"}), 500
 
@@ -212,7 +212,6 @@ def get_powers_list_as_html():
     for the htmx-powered control panel.
     """
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-    print(player_id)
     if not player_id:
         # 1. Create a Python dictionary representing the event and its data.
         #    The key is the event name, the value is the data for event.detail.
