@@ -4,9 +4,6 @@ import Alpine from 'alpinejs';
 // Make Alpine available globally on the window object for x-data attributes.
 window.Alpine = Alpine;
 
-// Start Alpine to initialize components on this page.
-Alpine.start();
-// --- End of Alpine.js Setup ---
 
 import 'htmx.org';
 
@@ -40,80 +37,81 @@ const BLANK_WORKSPACE_JSON = {
 // A module-scoped variable to hold the main workspace instance
 let workspace;
 
-/**
- * A helper function that takes a function and returns a new version of it
- * that will only run after a specified delay of inactivity.
- * @param {Function} func The function to debounce.
- * @param {number} timeout The delay in milliseconds.
- * @return {Function} The new debounced function.
- */
-function debounce(func, timeout = 500) {
-    let timer;
-    return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => { func.apply(this, args); }, timeout);
-    };
-}
 
-/**
- * Gathers data from the editor and modal, then posts it to the server.
- */
-async function handleSavePower() {
-    console.log("Handling save power...");
-
-    // 1. Get metadata from the modal form
-    const powerName = document.getElementById('powerName').value;
-    const powerDescription = document.getElementById('powerDescription').value;
-    const powerCategory = document.getElementById('powerCategory').value;
-
-    if (!powerName) {
-        alert("Please enter a name for your power.");
-        return;
-    }
-
-    // 2. Get the current state of the Blockly workspace
-    const blocklyJson = Blockly.serialization.workspaces.save(workspace);
-    const pythonCode = pythonGenerator.workspaceToCode(workspace);
-
-    // 3. Assemble the complete "Power Object"
-    const powerDataObject = {
-        name: powerName,
-        description: powerDescription,
-        category: powerCategory || "General", // Default category
-        blockly_json: blocklyJson,
-        python_code: pythonCode,
-        parameters: [] // Placeholder for now. We will implement parameter extraction later.
-    };
-
-    console.log("Sending power data to server:", powerDataObject);
-
-    // 4. POST the data to the new Flask endpoint
-    try {
-        const response = await fetch('/api/powers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(powerDataObject),
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            console.log("Power saved successfully!", result);
-            alert(`Power "${powerName}" saved successfully!`);
-            // Close the modal after saving
-            document.querySelector('.modal-root').__x.data.isModalOpen = false;
-
-            // TODO: Refresh the power library list using htmx
-            // htmx.trigger('#power-library-panel', 'load');
-        } else {
-            console.error('Error saving power:', response.status, await response.text());
-            alert('Failed to save power. See console for details.');
-        }
-    } catch (error) {
-        console.error('Network error while saving power:', error);
-        alert('Network error. Could not save power.');
-    }
-}
 async function init() {
+    /**
+     * A helper function that takes a function and returns a new version of it
+     * that will only run after a specified delay of inactivity.
+     * @param {Function} func The function to debounce.
+     * @param {number} timeout The delay in milliseconds.
+     * @return {Function} The new debounced function.
+     */
+    function debounce(func, timeout = 500) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => { func.apply(this, args); }, timeout);
+        };
+    }
+
+    /**
+     * Gathers data from the editor and modal, then posts it to the server.
+     */
+    async function handleSavePower() {
+        console.log("Handling save power...");
+
+        // 1. Get metadata from the modal form
+        const powerName = document.getElementById('powerName').value;
+        const powerDescription = document.getElementById('powerDescription').value;
+        const powerCategory = document.getElementById('powerCategory').value;
+
+        if (!powerName) {
+            alert("Please enter a name for your power.");
+            return;
+        }
+
+        // 2. Get the current state of the Blockly workspace
+        const blocklyJson = Blockly.serialization.workspaces.save(workspace);
+        const pythonCode = pythonGenerator.workspaceToCode(workspace);
+
+        // 3. Assemble the complete "Power Object"
+        const powerDataObject = {
+            name: powerName,
+            description: powerDescription,
+            category: powerCategory || "General", // Default category
+            blockly_json: blocklyJson,
+            python_code: pythonCode,
+            parameters: [] // Placeholder for now. We will implement parameter extraction later.
+        };
+
+        console.log("Sending power data to server:", powerDataObject);
+
+        // 4. POST the data to the new Flask endpoint
+        try {
+            const response = await fetch('/api/powers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(powerDataObject),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log("Power saved successfully!", result);
+                alert(`Power "${powerName}" saved successfully!`);
+                // Close the modal after saving
+                document.querySelector('.modal-root').__x.data.isModalOpen = false;
+
+                // TODO: Refresh the power library list using htmx
+                // htmx.trigger('#power-library-panel', 'load');
+            } else {
+                console.error('Error saving power:', response.status, await response.text());
+                alert('Failed to save power. See console for details.');
+            }
+        } catch (error) {
+            console.error('Network error while saving power:', error);
+            alert('Network error. Could not save power.');
+        }
+    }
 
     initializeHtmxListeners();
 
@@ -936,5 +934,16 @@ async function init() {
     // Add other button listeners for Save, Load, Execute here later.
 }
 
-// Ensure the init function is called after the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', init);
+// --- Main Execution ---
+// This listener waits for the entire HTML document to be parsed and ready.
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded and parsed.");
+
+    // 1. NOW that the DOM is ready, start Alpine.
+    //    It will scan the document and find all x-data attributes.
+    Alpine.start();
+    console.log("Alpine.js started.");
+
+    // 2. Then, run our application's main initialization logic.
+    init();
+});

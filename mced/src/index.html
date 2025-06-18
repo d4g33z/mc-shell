@@ -36,18 +36,55 @@
 
     </div>
 
-    <div @keydown.escape.window="isModalOpen = false" class="modal-root">
+       <div @keydown.escape.window="isModalOpen = false" class="modal-root">
 
-        <div x-show="isModalOpen" class="modal-overlay" @click="isModalOpen = false"></div>
+        <div x-show="isModalOpen" class="modal-overlay"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="isModalOpen = false">
+        </div>
 
         <div x-show="isModalOpen" class="modal-content" x-transition>
             <h3>Save Power</h3>
+            <p>Enter the details for your new power.</p>
+            <div class="form-group">
+                <label for="powerName">Power Name</label>
+                <input type="text" id="powerName" placeholder="e.g., Build Tower">
+            </div>
+            <div class="form-group">
+                <label for="powerDescription">Description</label>
+                <textarea id="powerDescription" rows="3" placeholder="e.g., Creates a 10-block high cobblestone tower."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="powerCategory">Category</label>
+                <input type="text" id="powerCategory" placeholder="e.g., Construction, Utility">
+            </div>
             <div class="modal-actions">
                 <button class="btn-secondary" @click="isModalOpen = false">Cancel</button>
                 <button class="btn-primary" id="confirmSaveButton">Save to Library</button>
             </div>
         </div>
+
     </div>
+
+    <script type="module" src="./index.js"></script>
+
+<!--    <div @keydown.escape.window="isModalOpen = false" class="modal-root">-->
+
+<!--        <div x-show="isModalOpen" class="modal-overlay" @click="isModalOpen = false"></div>-->
+
+<!--        <div x-show="isModalOpen" class="modal-content" x-transition>-->
+<!--            <h3>Save Power</h3>-->
+<!--            <div class="modal-actions">-->
+<!--                <button class="btn-secondary" @click="isModalOpen = false">Cancel</button>-->
+<!--                <button class="btn-primary" id="confirmSaveButton">Save to Library</button>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
 
 <!--    <div @keydown.escape.window="isModalOpen = false" class="modal-root">-->
 
@@ -93,6 +130,5 @@
 <!--        </div>-->
 <!--    </div>-->
 
-    <script type="module" src="./index.js"></script>
 </body>
 </html>
