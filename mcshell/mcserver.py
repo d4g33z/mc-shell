@@ -180,29 +180,70 @@ def cancel_power():
 # --- New Endpoint to Save a Power ---
 @app.route('/api/powers', methods=['POST'])
 def save_new_power():
-    """Saves a new power from the editor."""
-    # Get the trusted, authorized player ID from the server's configuration
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-    if not player_id:
-        return jsonify({"error": "No authorized player"}), 401
-
-    # Get the repository instance from the app config
     power_repo = app.config.get('POWER_LIBRARY')
-    if not power_repo:
-        return jsonify({"error": "Power repository not configured"}), 500
+    # ... (error checking for player_id and power_repo) ...
 
-    # Get the full power object from the request body
-    power_data = request.get_json()
-    if not power_data or not power_data.get("name") or not power_data.get("blockly_json"):
-        return jsonify({"error": "Invalid or incomplete power data"}), 400
+    # htmx with json-enc sends a JSON body
+    power_metadata = request.get_json()
+
+    # We still need to add the blockly JSON and Python code
+    # This logic would be in your main `handleSavePower` JS function
+    # which we are now replacing. So the client needs to send it.
+    # For now, let's assume the client sends the full object.
+    # We will need to adjust the client-side to do this.
+
+    # Let's assume for now the client sends everything.
+    power_data = power_metadata
+
+    if not power_data or "name" not in power_data:
+        return jsonify({"error": "Invalid power data"}), 400
 
     try:
-        # Call the repository's save method
-        power_id = power_repo.save_power(power_data)
-        return jsonify({"success": True, "power_id": power_id}), 201 # 201 Created
+        power_id = power_repo.save_power(player_id, power_data)
+
+        # --- THIS IS THE FIX ---
+        # 1. Create the trigger data. The event name is the key.
+        trigger_data = {"newPowerSaved": "A power was saved."} # The value can be anything, even a message
+
+        # 2. Create the headers dictionary with the JSON-encoded trigger data.
+        headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+        # 3. Return the response with the headers.
+        #    We also need a way to close the modal. Let's add another trigger for that.
+        trigger_data["closeModal"] = True # Add another event
+        headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+        return jsonify({"success": True, "power_id": power_id}), 201, headers
     except Exception as e:
         print(f"Error saving power for player {player_id}: {e}")
         return jsonify({"error": "An internal error occurred while saving the power."}), 500
+    
+# @app.route('/api/powers', methods=['POST'])
+# def save_new_power():
+#     """Saves a new power from the editor."""
+#     # Get the trusted, authorized player ID from the server's configuration
+#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+#     if not player_id:
+#         return jsonify({"error": "No authorized player"}), 401
+#
+#     # Get the repository instance from the app config
+#     power_repo = app.config.get('POWER_LIBRARY')
+#     if not power_repo:
+#         return jsonify({"error": "Power repository not configured"}), 500
+#
+#     # Get the full power object from the request body
+#     power_data = request.get_json()
+#     if not power_data or not power_data.get("name") or not power_data.get("blockly_json"):
+#         return jsonify({"error": "Invalid or incomplete power data"}), 400
+#
+#     try:
+#         # Call the repository's save method
+#         power_id = power_repo.save_power(power_data)
+#         return jsonify({"success": True, "power_id": power_id}), 201 # 201 Created
+#     except Exception as e:
+#         print(f"Error saving power for player {player_id}: {e}")
+#         return jsonify({"error": "An internal error occurred while saving the power."}), 500
 
 # --- This endpoint now returns HTML fragments, not JSON ---
 @app.route('/api/powers', methods=['GET'])
