@@ -45,6 +45,73 @@ let workspace;
 
 async function init() {
     /**
+    * Handles opening a file picker and loading a workspace from a JSON file.
+    */
+    async function handleLoadPowerFromFile() {
+        if (!workspace) {
+            alert("Workspace is not ready yet.");
+            return;
+        }
+
+        // Modern browsers support the File System Access API
+        if (window.showOpenFilePicker) {
+            try {
+                // 1. Show the native "Open File" dialog
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Blockly Workspace Files',
+                        accept: { 'application/json': ['.json'] },
+                    }],
+                    multiple: false,
+                });
+
+                // 2. Get the file content
+                const file = await fileHandle.getFile();
+                const jsonText = await file.text();
+                const loadedJson = JSON.parse(jsonText);
+
+                // 3. Load the content into Blockly
+                workspace.clear(); // Clear the existing blocks
+                Blockly.serialization.workspaces.load(loadedJson, workspace);
+                console.log(`Successfully loaded power from: ${file.name}`);
+
+            } catch (error) {
+                // This error is commonly thrown if the user clicks "Cancel" in the file dialog.
+                if (error.name === 'AbortError') {
+                    console.log('User cancelled the file open dialog.');
+                } else {
+                    console.error('Error opening or loading file:', error);
+                    alert('An error occurred while trying to load the file.');
+                }
+            }
+        } else {
+            // Fallback for older browsers
+            console.warn('File System Access API not supported. Using legacy file input.');
+            const inputElement = document.createElement('input');
+            inputElement.type = 'file';
+            inputElement.accept = '.json,application/json';
+
+            inputElement.onchange = async (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    try {
+                        const jsonText = await file.text();
+                        const loadedJson = JSON.parse(jsonText);
+
+                        workspace.clear();
+                        Blockly.serialization.workspaces.load(loadedJson, workspace);
+                        console.log(`Successfully loaded power from: ${file.name}`);
+                    } catch (e) {
+                        console.error('Error parsing or loading file:', e);
+                        alert('Error loading workspace: The selected file is not valid JSON.');
+                    }
+                }
+            };
+            inputElement.click();
+        }
+    }
+
+    /**
      * Saves the current Blockly workspace state to the browser's localStorage.
      */
     function autosaveWorkspace() {
@@ -1066,7 +1133,11 @@ async function init() {
         });
     }
 
-    // Add other button listeners for Save, Load, Execute here later.
+    // Attach the load function to the new button
+    const loadButton = document.getElementById('loadPowerFromFileButton');
+    if (loadButton) {
+        loadButton.addEventListener('click', handleLoadPowerFromFile);
+    }
 }
 
 // --- Main Execution ---
