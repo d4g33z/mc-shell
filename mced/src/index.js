@@ -36,10 +36,61 @@ const BLANK_WORKSPACE_JSON = {
     "variables": []
 };
 
+// Use a constant for the localStorage key to avoid typos
+const AUTOSAVE_KEY = 'mcEdWorkspaceAutosave';
+
 // A module-scoped variable to hold the main workspace instance
 let workspace;
 
+
 async function init() {
+    /**
+     * Saves the current Blockly workspace state to the browser's localStorage.
+     */
+    function autosaveWorkspace() {
+        if (!workspace) {
+            return; // Do nothing if the workspace isn't initialized yet
+        }
+        try {
+            // Serialize the workspace to a JSON object
+            const workspaceJson = Blockly.serialization.workspaces.save(workspace);
+            // Convert the object to a string to store it
+            const jsonText = JSON.stringify(workspaceJson);
+            // Save it to localStorage
+            localStorage.setItem(AUTOSAVE_KEY, jsonText);
+            console.log('Workspace autosaved to localStorage.');
+        } catch (e) {
+            console.error('Error during autosave:', e);
+        }
+    }
+
+
+    /**
+     * Attempts to load a workspace from localStorage.
+     * If no valid autosave is found, it returns the provided default JSON.
+     * @param {object} defaultJson The default workspace JSON to use as a fallback.
+     * @return {object} The workspace JSON to load.
+     */
+    function loadAutosavedWorkspace(defaultJson) {
+        try {
+            const savedJsonText = localStorage.getItem(AUTOSAVE_KEY);
+            if (savedJsonText) {
+                const loadedJson = JSON.parse(savedJsonText);
+                // Basic validation to make sure we're loading a real workspace
+                if (loadedJson && loadedJson.blocks) {
+                    console.log('Found and loaded workspace from localStorage.');
+                    return loadedJson;
+                }
+            }
+        } catch (e) {
+            console.error('Error loading autosaved workspace:', e);
+            // If there's an error, we'll fall back to the default
+        }
+        // If no valid autosave was found, return the default
+        console.log('No valid autosave found, loading default workspace.');
+        return defaultJson;
+    }
+
     // TODO: these helpers can be defined externally and attached to window to make available here
     /**
      * A helper function that takes a function and returns a new version of it
@@ -150,6 +201,31 @@ async function init() {
     installMCGenerator(pythonGenerator);
     installMCMaterialsGenerator(pythonGenerator);
     installMCEntityGenerator(pythonGenerator);
+
+    // --- Determine the initial workspace to load ---
+    // It will prioritize localStorage, then workspace.json, then a blank slate.
+    // (This re-uses the fetch logic from our previous discussion)
+    let initialWorkspaceJson = loadAutosavedWorkspace(null); // Try localStorage first
+
+
+    if (!initialWorkspaceJson) {
+        try {
+            const response = await fetch('./workspace.json'); // Path relative to index.html
+            if (response.ok) {
+                initialWorkspaceJson = await response.json();
+            } else {
+                initialWorkspaceJson = BLANK_WORKSPACE_JSON;
+            }
+        } catch (e) {
+            initialWorkspaceJson = BLANK_WORKSPACE_JSON;
+        }
+    }
+
+    // --- ADD THIS LINE FOR DEBUGGING ---
+    console.log("Workspace will be initialized with this JSON:", initialWorkspaceJson);
+    // For a more readable, indented view, you can use JSON.stringify:
+    // console.log("Workspace will be initialized with this JSON:", JSON.stringify(initialWorkspaceJson, null, 2));
+    // ------
 
     // --- 3. Define the complete Toolbox ---
     const toolboxXml = `
@@ -896,9 +972,48 @@ async function init() {
             minScale: 0.3,
             scaleSpeed: 1.2
         },
-        json: BLANK_WORKSPACE_JSON
     });
 
+    // 2. Now that the workspace exists, programmatically load the JSON data.
+    //    This is more reliable as it happens after the initial render.
+    if (initialWorkspaceJson && initialWorkspaceJson.blocks) {
+        try {
+            // No need to clear, as the workspace is fresh. But if this logic were
+            // used in a "Load" function, workspace.clear() would come first.
+            Blockly.serialization.workspaces.load(initialWorkspaceJson, workspace);
+            console.log("Successfully loaded initial workspace from JSON data.");
+        } catch (e) {
+            console.error("Error loading workspace JSON data:", e);
+            // In case of error, the user is left with a blank workspace.
+        }
+    }
+
+    // --- 3. Set up the autosave triggers ---
+    console.log("Setting up autosave listeners.");
+    // Save when the user is about to leave or reload the page
+    window.addEventListener('beforeunload', autosaveWorkspace);
+
+
+    // --- 4. (IMPROVEMENT) Also save periodically after changes ---
+    const debouncedAutosave = debounce(autosaveWorkspace, 1000); // Wait 1 second after changes
+    workspace.addChangeListener((event) => {
+        if (event.isUiEvent) return; // Don't save on clicks, scrolls, etc.
+        debouncedAutosave();
+    });
+
+    // --- 5. Update the "Clear Workspace" button ---
+    const clearWorkspaceButton = document.getElementById('clearWorkspaceButton');
+
+    if (clearWorkspaceButton) {
+        clearWorkspaceButton.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear the workspace? This cannot be undone.")) {
+                workspace.clear();
+                // Crucially, remove the autosaved data as well
+                localStorage.removeItem(AUTOSAVE_KEY);
+                console.log("Workspace and autosave data cleared.");
+            }
+        });
+    }
     // --- LIVE GENERATION & HIGHLIGHTING LOGIC ---
 
     // Get a reference to the <code> element where code will be displayed
