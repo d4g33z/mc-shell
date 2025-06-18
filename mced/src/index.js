@@ -8,6 +8,8 @@ window.Alpine = Alpine;
 Alpine.start();
 // --- End of Alpine.js Setup ---
 
+import 'htmx.org';
+
 import * as Blockly from 'blockly';
 import * as Prism from 'prismjs';
 
@@ -15,6 +17,9 @@ import 'prismjs/components/prism-python';
 import 'prismjs/themes/prism-okaidia.css';
 
 import { pythonGenerator } from 'blockly/python';
+
+// --- NEW: Import the htmx listener initializer ---
+import { initializeHtmxListeners } from './lib/htmx_listeners.mjs';
 
 import { installMCGenerator} from "./generators/python/mc.mjs";
 import { installMCMaterialsGenerator} from "./generators/python/materials.mjs";
@@ -109,6 +114,9 @@ async function handleSavePower() {
     }
 }
 async function init() {
+
+    initializeHtmxListeners();
+
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
     defineMineCraftBlocklyUtils(Blockly);
@@ -905,6 +913,7 @@ async function init() {
         }
         debouncedCodeUpdate();
     });
+
 
     // Trigger an initial generation to populate the view on load
     debouncedCodeUpdate();

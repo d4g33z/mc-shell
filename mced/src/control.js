@@ -1,14 +1,14 @@
-// 1. Import Alpine.js from the npm package
+// --- Import and initialize libraries for the control page ---
 import Alpine from 'alpinejs';
+import 'htmx.org';
 
-// 2. Make Alpine available globally on the window object.
-//    This is necessary so that the x-data, x-show, etc. attributes
-//    in your HTML can find and interact with the Alpine library.
+// --- NEW: Import and call the htmx listener initializer ---
+import { initializeHtmxListeners } from './lib/htmx_listeners.js';
+
 window.Alpine = Alpine;
-
-// 3. Start Alpine. This tells Alpine to scan the DOM and initialize
-//    all of its components (i.e., elements with x-data).
 Alpine.start();
 
-// Your other existing code, if any
-console.log("MC-ED Control UI Loaded with Alpine.js from npm.");
+// Call the initializer function to set up error handling for this page
+initializeHtmxListeners();
+
+console.log("MC-ED Control UI Loaded with shared htmx listeners.");
