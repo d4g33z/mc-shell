@@ -5,7 +5,7 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 
 
-import 'htmx.org';
+import * as htmx from 'htmx.org';
 
 import * as Blockly from 'blockly';
 import * as Prism from 'prismjs';
@@ -73,20 +73,18 @@ async function init() {
         // 2. Get the current state of the Blockly workspace
         const blocklyJson = Blockly.serialization.workspaces.save(workspace);
         const pythonCode = pythonGenerator.workspaceToCode(workspace);
-
-        // 3. Assemble the complete "Power Object"
         const powerDataObject = {
             name: powerName,
             description: powerDescription,
-            category: powerCategory || "General", // Default category
+            category: powerCategory || "General",
             blockly_json: blocklyJson,
             python_code: pythonCode,
-            parameters: [] // Placeholder for now. We will implement parameter extraction later.
+            parameters: [] // Placeholder for now
         };
 
         console.log("Sending power data to server:", powerDataObject);
 
-        // 4. POST the data to the new Flask endpoint
+        // 4. POST the data to the Flask endpoint
         try {
             const response = await fetch('/api/powers', {
                 method: 'POST',
@@ -98,11 +96,12 @@ async function init() {
                 const result = await response.json();
                 console.log("Power saved successfully!", result);
                 alert(`Power "${powerName}" saved successfully!`);
-                // Close the modal after saving
-                document.querySelector('.modal-root').__x.data.isModalOpen = false;
 
-                // TODO: Refresh the power library list using htmx
-                // htmx.trigger('#power-library-panel', 'load');
+                // Dispatch a custom event that the body is listening for.
+                window.dispatchEvent(new CustomEvent('close-save-modal'));
+
+                htmx.trigger('#power-library-panel', 'load'); // This tells htmx to re-fire the hx-get request
+
             } else {
                 console.error('Error saving power:', response.status, await response.text());
                 alert('Failed to save power. See console for details.');

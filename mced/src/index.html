@@ -7,7 +7,8 @@
         <link rel="stylesheet" href="./editor.css">
 
     </head>
-    <body x-data="{ isModalOpen: false }">
+    <body x-data="{ isModalOpen: false }" @close-save-modal.window="isModalOpen = false">
+<!--    <body x-data="{ isModalOpen: false }">-->
 
         <div class="editor-layout">
             <aside id="power-library-panel">
