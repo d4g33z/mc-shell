@@ -5,7 +5,9 @@ import Alpine from 'alpinejs';
 window.Alpine = Alpine;
 
 
-import * as htmx from 'htmx.org';
+// CORRECT: Import the default export from the htmx.org package
+import htmx from 'htmx.org';
+import 'htmx-ext-json-enc';
 
 import * as Blockly from 'blockly';
 import * as Prism from 'prismjs';
@@ -37,8 +39,8 @@ const BLANK_WORKSPACE_JSON = {
 // A module-scoped variable to hold the main workspace instance
 let workspace;
 
-
 async function init() {
+    // TODO: these helpers can be defined externally and attached to window to make available here
     /**
      * A helper function that takes a function and returns a new version of it
      * that will only run after a specified delay of inactivity.
@@ -55,28 +57,37 @@ async function init() {
     }
 
     /**
-     * Gathers data from the editor and modal, then posts it to the server.
+     * Gathers data from the editor modal and the Blockly workspace,
+     * then POSTs the complete "Power Object" to the server.
      */
     async function handleSavePower() {
         console.log("Handling save power...");
 
-        // 1. Get metadata from the modal form
-        const powerName = document.getElementById('powerName').value;
-        const powerDescription = document.getElementById('powerDescription').value;
-        const powerCategory = document.getElementById('powerCategory').value;
+        // 1. Get the form element itself
+        const formElement = document.getElementById('savePowerForm');
+        if (!formElement) {
+            console.error("Save Power form not found!");
+            return;
+        }
 
-        if (!powerName) {
+        // 2. Use the FormData API to easily get all form values into an object
+        const formData = new FormData(formElement);
+        const formDataObject = Object.fromEntries(formData.entries());
+
+        if (!formDataObject.name) {
             alert("Please enter a name for your power.");
             return;
         }
 
-        // 2. Get the current state of the Blockly workspace
+        // 3. Get the current state of the Blockly workspace
         const blocklyJson = Blockly.serialization.workspaces.save(workspace);
         const pythonCode = pythonGenerator.workspaceToCode(workspace);
+
+        // 4. Assemble the complete "Power Object" by merging the form data and workspace data
         const powerDataObject = {
-            name: powerName,
-            description: powerDescription,
-            category: powerCategory || "General",
+            name: formDataObject.name,
+            description: formDataObject.description,
+            category: formDataObject.category || "General",
             blockly_json: blocklyJson,
             python_code: pythonCode,
             parameters: [] // Placeholder for now
@@ -84,7 +95,7 @@ async function init() {
 
         console.log("Sending power data to server:", powerDataObject);
 
-        // 4. POST the data to the Flask endpoint
+        // 5. POST the complete object to the new Flask endpoint
         try {
             const response = await fetch('/api/powers', {
                 method: 'POST',
@@ -95,13 +106,16 @@ async function init() {
             if (response.ok) {
                 const result = await response.json();
                 console.log("Power saved successfully!", result);
-                alert(`Power "${powerName}" saved successfully!`);
+                alert(`Power "${formDataObject.name}" saved successfully!`);
 
-                // Dispatch a custom event that the body is listening for.
+                // Dispatch the custom event to close the modal
                 window.dispatchEvent(new CustomEvent('close-save-modal'));
 
-                htmx.trigger('#power-library-panel', 'load'); // This tells htmx to re-fire the hx-get request
-
+                // Trigger a refresh of the power list using htmx
+                const powerListElement = document.getElementById('power-list');
+                if (powerListElement) {
+                    htmx.trigger(powerListElement, 'load');
+                }
             } else {
                 console.error('Error saving power:', response.status, await response.text());
                 alert('Failed to save power. See console for details.');
@@ -111,6 +125,13 @@ async function init() {
             alert('Network error. Could not save power.');
         }
     }
+
+    // Ensure the event listener for the save button is active in your init() function
+    // This code should already be in your init() function
+    // const confirmSaveButton = document.getElementById('confirmSaveButton');
+    // if (confirmSaveButton) {
+    //     confirmSaveButton.addEventListener('click', handleSavePower);
+    // }
 
     initializeHtmxListeners();
 

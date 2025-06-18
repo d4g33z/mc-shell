@@ -13,9 +13,15 @@
         <div class="editor-layout">
             <aside id="power-library-panel">
                 <h2>Power Library</h2>
-                <div id="power-list" hx-get="/api/powers" hx-trigger="load" hx-swap="innerHTML">
+                <div id="power-list"
+                     hx-get="/api/powers"
+                     hx-trigger="load, newPowerSaved from:body" hx-swap="innerHTML">
+
                     <p style="padding: 0 8px; color: #888;">Loading powers...</p>
                 </div>
+<!--                <div id="power-list" hx-get="/api/powers" hx-trigger="load" hx-swap="innerHTML">-->
+<!--                    <p style="padding: 0 8px; color: #888;">Loading powers...</p>-->
+<!--                </div>-->
             </aside>
 
             <main id="main-content-panel">
@@ -36,6 +42,7 @@
         </div>
 
         <template x-teleport="body">
+
             <div @keydown.escape.window="isModalOpen = false" class="modal-root">
 
                 <div x-show="isModalOpen" x-cloak class="modal-overlay"
@@ -50,22 +57,23 @@
 
                 <div x-show="isModalOpen" x-cloak class="modal-content" x-transition>
                     <h3>Save Power</h3>
-                    <p>Enter the details for your new power.</p>
-                    <div class="form-group">
-                        <label for="powerName">Power Name</label>
-                        <input type="text" id="powerName" placeholder="e.g., Build Tower">
-                    </div>
-                    <div class="form-group">
-                        <label for="powerDescription">Description</label>
-                        <textarea id="powerDescription" rows="3" placeholder="e.g., Creates a 10-block high cobblestone tower."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="powerCategory">Category</label>
-                        <input type="text" id="powerCategory" placeholder="e.g., Construction, Utility">
-                    </div>
+                    <form id="savePowerForm">
+                        <div class="form-group">
+                            <label for="powerName">Power Name</label>
+                            <input type="text" id="powerName" name="name" placeholder="e.g., Build Tower">
+                        </div>
+                        <div class="form-group">
+                            <label for="powerDescription">Description</label>
+                            <textarea id="powerDescription" name="description" rows="3" placeholder="e.g., Creates a 10-block high cobblestone tower."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="powerCategory">Category</label>
+                            <input type="text" id="powerCategory" name="category" placeholder="e.g., Construction, Utility">
+                        </div>
+                    </form>
                     <div class="modal-actions">
-                        <button class="btn-secondary" @click="isModalOpen = false">Cancel</button>
-                        <button class="btn-primary" id="confirmSaveButton">Save to Library</button>
+                        <button type="button" class="btn-secondary" @click="isModalOpen = false">Cancel</button>
+                        <button type="button" class="btn-primary" id="confirmSaveButton">Save to Library</button>
                     </div>
                 </div>
             </div>
