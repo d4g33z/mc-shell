@@ -200,7 +200,7 @@ def save_new_power():
         return jsonify({"error": "Invalid power data"}), 400
 
     try:
-        power_id = power_repo.save_power(player_id, power_data)
+        power_id = power_repo.save_power(power_data)
 
         # --- THIS IS THE FIX ---
         # 1. Create the trigger data. The event name is the key.
@@ -218,7 +218,7 @@ def save_new_power():
     except Exception as e:
         print(f"Error saving power for player {player_id}: {e}")
         return jsonify({"error": "An internal error occurred while saving the power."}), 500
-    
+
 # @app.route('/api/powers', methods=['POST'])
 # def save_new_power():
 #     """Saves a new power from the editor."""
