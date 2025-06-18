@@ -23,8 +23,8 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_m
 import logging
 # --- Suppress Flask's Default Console Logging ---
 flask_logger = logging.getLogger('werkzeug') # Get Werkzeug logger (Flask's dev server)
-#flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
-flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+#flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WARNING (or higher)
 # Alternatively, to completely remove the default Werkzeug console handler:
 # flask_logger.handlers = [] # Remove all handlers, including console
 
@@ -141,10 +141,11 @@ def execute_power():
     Executes a saved power by its ID.
     The client no longer sends the code, only the ID of the power to run.
     """
-    data = request.get_json()
-    power_id = data.get('power_id')
     player_name = app.config.get('MINECRAFT_PLAYER_NAME')
     power_repo = app.config.get('POWER_LIBRARY')
+
+    data = request.get_json()
+    power_id = data.get('power_id')
 
     if not all([power_id, player_name]):
         return jsonify({"error": "Missing power_id or not authorized"}), 400
