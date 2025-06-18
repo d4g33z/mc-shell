@@ -1,3 +1,13 @@
+// --- Initialize Alpine.js for the Editor UI (e.g., the Save Modal) ---
+import Alpine from 'alpinejs';
+
+// Make Alpine available globally on the window object for x-data attributes.
+window.Alpine = Alpine;
+
+// Start Alpine to initialize components on this page.
+Alpine.start();
+// --- End of Alpine.js Setup ---
+
 import * as Blockly from 'blockly';
 import * as Prism from 'prismjs';
 

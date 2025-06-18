@@ -9,6 +9,7 @@
     "build": "parcel build"
   },
   "dependencies": {
+    "alpinejs": "^3.14.9",
     "blockly": "^12.0.0",
     "prismjs": "^1.30.0",
     "socket.io-client": "^4.8.1"
