@@ -20,6 +20,13 @@ class ServerShutdownException(Exception):
 app = Flask(__name__, static_folder=str(MC_APP_DIR)) # Serve files from Parcel's build output
 socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_mode='threading')
 
+import logging
+# --- Suppress Flask's Default Console Logging ---
+flask_logger = logging.getLogger('werkzeug') # Get Werkzeug logger (Flask's dev server)
+#flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+# Alternatively, to completely remove the default Werkzeug console handler:
+# flask_logger.handlers = [] # Remove all handlers, including console
 
 # --- State Management for Running Powers ---
 # This dictionary will hold the state of each running power
@@ -204,13 +211,31 @@ def get_powers_list_as_html():
     for the htmx-powered control panel.
     """
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    print(player_id)
     if not player_id:
-        # Return an empty response with an error header for htmx to potentially handle
-        return make_response("", 204, {"HX-Trigger": "showError", "errorMessage": "No authorized player"})
+        # 1. Create a Python dictionary representing the event and its data.
+        #    The key is the event name, the value is the data for event.detail.
+        trigger_data = {
+            "showError": {
+                "errorMessage": "Server not fully configured: No authorized player"
+            }
+        }
+        # 2. Convert the dictionary to a JSON string and set it as the header value.
+        headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+        # 3. Return the response with the correctly formatted header.
+        return make_response("", 204, headers)
 
     power_repo = app.config.get('POWER_REPO')
     if not power_repo:
-        return make_response("", 500, {"HX-Trigger": "showError", "errorMessage": "Power repository not configured"})
+        trigger_data = {
+            "showError": {
+                "errorMessage": "Server not fully configured: Missing Player ID or Power Repository."
+            }
+        }
+        headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+        return make_response("", 500, headers)
 
     # 1. Fetch the summary data from the repository
     powers_summary_list = power_repo.list_powers()
@@ -245,6 +270,11 @@ def get_powers_list_as_html():
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
+
+    # --- ADD THIS HEADER ---
+    # This tells the htmx front-end to fire a custom event named 'powersLoaded'
+    # after this response has been swapped into the DOM.
+    response.headers['HX-Trigger'] = 'powersLoaded'
 
     return response
 
