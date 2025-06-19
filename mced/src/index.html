@@ -7,36 +7,16 @@
         <link rel="stylesheet" href="./editor.css">
 
     </head>
-
-<!--    <body x-data="{ isModalOpen: false }" @close-save-modal.window="isModalOpen = false">-->
-<!--    <body x-data="{-->
-<!--          isSaveModalOpen: false,-->
-<!--          isConfirmModalOpen: false,-->
-<!--          confirmMessage: '',-->
-<!--          onConfirmAction: () => {}-->
-<!--      }"-->
-<!--      @close-save-modal.window="isSaveModalOpen = false">-->
-
     <body x-data="editorComponent()" @close-save-modal.window="isSaveModalOpen = false">
         <div class="editor-layout">
             <aside id="power-library-panel">
                 <h2>Power Library</h2>
-<!--                <div id="power-list"-->
-<!--                     hx-get="/api/powers"-->
-<!--                     hx-trigger="load, newPowerSaved from:body" hx-swap="innerHTML">-->
-
-<!--                    <p style="padding: 0 8px; color: #888;">Loading powers...</p>-->
-
-<!--                </div>-->
                 <div id="power-list"
                      hx-get="/api/powers"
                      hx-trigger="load, powerSaved from:body" hx-swap="innerHTML">
 
                     <p style="padding: 0 8px; color: #888;">Loading powers...</p>
                 </div>
-<!--                <div id="power-list" hx-get="/api/powers" hx-trigger="load" hx-swap="innerHTML">-->
-<!--                    <p style="padding: 0 8px; color: #888;">Loading powers...</p>-->
-<!--                </div>-->
             </aside>
 
             <main id="main-content-panel">
@@ -100,18 +80,28 @@
 
             <div x-show="isConfirmModalOpen" x-cloak class="modal-overlay" @click="isConfirmModalOpen = false"></div>
 
+<!--            <div x-show="isConfirmModalOpen" x-cloak class="modal-content" x-transition>-->
+<!--                <h3>Confirm Action</h3>-->
+<!--                <p x-text="confirmMessage">Are you sure?</p>-->
+
+<!--                <div class="modal-actions">-->
+<!--                    <button class="btn-secondary" @click="isConfirmModalOpen = false">Cancel</button>-->
+
+<!--                    <button class="btn-primary btn-danger" @click="onConfirmAction(); isConfirmModalOpen = false;">Confirm</button>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+        <div @keydown.escape.window="isConfirmModalOpen = false" class="modal-root">
+            <div x-show="isConfirmModalOpen" x-cloak class="modal-overlay" @click="isConfirmModalOpen = false"></div>
             <div x-show="isConfirmModalOpen" x-cloak class="modal-content" x-transition>
                 <h3>Confirm Action</h3>
-                <p x-text="confirmMessage">Are you sure?</p>
-
+                <p x-text="confirmMessage"></p>
                 <div class="modal-actions">
                     <button class="btn-secondary" @click="isConfirmModalOpen = false">Cancel</button>
-
-                    <button class="btn-primary btn-danger" @click="onConfirmAction(); isConfirmModalOpen = false;">Confirm</button>
+                    <button class="btn-primary btn-danger" @click="executeConfirm()">Confirm</button>
                 </div>
             </div>
         </div>
-
     </template>
 
         <script type="module" src="./index.js"></script>

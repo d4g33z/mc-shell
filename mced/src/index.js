@@ -75,20 +75,29 @@ let workspace;
 /**
  * Creates the data and methods for our main editor Alpine.js component.
  */
+// In src/index.js
+
+/**
+ * Creates the data and methods for our main editor Alpine.js component.
+ */
 function editorComponent() {
     return {
-        // --- DATA PROPERTIES ---
+        // --- DATA / STATE ---
         isSaveModalOpen: false,
         isConfirmModalOpen: false,
         confirmMessage: 'Are you sure?',
-        onConfirmAction: () => {}, // A placeholder for the action to run
+        onConfirmAction: () => { console.log('No confirmation action set.'); },
 
         // --- METHODS ---
-        // This method prepares and opens the confirmation dialog
+
+        // This method is now part of the component.
+        // It prepares and opens the confirmation dialog.
         promptToClearWorkspace() {
+            console.log("promptToClearWorkspace called");
             this.confirmMessage = 'Are you sure you want to clear the entire workspace? This cannot be undone.';
 
-            // Set the action to be performed when the user clicks "Confirm"
+            // Set the action to be performed when the user clicks "Confirm".
+            // 'this' inside onConfirmAction will refer to the component's state.
             this.onConfirmAction = () => {
                 if (workspace) {
                     workspace.clear();
@@ -101,7 +110,7 @@ function editorComponent() {
             this.isConfirmModalOpen = true;
         },
 
-        // This is the method that the confirmation modal's "Confirm" button will call
+        // This method is called by the "Confirm" button in the modal.
         executeConfirm() {
             this.onConfirmAction();
             this.isConfirmModalOpen = false; // Close the modal after executing
@@ -112,36 +121,36 @@ function editorComponent() {
 // Attach the component function to the window object to make it globally accessible from the HTML
 window.editorComponent = editorComponent;
 
-/**
- * Prepares and opens the confirmation modal for clearing the workspace.
- * This function will be called directly from the button's @click in index.html.
- */
-function promptToClearWorkspace() {
-    // Access the Alpine.js data store on the body element.
-    const alpineState = document.body._x_dataStack[0];
-    if (!alpineState) {
-        console.error("Alpine.js state not found on body.");
-        return;
-    }
-
-    // 1. Set the confirmation message for this specific action.
-    alpineState.confirmMessage = 'Are you sure you want to clear the entire workspace? This cannot be undone.';
-
-    // 2. Define the action to be run if the user clicks "Confirm".
-    alpineState.onConfirmAction = () => {
-        if (workspace) {
-            workspace.clear();
-            // Crucially, remove the autosaved data as well.
-            localStorage.removeItem(AUTOSAVE_KEY);
-            console.log("Workspace and autosave data cleared.");
-        }
-    };
-
-    // 3. Open the confirmation modal.
-    alpineState.isConfirmModalOpen = true;
-}
-
-window.promptToClearWorkspace = promptToClearWorkspace;
+// /**
+//  * Prepares and opens the confirmation modal for clearing the workspace.
+//  * This function will be called directly from the button's @click in index.html.
+//  */
+// function promptToClearWorkspace() {
+//     // Access the Alpine.js data store on the body element.
+//     const alpineState = document.body._x_dataStack[0];
+//     if (!alpineState) {
+//         console.error("Alpine.js state not found on body.");
+//         return;
+//     }
+//
+//     // 1. Set the confirmation message for this specific action.
+//     alpineState.confirmMessage = 'Are you sure you want to clear the entire workspace? This cannot be undone.';
+//
+//     // 2. Define the action to be run if the user clicks "Confirm".
+//     alpineState.onConfirmAction = () => {
+//         if (workspace) {
+//             workspace.clear();
+//             // Crucially, remove the autosaved data as well.
+//             localStorage.removeItem(AUTOSAVE_KEY);
+//             console.log("Workspace and autosave data cleared.");
+//         }
+//     };
+//
+//     // 3. Open the confirmation modal.
+//     alpineState.isConfirmModalOpen = true;
+// }
+//
+// window.promptToClearWorkspace = promptToClearWorkspace;
 
 async function init() {
 
