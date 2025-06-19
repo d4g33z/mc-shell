@@ -1,5 +1,5 @@
 import Alpine from 'alpinejs';
-import 'htmx.org'; // Imports for its side-effect of initializing on the window
+import 'htmx.org'; // Imports for its side effect of initializing on the window
 import 'htmx-ext-json-enc'; // Imports the extension
 import Prism from 'prismjs';
 import 'prismjs/components/prism-python';
@@ -35,6 +35,47 @@ const AUTOSAVE_KEY = 'mcEdWorkspaceAutosave';
 // A module-scoped variable to hold the main workspace instance
 let workspace;
 
+/**
+ * Sends a DELETE request to the server to remove a power.
+ * On success, it removes the power's element from the DOM.
+ * @param {string} powerId The UUID of the power to delete.
+ */
+async function handleDeletePower(powerId) {
+    if (!powerId) {
+        console.error("handleDeletePower called without a powerId.");
+        return;
+    }
+
+    console.log(`Sending request to delete power: ${powerId}`);
+    try {
+        const response = await fetch(`/api/power/${powerId}`, {
+            method: 'DELETE',
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log("Power deleted successfully on server:", result);
+
+            // Find the corresponding <li> element and remove it for instant UI feedback.
+            const elementToDelete = document.getElementById(`power-item-${powerId}`);
+            if (elementToDelete) {
+                // Animate fade-out before removing
+                elementToDelete.style.transition = 'opacity 0.3s ease';
+                elementToDelete.style.opacity = '0';
+                setTimeout(() => elementToDelete.remove(), 300);
+            }
+        } else {
+            const errorText = await response.text();
+            console.error('Error deleting power:', response.status, errorText);
+            alert(`Failed to delete power: ${errorText}`);
+        }
+    } catch (error) {
+        console.error('Network error while deleting power:', error);
+        alert('Network error. Could not delete power.');
+    }
+}
+
+window.handleDeletePower = handleDeletePower;
 
 // --- Main Application Logic ---
 async function init() {
@@ -276,6 +317,7 @@ async function init() {
             alert('Network error. Could not save power.');
         }
     }
+
 
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
@@ -1144,6 +1186,13 @@ async function init() {
     // Trigger an initial generation to populate the view on load
     debouncedCodeUpdate();
 
+    // --- Wire up the "Delete" button inside the modal ---
+    // const confirmDeleteButton = document.getElementById('confirmDeleteButton');
+    // if (confirmDeleteButton) {
+    //     console.log("inside confirmDeleteButton");
+    //     confirmDeleteButton.addEventListener('click', handleDeletePower);
+    // }
+
     // --- Wire up the "Save to Library" button inside the modal ---
     const confirmSaveButton = document.getElementById('confirmSaveButton');
     if (confirmSaveButton) {
@@ -1228,7 +1277,20 @@ async function init() {
         }
     });
 
-
+    // --- TEMPORARY DEBUGGING LISTENER ---
+    // // Add this anywhere inside the init() function.
+    // document.body.addEventListener('open-delete-confirm', (event) => {
+    //     // If this message appears, the dispatch is working!
+    //     console.log("Event 'open-delete-confirm' was successfully dispatched!");
+    //
+    //     // This will show you the data that was sent with the event.
+    //     // It should contain the powerId and powerName.
+    //     console.log("Event Detail (data passed with dispatch):", event.detail);
+    //
+    //     // You can use an alert for unmissable confirmation during testing.
+    //     alert(`Delete event dispatched for power name: ${event.detail.powerName}`);
+    // });
+    // --- END OF DEBUGGING LISTENER ---
 }
 
 // --- Main Execution ---

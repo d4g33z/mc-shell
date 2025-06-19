@@ -40,38 +40,70 @@
         </div>
 
         <template x-teleport="body">
+            <div>
+                <div x-data="{ isOpen: false }"
+                     @open-save-modal.window="isOpen = true"
+                     @power-saved.window="isOpen = false"
+                     @keydown.escape.window="isOpen = false"
+                     class="modal-root">
 
-            <div x-data="{ isOpen: false }"
-                 @open-save-modal.window="isOpen = true"
-                 @power-saved.window="isOpen = false"
-                 @keydown.escape.window="isOpen = false"
-                 class="modal-root">
+                    <div x-show="isOpen" x-cloak class="modal-overlay" @click="isOpen = false"></div>
+                    <div x-show="isOpen" x-cloak class="modal-content" x-transition>
+                        <form id="savePowerForm">
+                            <h3>Save Power</h3>
+                            <p>Enter the details for your new power.</p>
+                            <div class="form-group">
+                                <label for="powerName">Power Name</label>
+                                <input type="text" id="powerName" name="name" placeholder="e.g., Build Tower">
+                            </div>
+                            <div class="form-group">
+                                <label for="powerDescription">Description</label>
+                                <textarea id="powerDescription" name="description" rows="3" placeholder="e.g., Creates a 10-block high cobblestone tower."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="powerCategory">Category</label>
+                                <input type="text" id="powerCategory" name="category" placeholder="e.g., Construction, Utility">
+                            </div>
+                        </form>
+                        <div class="modal-actions">
+                            <button class="btn-secondary" @click="isOpen = false">Cancel</button>
+                            <button class="btn-primary" id="confirmSaveButton">Save to Library</button>
+                        </div>
+                    </div>
+                </div>
 
-                <div x-show="isOpen" x-cloak class="modal-overlay" @click="isOpen = false"></div>
-                <div x-show="isOpen" x-cloak class="modal-content" x-transition>
-                    <form id="savePowerForm">
-                        <h3>Save Power</h3>
-                        <p>Enter the details for your new power.</p>
-                        <div class="form-group">
-                            <label for="powerName">Power Name</label>
-                            <input type="text" id="powerName" name="name" placeholder="e.g., Build Tower">
+                <div x-data="{
+                        isOpen: false,
+                        powerIdToDelete: null,
+                        powerNameToDelete: ''
+                     }"
+                     @open-delete-confirm.window="
+                        isOpen = true;
+                        powerIdToDelete = $event.detail.powerId;
+                        powerNameToDelete = $event.detail.powerName;
+                     "
+                     @keydown.escape.window="isOpen = false"
+                     class="modal-root">
+
+                    <div x-show="isOpen" x-cloak class="modal-overlay" @click="isOpen = false"></div>
+
+                    <div x-show="isOpen" x-cloak class="modal-content" x-transition>
+                        <h3>Delete Power</h3>
+                        <p>Are you sure you want to permanently delete the power: <strong x-text="powerNameToDelete"></strong>?</p>
+                        <p>This action cannot be undone.</p>
+
+                        <div class="modal-actions">
+                            <button class="btn-secondary" @click="isOpen = false">Cancel</button>
+
+                            <button class="btn-primary btn-danger"
+                                    id="confirmDeleteButton"
+                                    @click="window.handleDeletePower(powerIdToDelete); isOpen = false;">
+                                Confirm Deletion
+                            </button>
                         </div>
-                        <div class="form-group">
-                            <label for="powerDescription">Description</label>
-                            <textarea id="powerDescription" name="description" rows="3" placeholder="e.g., Creates a 10-block high cobblestone tower."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="powerCategory">Category</label>
-                            <input type="text" id="powerCategory" name="category" placeholder="e.g., Construction, Utility">
-                        </div>
-                    </form>
-                    <div class="modal-actions">
-                        <button class="btn-secondary" @click="isOpen = false">Cancel</button>
-                        <button class="btn-primary" id="confirmSaveButton">Save to Library</button>
                     </div>
                 </div>
             </div>
-
         </template>
 
         <script type="module" src="./index.js"></script>
