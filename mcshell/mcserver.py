@@ -108,34 +108,6 @@ def execute_power_thread(code_to_execute, player_name, power_id, cancel_event, s
 
 # --- API Endpoints ---
 
-# @app.route('/execute_power', methods=['POST'])
-# def execute_power():
-#     data = request.get_json()
-#     python_code = data.get('code')
-#     player_name = data.get('playerName') # Get player name from request
-#
-#     # --- Get the server data from the app's config ---
-#     server_data_for_thread = app.config.get('MCSHELL_SERVER_DATA')
-#     print(server_data_for_thread)
-#
-#     if not python_code:
-#         return jsonify({"error": "No code provided"}), 400
-#
-#     power_id = str(uuid.uuid4())
-#     cancel_event = Event()
-#
-#     # Create and start the thread
-#     thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event,server_data_for_thread))
-#     thread.daemon = True # Allows main program to exit even if threads are running
-#     thread.start()
-#
-#     # Store the thread and its cancellation event
-#     RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
-#
-#     print(f"Dispatched power {power_id} for execution.")
-#     return jsonify({"status": "dispatched", "power_id": power_id})
-#
-
 @app.route('/execute_power', methods=['POST'])
 def execute_power():
     """
@@ -178,147 +150,82 @@ def cancel_power():
     else:
         return jsonify({"error": "Invalid or unknown power_id"}), 404
 
-# --- New Endpoint to Save a Power ---
+# # --- New Endpoint to Save a Power ---
+# @app.route('/api/powers', methods=['POST'])
+# def save_new_power():
+#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+#     power_repo = app.config.get('POWER_REPO')
+#     # ... (error checking for player_id and power_repo) ...
+#
+#     # htmx with json-enc sends a JSON body
+#     power_metadata = request.get_json()
+#
+#     # We still need to add the blockly JSON and Python code
+#     # This logic would be in your main `handleSavePower` JS function
+#     # which we are now replacing. So the client needs to send it.
+#     # For now, let's assume the client sends the full object.
+#     # We will need to adjust the client-side to do this.
+#
+#     # Let's assume for now the client sends everything.
+#     power_data = power_metadata
+#
+#     if not power_data or "name" not in power_data:
+#         return jsonify({"error": "Invalid power data"}), 400
+#
+#     try:
+#         power_id = power_repo.save_power(power_data)
+#
+#         # --- THIS IS THE FIX ---
+#         # 1. Create the trigger data. The event name is the key.
+#         trigger_data = {"newPowerSaved": "A power was saved."} # The value can be anything, even a message
+#
+#         # 2. Create the headers dictionary with the JSON-encoded trigger data.
+#         headers = {"HX-Trigger": json.dumps(trigger_data)}
+#
+#         # 3. Return the response with the headers.
+#         #    We also need a way to close the modal. Let's add another trigger for that.
+#         trigger_data["closeModal"] = True # Add another event
+#         headers = {"HX-Trigger": json.dumps(trigger_data)}
+#
+#         return jsonify({"success": True, "power_id": power_id}), 201, headers
+#     except Exception as e:
+#         print(f"Error saving power for player {player_id}: {e}")
+#         return jsonify({"error": "An internal error occurred while saving the power."}), 500
+
+
 @app.route('/api/powers', methods=['POST'])
 def save_new_power():
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
     power_repo = app.config.get('POWER_REPO')
-    # ... (error checking for player_id and power_repo) ...
 
-    # htmx with json-enc sends a JSON body
-    power_metadata = request.get_json()
+    if not power_repo or not player_id:
+        trigger_data = {"showError": {"errorMessage": "Server not fully configured."}}
+        return make_response("", 500, {"HX-Trigger": json.dumps(trigger_data)})
 
-    # We still need to add the blockly JSON and Python code
-    # This logic would be in your main `handleSavePower` JS function
-    # which we are now replacing. So the client needs to send it.
-    # For now, let's assume the client sends the full object.
-    # We will need to adjust the client-side to do this.
-
-    # Let's assume for now the client sends everything.
-    power_data = power_metadata
-
-    if not power_data or "name" not in power_data:
+    power_data = request.get_json()
+    if not power_data or not power_data.get("name"):
         return jsonify({"error": "Invalid power data"}), 400
 
     try:
         power_id = power_repo.save_power(power_data)
 
-        # --- THIS IS THE FIX ---
-        # 1. Create the trigger data. The event name is the key.
-        trigger_data = {"newPowerSaved": "A power was saved."} # The value can be anything, even a message
+        # --- CORRECTED: Send multiple triggers back to the client ---
+        # 1. Create a dictionary with ALL events we want to fire on the client.
+        trigger_data = {
+            "newPowerSaved": "A power was saved, library should refresh.",
+            "closeSaveModal": True # This event will tell Alpine.js to close the modal.
+        }
 
-        # 2. Create the headers dictionary with the JSON-encoded trigger data.
+        # 2. Convert the dictionary to a JSON string for the header.
         headers = {"HX-Trigger": json.dumps(trigger_data)}
 
         # 3. Return the response with the headers.
-        #    We also need a way to close the modal. Let's add another trigger for that.
-        trigger_data["closeModal"] = True # Add another event
-        headers = {"HX-Trigger": json.dumps(trigger_data)}
-
         return jsonify({"success": True, "power_id": power_id}), 201, headers
+
     except Exception as e:
         print(f"Error saving power for player {player_id}: {e}")
         return jsonify({"error": "An internal error occurred while saving the power."}), 500
 
-# @app.route('/api/powers', methods=['POST'])
-# def save_new_power():
-#     """Saves a new power from the editor."""
-#     # Get the trusted, authorized player ID from the server's configuration
-#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-#     if not player_id:
-#         return jsonify({"error": "No authorized player"}), 401
-#
-#     # Get the repository instance from the app config
-#     power_repo = app.config.get('POWER_REPO')
-#     if not power_repo:
-#         return jsonify({"error": "Power repository not configured"}), 500
-#
-#     # Get the full power object from the request body
-#     power_data = request.get_json()
-#     if not power_data or not power_data.get("name") or not power_data.get("blockly_json"):
-#         return jsonify({"error": "Invalid or incomplete power data"}), 400
-#
-#     try:
-#         # Call the repository's save method
-#         power_id = power_repo.save_power(power_data)
-#         return jsonify({"success": True, "power_id": power_id}), 201 # 201 Created
-#     except Exception as e:
-#         print(f"Error saving power for player {player_id}: {e}")
-#         return jsonify({"error": "An internal error occurred while saving the power."}), 500
-
-# --- This endpoint now returns HTML fragments, not JSON ---
-# @app.route('/api/powers', methods=['GET'])
-# def get_powers_list_as_html():
-#     """
-#     Fetches the list of saved powers and renders them as HTML widgets
-#     for the htmx-powered control panel.
-#     """
-#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-#     if not player_id:
-#         # 1. Create a Python dictionary representing the event and its data.
-#         #    The key is the event name, the value is the data for event.detail.
-#         trigger_data = {
-#             "showError": {
-#                 "errorMessage": "Server not fully configured: No authorized player"
-#             }
-#         }
-#         # 2. Convert the dictionary to a JSON string and set it as the header value.
-#         headers = {"HX-Trigger": json.dumps(trigger_data)}
-#
-#         # 3. Return the response with the correctly formatted header.
-#         return make_response("", 204, headers)
-#
-#     power_repo = app.config.get('POWER_REPO')
-#     if not power_repo:
-#         trigger_data = {
-#             "showError": {
-#                 "errorMessage": "Server not fully configured: Missing Player ID or Power Library."
-#             }
-#         }
-#         headers = {"HX-Trigger": json.dumps(trigger_data)}
-#
-#         return make_response("", 500, headers)
-#
-#     # 1. Fetch the summary data from the repository
-#     powers_summary_list = power_repo.list_powers()
-#     if not powers_summary_list:
-#         return "<p>No powers saved yet. Go to the editor to create one!</p>"
-#
-#     # 2. Define the Jinja2 template for a single widget
-#     #    This template now uses the correct /execute_power endpoint and sends the power_id
-#     widget_template = """
-#     <div class="power-widget" id="{{ power.power_id }}">
-#         <div class="power-header">
-#             <span class="power-name">{{ power.name }}</span>
-#             <span class="power-category">{{ power.category }}</span>
-#         </div>
-#         <p class="power-description">{{ power.description }}</p>
-#         <div class="power-status">Status: Idle</div>
-#         <button class="execute-btn"
-#                 hx-post="/execute_power"
-#                 hx-vals='{"power_id": "{{ power.power_id }}"}'
-#                 hx-target="#{{ power.power_id }} .power-status"
-#                 hx-swap="innerHTML">
-#             Execute
-#         </button>
-#     </div>
-#     """
-#
-#     # 3. Render a widget for each power and join them into a single HTML string
-#     html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_summary_list])
-#
-#     # 4. Create a response object with caching disabled
-#     response = make_response(html_response_string)
-#     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-#     response.headers['Pragma'] = 'no-cache'
-#     response.headers['Expires'] = '0'
-#
-#     # --- ADD THIS HEADER ---
-#     # This tells the htmx front-end to fire a custom event named 'powersLoaded'
-#     # after this response has been swapped into the DOM.
-#     response.headers['HX-Trigger'] = 'powersLoaded'
-#
-#     return response
 @app.route('/api/powers', methods=['GET'])
 def get_powers_list_as_html():
     """
@@ -368,7 +275,14 @@ def get_powers_list_as_html():
               <div class="power-item-details" x-show="open" x-transition>
                 <p class="power-description">{{ power.description or 'No description.' }}</p>
                 <div class="power-item-actions">
-                  <button class="btn-small">Load (Replace)</button>
+
+                  <button class="btn-small"
+                          hx-get="/api/power/{{ power.power_id }}"
+                          hx-swap="none"
+                          title="Clear workspace and load this power">
+                      Load (Replace)
+                  </button>
+                  
                   <button class="btn-small">Add to Workspace</button>
                   <button class="btn-small btn-danger">Delete</button>
                 </div>
@@ -393,6 +307,41 @@ def get_powers_list_as_html():
     response.headers['Expires'] = '0'
 
     return response
+
+@app.route('/api/power/<power_id>', methods=['GET'])
+def get_power_detail(power_id):
+    """
+    Gets the full data for a single power by its ID.
+    Returns the data in an HX-Trigger header for the client-side JS to handle.
+    """
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
+
+    if not player_id or not power_repo:
+        # Handle error case
+        err_trigger = {"showError": {"errorMessage": "Server or player not configured."}}
+        return make_response("", 401, {"HX-Trigger": json.dumps(err_trigger)})
+
+    full_power_data = power_repo.get_full_power(power_id)
+
+    if not full_power_data:
+        err_trigger = {"showError": {"errorMessage": f"Power with ID {power_id} not found."}}
+        return make_response("", 404, {"HX-Trigger": json.dumps(err_trigger)})
+
+    # --- The Htmx Event Trigger Response ---
+    # We are defining a custom event 'loadPower' and passing the full power data
+    # and the loading 'mode' inside the event's detail.
+    trigger_data = {
+        "loadPower": {
+            "powerData": full_power_data,
+            "mode": "replace" # Signal to the client to replace the workspace
+        }
+    }
+
+    headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+    # We don't need to send a body, just the trigger header. Status 204 No Content is perfect.
+    return "", 204, headers
 
 # You will also need a new endpoint for execution by name,
 # which would load the code and then call the existing execute_power_thread.
@@ -557,8 +506,3 @@ def stop_app_server():
         print("Application server thread has shut down successfully.")
 
     app_server_thread = None
-
-# if __name__ == '__main__':
-#     start_app_server()
-#     time.sleep(10)
-#     stop_app_server()
