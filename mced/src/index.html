@@ -7,7 +7,7 @@
         <link rel="stylesheet" href="./editor.css">
 
     </head>
-    <body x-data="editorComponent()" @close-save-modal.window="isSaveModalOpen = false">
+    <body x-data>
         <div class="editor-layout">
             <aside id="power-library-panel">
                 <h2>Power Library</h2>
@@ -23,12 +23,12 @@
 
                 <div id="controls">
                     <button id="newPowerButton">New Power</button>
-                    <button id="savePowerAsButton" @click="isSaveModalOpen = true">Save Power As...</button>
+                    <button id="savePowerAsButton" @click="$dispatch('open-save-modal')">Save Power As...</button>
 
                     <button id="loadPowerFromFileButton">Load from File...</button>
 
                     <button id="executePowerButton">Execute (Debug)</button>
-                    <button id="clearWorkspaceButton" @click="promptToClearWorkspace()">Clear Workspace</button>
+                    <button id="clearWorkspaceButton">Clear Workspace</button>
                 </div>
 
                 <div id="editor-preview-pane">
@@ -41,21 +41,17 @@
 
         <template x-teleport="body">
 
-            <div @keydown.escape.window="isSaveModalOpen = false" class="modal-root">
+            <div x-data="{ isOpen: false }"
+                 @open-save-modal.window="isOpen = true"
+                 @power-saved-successfully.window="isOpen = false"
+                 @keydown.escape.window="isOpen = false"
+                 class="modal-root">
 
-                <div x-show="isSaveModalOpen" x-cloak class="modal-overlay"
-                     x-transition:enter="transition ease-out duration-200"
-                     x-transition:enter-start="opacity-0"
-                     x-transition:enter-end="opacity-100"
-                     x-transition:leave="transition ease-in duration-200"
-                     x-transition:leave-start="opacity-100"
-                     x-transition:leave-end="opacity-0"
-                     @click="isSaveModalOpen = false">
-                </div>
-
-                <div x-show="isSaveModalOpen" x-cloak class="modal-content" x-transition>
-                    <h3>Save Power</h3>
+                <div x-show="isOpen" x-cloak class="modal-overlay" @click="isOpen = false"></div>
+                <div x-show="isOpen" x-cloak class="modal-content" x-transition>
                     <form id="savePowerForm">
+                        <h3>Save Power</h3>
+                        <p>Enter the details for your new power.</p>
                         <div class="form-group">
                             <label for="powerName">Power Name</label>
                             <input type="text" id="powerName" name="name" placeholder="e.g., Build Tower">
@@ -70,39 +66,13 @@
                         </div>
                     </form>
                     <div class="modal-actions">
-                        <button type="button" class="btn-secondary" @click="isSaveModalOpen = false">Cancel</button>
-                        <button type="button" class="btn-primary" id="confirmSaveButton">Save to Library</button>
+                        <button class="btn-secondary" @click="isOpen = false">Cancel</button>
+                        <button class="btn-primary" id="confirmSaveButton">Save to Library</button>
                     </div>
                 </div>
             </div>
 
-            <div @keydown.escape.window="isConfirmModalOpen = false" class="modal-root">
-
-            <div x-show="isConfirmModalOpen" x-cloak class="modal-overlay" @click="isConfirmModalOpen = false"></div>
-
-<!--            <div x-show="isConfirmModalOpen" x-cloak class="modal-content" x-transition>-->
-<!--                <h3>Confirm Action</h3>-->
-<!--                <p x-text="confirmMessage">Are you sure?</p>-->
-
-<!--                <div class="modal-actions">-->
-<!--                    <button class="btn-secondary" @click="isConfirmModalOpen = false">Cancel</button>-->
-
-<!--                    <button class="btn-primary btn-danger" @click="onConfirmAction(); isConfirmModalOpen = false;">Confirm</button>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-        <div @keydown.escape.window="isConfirmModalOpen = false" class="modal-root">
-            <div x-show="isConfirmModalOpen" x-cloak class="modal-overlay" @click="isConfirmModalOpen = false"></div>
-            <div x-show="isConfirmModalOpen" x-cloak class="modal-content" x-transition>
-                <h3>Confirm Action</h3>
-                <p x-text="confirmMessage"></p>
-                <div class="modal-actions">
-                    <button class="btn-secondary" @click="isConfirmModalOpen = false">Cancel</button>
-                    <button class="btn-primary btn-danger" @click="executeConfirm()">Confirm</button>
-                </div>
-            </div>
-        </div>
-    </template>
+        </template>
 
         <script type="module" src="./index.js"></script>
     </body>

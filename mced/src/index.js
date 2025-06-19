@@ -1,38 +1,3 @@
-// // --- Initialize Alpine.js for the Editor UI (e.g., the Save Modal) ---
-// import Alpine from 'alpinejs';
-//
-// // Make Alpine available globally on the window object for x-data attributes.
-// window.Alpine = Alpine;
-//
-//
-// // CORRECT: Import the default export from the htmx.org package
-// import htmx from 'htmx.org';
-// import 'htmx-ext-json-enc';
-//
-// import * as Blockly from 'blockly';
-// import * as Prism from 'prismjs';
-//
-// import 'prismjs/components/prism-python';
-// import 'prismjs/themes/prism-okaidia.css';
-//
-// import { pythonGenerator } from 'blockly/python';
-//
-// // --- NEW: Import the htmx listener initializer ---
-// import { initializeHtmxListeners } from './lib/htmx_listeners.mjs';
-//
-// import { installMCGenerator} from "./generators/python/mc.mjs";
-// import { installMCMaterialsGenerator} from "./generators/python/materials.mjs";
-// import { installMCEntityGenerator } from "./generators/python/entities.mjs";
-//
-// import {defineMineCraftBlocklyUtils} from "./lib/utils.mjs";
-// import {defineMineCraftConstants} from "./lib/constants.mjs";
-// import {defineMineCraftBlocks} from "./blocks/mc.mjs";
-// import {defineMineCraftMaterialBlocks} from "./blocks/materials.mjs";
-// import {defineMinecraftEntityBlocks} from "./blocks/entities.mjs";
-
-// --- Library Imports ---
-// We import the modules we need at the top.
-
 import Alpine from 'alpinejs';
 import 'htmx.org'; // Imports for its side-effect of initializing on the window
 import 'htmx-ext-json-enc'; // Imports the extension
@@ -72,86 +37,6 @@ let workspace;
 
 
 // --- Main Application Logic ---
-/**
- * Creates the data and methods for our main editor Alpine.js component.
- */
-// In src/index.js
-
-/**
- * Creates the data and methods for our main editor Alpine.js component.
- */
-function editorComponent() {
-    return {
-        // --- DATA / STATE ---
-        isSaveModalOpen: false,
-        isConfirmModalOpen: false,
-        confirmMessage: 'Are you sure?',
-        onConfirmAction: () => { console.log('No confirmation action set.'); },
-
-        // --- METHODS ---
-
-        // This method is now part of the component.
-        // It prepares and opens the confirmation dialog.
-        promptToClearWorkspace() {
-            console.log("promptToClearWorkspace called");
-            this.confirmMessage = 'Are you sure you want to clear the entire workspace? This cannot be undone.';
-
-            // Set the action to be performed when the user clicks "Confirm".
-            // 'this' inside onConfirmAction will refer to the component's state.
-            this.onConfirmAction = () => {
-                if (workspace) {
-                    workspace.clear();
-                    localStorage.removeItem(AUTOSAVE_KEY);
-                    console.log("Workspace and autosave data cleared.");
-                }
-            };
-
-            // Open the confirmation modal
-            this.isConfirmModalOpen = true;
-        },
-
-        // This method is called by the "Confirm" button in the modal.
-        executeConfirm() {
-            this.onConfirmAction();
-            this.isConfirmModalOpen = false; // Close the modal after executing
-        }
-    };
-}
-
-// Attach the component function to the window object to make it globally accessible from the HTML
-window.editorComponent = editorComponent;
-
-// /**
-//  * Prepares and opens the confirmation modal for clearing the workspace.
-//  * This function will be called directly from the button's @click in index.html.
-//  */
-// function promptToClearWorkspace() {
-//     // Access the Alpine.js data store on the body element.
-//     const alpineState = document.body._x_dataStack[0];
-//     if (!alpineState) {
-//         console.error("Alpine.js state not found on body.");
-//         return;
-//     }
-//
-//     // 1. Set the confirmation message for this specific action.
-//     alpineState.confirmMessage = 'Are you sure you want to clear the entire workspace? This cannot be undone.';
-//
-//     // 2. Define the action to be run if the user clicks "Confirm".
-//     alpineState.onConfirmAction = () => {
-//         if (workspace) {
-//             workspace.clear();
-//             // Crucially, remove the autosaved data as well.
-//             localStorage.removeItem(AUTOSAVE_KEY);
-//             console.log("Workspace and autosave data cleared.");
-//         }
-//     };
-//
-//     // 3. Open the confirmation modal.
-//     alpineState.isConfirmModalOpen = true;
-// }
-//
-// window.promptToClearWorkspace = promptToClearWorkspace;
-
 async function init() {
 
     /**
@@ -374,15 +259,21 @@ async function init() {
                 console.log("Power saved successfully!", result);
                 alert(`Power "${formDataObject.name}" saved successfully!`);
 
-                // Dispatch the custom event to close the modal
-                window.dispatchEvent(new CustomEvent('close-save-modal'));
+                // --- FIX: Dispatch events instead of manipulating state ---
+                // Announce that the modal should close
+                window.dispatchEvent(new CustomEvent('power-saved-successfully'));
+                // Announce that the library list should refresh
+                // window.htmlx.trigger(document.getElementById('power-list'), 'load');
 
-                // Trigger a refresh of the power list using htmx
-                const powerListElement = document.getElementById('power-list');
-                // --- THE FIX ---
-                // Announce that a power was saved by dispatching a custom event on the body.
-                console.log("Save successful. Dispatching 'powerSaved' event.");
-                document.body.dispatchEvent(new CustomEvent('powerSaved', { bubbles: true }));
+                // // Dispatch the custom event to close the modal
+                // window.dispatchEvent(new CustomEvent('close-save-modal'));
+                //
+                // // Trigger a refresh of the power list using htmx
+                // const powerListElement = document.getElementById('power-list');
+                // // --- THE FIX ---
+                // // Announce that a power was saved by dispatching a custom event on the body.
+                // console.log("Save successful. Dispatching 'powerSaved' event.");
+                // document.body.dispatchEvent(new CustomEvent('powerSaved', { bubbles: true }));
                 // --- END OF FIX ---
 
         //         if (powerListElement) {
@@ -1225,18 +1116,18 @@ async function init() {
     });
 
     // // --- 5. Update the "Clear Workspace" button ---
-    // const clearWorkspaceButton = document.getElementById('clearWorkspaceButton');
-    //
-    // if (clearWorkspaceButton) {
-    //     clearWorkspaceButton.addEventListener('click', () => {
-    //         if (confirm("Are you sure you want to clear the workspace? This cannot be undone.")) {
-    //             workspace.clear();
-    //             // Crucially, remove the autosaved data as well
-    //             localStorage.removeItem(AUTOSAVE_KEY);
-    //             console.log("Workspace and autosave data cleared.");
-    //         }
-    //     });
-    // }
+    const clearWorkspaceButton = document.getElementById('clearWorkspaceButton');
+
+    if (clearWorkspaceButton) {
+        clearWorkspaceButton.addEventListener('click', () => {
+            if (confirm("Are you sure you want to clear the workspace? This cannot be undone.")) {
+                workspace.clear();
+                // Crucially, remove the autosaved data as well
+                localStorage.removeItem(AUTOSAVE_KEY);
+                console.log("Workspace and autosave data cleared.");
+            }
+        });
+    }
     // --- LIVE GENERATION & HIGHLIGHTING LOGIC ---
 
     // Get a reference to the <code> element where code will be displayed
@@ -1279,15 +1170,6 @@ async function init() {
     if (confirmSaveButton) {
         confirmSaveButton.addEventListener('click', handleSavePower);
     }
-
-    // --- Wire up UI Buttons ---
-    // const clearButton = document.getElementById('clearWorkspaceButton');
-    // if (clearButton) {
-    //     clearButton.addEventListener('click', () => {
-    //         workspace.clear();
-    //         console.log("Workspace cleared.");
-    //     });
-    // }
 
     // Attach the load function to the new button
     const loadButton = document.getElementById('loadPowerFromFileButton');
