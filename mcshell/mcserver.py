@@ -143,7 +143,7 @@ def execute_power():
     The client no longer sends the code, only the ID of the power to run.
     """
     player_name = app.config.get('MINECRAFT_PLAYER_NAME')
-    power_repo = app.config.get('POWER_LIBRARY')
+    power_repo = app.config.get('POWER_REPO')
 
     data = request.get_json()
     power_id = data.get('power_id')
@@ -182,7 +182,7 @@ def cancel_power():
 @app.route('/api/powers', methods=['POST'])
 def save_new_power():
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-    power_repo = app.config.get('POWER_LIBRARY')
+    power_repo = app.config.get('POWER_REPO')
     # ... (error checking for player_id and power_repo) ...
 
     # htmx with json-enc sends a JSON body
@@ -229,7 +229,7 @@ def save_new_power():
 #         return jsonify({"error": "No authorized player"}), 401
 #
 #     # Get the repository instance from the app config
-#     power_repo = app.config.get('POWER_LIBRARY')
+#     power_repo = app.config.get('POWER_REPO')
 #     if not power_repo:
 #         return jsonify({"error": "Power repository not configured"}), 500
 #
@@ -247,76 +247,150 @@ def save_new_power():
 #         return jsonify({"error": "An internal error occurred while saving the power."}), 500
 
 # --- This endpoint now returns HTML fragments, not JSON ---
+# @app.route('/api/powers', methods=['GET'])
+# def get_powers_list_as_html():
+#     """
+#     Fetches the list of saved powers and renders them as HTML widgets
+#     for the htmx-powered control panel.
+#     """
+#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+#     if not player_id:
+#         # 1. Create a Python dictionary representing the event and its data.
+#         #    The key is the event name, the value is the data for event.detail.
+#         trigger_data = {
+#             "showError": {
+#                 "errorMessage": "Server not fully configured: No authorized player"
+#             }
+#         }
+#         # 2. Convert the dictionary to a JSON string and set it as the header value.
+#         headers = {"HX-Trigger": json.dumps(trigger_data)}
+#
+#         # 3. Return the response with the correctly formatted header.
+#         return make_response("", 204, headers)
+#
+#     power_repo = app.config.get('POWER_REPO')
+#     if not power_repo:
+#         trigger_data = {
+#             "showError": {
+#                 "errorMessage": "Server not fully configured: Missing Player ID or Power Library."
+#             }
+#         }
+#         headers = {"HX-Trigger": json.dumps(trigger_data)}
+#
+#         return make_response("", 500, headers)
+#
+#     # 1. Fetch the summary data from the repository
+#     powers_summary_list = power_repo.list_powers()
+#     if not powers_summary_list:
+#         return "<p>No powers saved yet. Go to the editor to create one!</p>"
+#
+#     # 2. Define the Jinja2 template for a single widget
+#     #    This template now uses the correct /execute_power endpoint and sends the power_id
+#     widget_template = """
+#     <div class="power-widget" id="{{ power.power_id }}">
+#         <div class="power-header">
+#             <span class="power-name">{{ power.name }}</span>
+#             <span class="power-category">{{ power.category }}</span>
+#         </div>
+#         <p class="power-description">{{ power.description }}</p>
+#         <div class="power-status">Status: Idle</div>
+#         <button class="execute-btn"
+#                 hx-post="/execute_power"
+#                 hx-vals='{"power_id": "{{ power.power_id }}"}'
+#                 hx-target="#{{ power.power_id }} .power-status"
+#                 hx-swap="innerHTML">
+#             Execute
+#         </button>
+#     </div>
+#     """
+#
+#     # 3. Render a widget for each power and join them into a single HTML string
+#     html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_summary_list])
+#
+#     # 4. Create a response object with caching disabled
+#     response = make_response(html_response_string)
+#     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+#     response.headers['Pragma'] = 'no-cache'
+#     response.headers['Expires'] = '0'
+#
+#     # --- ADD THIS HEADER ---
+#     # This tells the htmx front-end to fire a custom event named 'powersLoaded'
+#     # after this response has been swapped into the DOM.
+#     response.headers['HX-Trigger'] = 'powersLoaded'
+#
+#     return response
 @app.route('/api/powers', methods=['GET'])
 def get_powers_list_as_html():
     """
-    Fetches the list of saved powers and renders them as HTML widgets
-    for the htmx-powered control panel.
+    Fetches the list of saved powers for the authorized player,
+    groups them by category, and renders them as an HTML fragment using Jinja2.
     """
-    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-    if not player_id:
-        # 1. Create a Python dictionary representing the event and its data.
-        #    The key is the event name, the value is the data for event.detail.
-        trigger_data = {
-            "showError": {
-                "errorMessage": "Server not fully configured: No authorized player"
-            }
-        }
-        # 2. Convert the dictionary to a JSON string and set it as the header value.
-        headers = {"HX-Trigger": json.dumps(trigger_data)}
+    # 1. Get the repository instance from the app config. It's already player-specific.
+    power_repo = app.config.get('POWER_REPO')
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME') # Still useful for logging/context
 
-        # 3. Return the response with the correctly formatted header.
-        return make_response("", 204, headers)
+    if not power_repo or not player_id:
+        # Error handling remains the same
+        trigger_data = {"showError": {"errorMessage": "Server not fully configured."}}
+        return make_response("", 500, {"HX-Trigger": json.dumps(trigger_data)})
 
-    power_repo = app.config.get('POWER_LIBRARY')
-    if not power_repo:
-        trigger_data = {
-            "showError": {
-                "errorMessage": "Server not fully configured: Missing Player ID or Power Library."
-            }
-        }
-        headers = {"HX-Trigger": json.dumps(trigger_data)}
-
-        return make_response("", 500, headers)
-
-    # 1. Fetch the summary data from the repository
+    # 2. Fetch the flat list of power summaries from the repository.
+    #    No player_id is passed to the method, as requested.
     powers_summary_list = power_repo.list_powers()
-    if not powers_summary_list:
-        return "<p>No powers saved yet. Go to the editor to create one!</p>"
 
-    # 2. Define the Jinja2 template for a single widget
-    #    This template now uses the correct /execute_power endpoint and sends the power_id
-    widget_template = """
-    <div class="power-widget" id="{{ power.power_id }}">
-        <div class="power-header">
-            <span class="power-name">{{ power.name }}</span>
-            <span class="power-category">{{ power.category }}</span>
-        </div>
-        <p class="power-description">{{ power.description }}</p>
-        <div class="power-status">Status: Idle</div>
-        <button class="execute-btn"
-                hx-post="/execute_power"
-                hx-vals='{"power_id": "{{ power.power_id }}"}'
-                hx-target="#{{ power.power_id }} .power-status"
-                hx-swap="innerHTML">
-            Execute
-        </button>
-    </div>
+    if not powers_summary_list:
+        return "<p style='padding: 0 10px; color: #666;'>No powers saved yet. Create one!</p>"
+
+    # 3. Process the data: group the flat list of powers by category.
+    powers_by_category = {}
+    for power in powers_summary_list:
+        category = power.get('category', 'Uncategorized')
+        if category not in powers_by_category:
+            powers_by_category[category] = []
+        powers_by_category[category].append(power)
+
+    # 4. Define the Jinja2 template for rendering the library.
+    #    This template includes Alpine.js directives for collapsible sections.
+    library_template_string = """
+    {% for category, powers in categories.items()|sort %}
+      <div class="power-category" x-data="{ open: true }">
+        <h3 @click="open = !open">
+          <span class="category-toggle" x-text="open ? '▼' : '▶'"></span>
+          {{ category }} ({{ powers|length }})
+        </h3>
+        <ul class="power-item-list" x-show="open" x-transition>
+          {% for power in powers %}
+            <li class="power-item" x-data="{ open: false }" id="power-item-{{ power.power_id }}">
+              <div class="power-item-header" @click="open = !open">
+                <span class="power-toggle" x-text="open ? '▼' : '▶'"></span>
+                <span class="power-name">{{ power.name }}</span>
+              </div>
+              <div class="power-item-details" x-show="open" x-transition>
+                <p class="power-description">{{ power.description or 'No description.' }}</p>
+                <div class="power-item-actions">
+                  <button class="btn-small">Load (Replace)</button>
+                  <button class="btn-small">Add to Workspace</button>
+                  <button class="btn-small btn-danger">Delete</button>
+                </div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
     """
 
-    # 3. Render a widget for each power and join them into a single HTML string
-    html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_summary_list])
+    # 5. Render the HTML fragment using the template and the grouped data.
+    html_response_string = render_template_string(
+        library_template_string,
+        categories=powers_by_category
+    )
 
-    # 4. Create a response object with caching disabled
+    # 6. Create the final response with headers to prevent caching.
     response = make_response(html_response_string)
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
-
-    # --- ADD THIS HEADER ---
-    # This tells the htmx front-end to fire a custom event named 'powersLoaded'
-    # after this response has been swapped into the DOM.
-    response.headers['HX-Trigger'] = 'powersLoaded'
 
     return response
 
@@ -324,7 +398,7 @@ def get_powers_list_as_html():
 # which would load the code and then call the existing execute_power_thread.
 @app.route('/execute_power_by_name', methods=['POST'])
 def execute_power_by_name():
-    power_repo = app.config.get('POWER_LIBRARY')
+    power_repo = app.config.get('POWER_REPO')
     power_name = request.form.get('power_name')
     print(f"Received request to execute power by name: {power_name}")
 
@@ -428,7 +502,7 @@ def start_app_server(server_data,mc_name,ipy_shell):
     # to switch between JsonFileRepository, SqliteRepository, etc.
     power_repo = JsonFileRepository(mc_name)
 
-    app.config['POWER_LIBRARY'] = power_repo
+    app.config['POWER_REPO'] = power_repo
 
 
     global app_server_thread
