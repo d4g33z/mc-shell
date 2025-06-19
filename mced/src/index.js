@@ -1,34 +1,62 @@
-// --- Initialize Alpine.js for the Editor UI (e.g., the Save Modal) ---
+// // --- Initialize Alpine.js for the Editor UI (e.g., the Save Modal) ---
+// import Alpine from 'alpinejs';
+//
+// // Make Alpine available globally on the window object for x-data attributes.
+// window.Alpine = Alpine;
+//
+//
+// // CORRECT: Import the default export from the htmx.org package
+// import htmx from 'htmx.org';
+// import 'htmx-ext-json-enc';
+//
+// import * as Blockly from 'blockly';
+// import * as Prism from 'prismjs';
+//
+// import 'prismjs/components/prism-python';
+// import 'prismjs/themes/prism-okaidia.css';
+//
+// import { pythonGenerator } from 'blockly/python';
+//
+// // --- NEW: Import the htmx listener initializer ---
+// import { initializeHtmxListeners } from './lib/htmx_listeners.mjs';
+//
+// import { installMCGenerator} from "./generators/python/mc.mjs";
+// import { installMCMaterialsGenerator} from "./generators/python/materials.mjs";
+// import { installMCEntityGenerator } from "./generators/python/entities.mjs";
+//
+// import {defineMineCraftBlocklyUtils} from "./lib/utils.mjs";
+// import {defineMineCraftConstants} from "./lib/constants.mjs";
+// import {defineMineCraftBlocks} from "./blocks/mc.mjs";
+// import {defineMineCraftMaterialBlocks} from "./blocks/materials.mjs";
+// import {defineMinecraftEntityBlocks} from "./blocks/entities.mjs";
+
+// --- Library Imports ---
+// We import the modules we need at the top.
+
 import Alpine from 'alpinejs';
-
-// Make Alpine available globally on the window object for x-data attributes.
-window.Alpine = Alpine;
-
-
-// CORRECT: Import the default export from the htmx.org package
-import htmx from 'htmx.org';
-import 'htmx-ext-json-enc';
-
-import * as Blockly from 'blockly';
-import * as Prism from 'prismjs';
-
+import 'htmx.org'; // Imports for its side-effect of initializing on the window
+import 'htmx-ext-json-enc'; // Imports the extension
+import Prism from 'prismjs';
 import 'prismjs/components/prism-python';
 import 'prismjs/themes/prism-okaidia.css';
 
+import * as Blockly from 'blockly';
 import { pythonGenerator } from 'blockly/python';
-
-// --- NEW: Import the htmx listener initializer ---
-import { initializeHtmxListeners } from './lib/htmx_listeners.mjs';
-
-import { installMCGenerator} from "./generators/python/mc.mjs";
-import { installMCMaterialsGenerator} from "./generators/python/materials.mjs";
+import { defineMineCraftBlocks } from "./blocks/mc.mjs";
+import { defineMineCraftMaterialBlocks } from "./blocks/materials.mjs";
+import { defineMinecraftEntityBlocks } from "./blocks/entities.mjs";
+import { defineMineCraftConstants } from "./lib/constants.mjs";
+import { defineMineCraftBlocklyUtils } from "./lib/utils.mjs";
+import { installMCGenerator } from "./generators/python/mc.mjs"
+import { installMCMaterialsGenerator } from "./generators/python/materials.mjs";
 import { installMCEntityGenerator } from "./generators/python/entities.mjs";
+import { initializeHtmxListeners } from './lib/htmx_listeners.js';
 
-import {defineMineCraftBlocklyUtils} from "./lib/utils.mjs";
-import {defineMineCraftConstants} from "./lib/constants.mjs";
-import {defineMineCraftBlocks} from "./blocks/mc.mjs";
-import {defineMineCraftMaterialBlocks} from "./blocks/materials.mjs";
-import {defineMinecraftEntityBlocks} from "./blocks/entities.mjs";
+// --- Global Setup ---
+
+// Make Alpine globally available BEFORE it starts.
+// This is necessary for the x-data attributes in the HTML to find it.
+window.Alpine = Alpine;
 
 // Define the structure for a completely empty workspace
 const BLANK_WORKSPACE_JSON = {
@@ -43,7 +71,80 @@ const AUTOSAVE_KEY = 'mcEdWorkspaceAutosave';
 let workspace;
 
 
+// --- Main Application Logic ---
+/**
+ * Creates the data and methods for our main editor Alpine.js component.
+ */
+function editorComponent() {
+    return {
+        // --- DATA PROPERTIES ---
+        isSaveModalOpen: false,
+        isConfirmModalOpen: false,
+        confirmMessage: 'Are you sure?',
+        onConfirmAction: () => {}, // A placeholder for the action to run
+
+        // --- METHODS ---
+        // This method prepares and opens the confirmation dialog
+        promptToClearWorkspace() {
+            this.confirmMessage = 'Are you sure you want to clear the entire workspace? This cannot be undone.';
+
+            // Set the action to be performed when the user clicks "Confirm"
+            this.onConfirmAction = () => {
+                if (workspace) {
+                    workspace.clear();
+                    localStorage.removeItem(AUTOSAVE_KEY);
+                    console.log("Workspace and autosave data cleared.");
+                }
+            };
+
+            // Open the confirmation modal
+            this.isConfirmModalOpen = true;
+        },
+
+        // This is the method that the confirmation modal's "Confirm" button will call
+        executeConfirm() {
+            this.onConfirmAction();
+            this.isConfirmModalOpen = false; // Close the modal after executing
+        }
+    };
+}
+
+// Attach the component function to the window object to make it globally accessible from the HTML
+window.editorComponent = editorComponent;
+
+/**
+ * Prepares and opens the confirmation modal for clearing the workspace.
+ * This function will be called directly from the button's @click in index.html.
+ */
+function promptToClearWorkspace() {
+    // Access the Alpine.js data store on the body element.
+    const alpineState = document.body._x_dataStack[0];
+    if (!alpineState) {
+        console.error("Alpine.js state not found on body.");
+        return;
+    }
+
+    // 1. Set the confirmation message for this specific action.
+    alpineState.confirmMessage = 'Are you sure you want to clear the entire workspace? This cannot be undone.';
+
+    // 2. Define the action to be run if the user clicks "Confirm".
+    alpineState.onConfirmAction = () => {
+        if (workspace) {
+            workspace.clear();
+            // Crucially, remove the autosaved data as well.
+            localStorage.removeItem(AUTOSAVE_KEY);
+            console.log("Workspace and autosave data cleared.");
+        }
+    };
+
+    // 3. Open the confirmation modal.
+    alpineState.isConfirmModalOpen = true;
+}
+
+window.promptToClearWorkspace = promptToClearWorkspace;
+
 async function init() {
+
     /**
      * Sends a command and its arguments to the Flask server's IPython endpoint.
      * @param {string} command The magic command to run (e.g., '%mc_create_script').
@@ -269,9 +370,16 @@ async function init() {
 
                 // Trigger a refresh of the power list using htmx
                 const powerListElement = document.getElementById('power-list');
-                if (powerListElement) {
-                    htmx.trigger(powerListElement, 'load');
-                }
+                // --- THE FIX ---
+                // Announce that a power was saved by dispatching a custom event on the body.
+                console.log("Save successful. Dispatching 'powerSaved' event.");
+                document.body.dispatchEvent(new CustomEvent('powerSaved', { bubbles: true }));
+                // --- END OF FIX ---
+
+        //         if (powerListElement) {
+        //             htmx.trigger(powerListElement, 'load');
+        //         }
+
             } else {
                 console.error('Error saving power:', response.status, await response.text());
                 alert('Failed to save power. See console for details.');
@@ -289,7 +397,6 @@ async function init() {
     //     confirmSaveButton.addEventListener('click', handleSavePower);
     // }
 
-    initializeHtmxListeners();
 
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
@@ -1079,6 +1186,8 @@ async function init() {
         },
     });
 
+    initializeHtmxListeners();
+
     // 2. Now that the workspace exists, programmatically load the JSON data.
     //    This is more reliable as it happens after the initial render.
     if (initialWorkspaceJson && initialWorkspaceJson.blocks) {
@@ -1163,13 +1272,13 @@ async function init() {
     }
 
     // --- Wire up UI Buttons ---
-    const clearButton = document.getElementById('clearWorkspaceButton');
-    if (clearButton) {
-        clearButton.addEventListener('click', () => {
-            workspace.clear();
-            console.log("Workspace cleared.");
-        });
-    }
+    // const clearButton = document.getElementById('clearWorkspaceButton');
+    // if (clearButton) {
+    //     clearButton.addEventListener('click', () => {
+    //         workspace.clear();
+    //         console.log("Workspace cleared.");
+    //     });
+    // }
 
     // Attach the load function to the new button
     const loadButton = document.getElementById('loadPowerFromFileButton');

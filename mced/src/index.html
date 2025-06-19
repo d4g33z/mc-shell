@@ -7,21 +7,30 @@
         <link rel="stylesheet" href="./editor.css">
 
     </head>
-<!--    <body x-data="{ isModalOpen: false }" @close-save-modal.window="isModalOpen = false">-->
-    <body x-data="{
-          isSaveModalOpen: false,
-          isConfirmModalOpen: false,
-          confirmMessage: '',
-          onConfirmAction: () => {}
-      }"
-      @close-save-modal.window="isSaveModalOpen = false">
 
+<!--    <body x-data="{ isModalOpen: false }" @close-save-modal.window="isModalOpen = false">-->
+<!--    <body x-data="{-->
+<!--          isSaveModalOpen: false,-->
+<!--          isConfirmModalOpen: false,-->
+<!--          confirmMessage: '',-->
+<!--          onConfirmAction: () => {}-->
+<!--      }"-->
+<!--      @close-save-modal.window="isSaveModalOpen = false">-->
+
+    <body x-data="editorComponent()" @close-save-modal.window="isSaveModalOpen = false">
         <div class="editor-layout">
             <aside id="power-library-panel">
                 <h2>Power Library</h2>
+<!--                <div id="power-list"-->
+<!--                     hx-get="/api/powers"-->
+<!--                     hx-trigger="load, newPowerSaved from:body" hx-swap="innerHTML">-->
+
+<!--                    <p style="padding: 0 8px; color: #888;">Loading powers...</p>-->
+
+<!--                </div>-->
                 <div id="power-list"
                      hx-get="/api/powers"
-                     hx-trigger="load, newPowerSaved from:body" hx-swap="innerHTML">
+                     hx-trigger="load, powerSaved from:body" hx-swap="innerHTML">
 
                     <p style="padding: 0 8px; color: #888;">Loading powers...</p>
                 </div>
@@ -39,16 +48,7 @@
                     <button id="loadPowerFromFileButton">Load from File...</button>
 
                     <button id="executePowerButton">Execute (Debug)</button>
-<!--                    <button id="clearWorkspaceButton">Clear Workspace</button>-->
-                    <button @click="
-                        confirmMessage = 'Are you sure you want to clear the workspace? This cannot be undone.';
-                        onConfirmAction = () => {
-                            workspace.clear();
-                            localStorage.removeItem('mcEdWorkspaceAutosave');
-                            console.log('Workspace and autosave data cleared.');
-                        };
-                        isConfirmModalOpen = true;
-                    ">Clear Workspace</button>
+                    <button id="clearWorkspaceButton" @click="promptToClearWorkspace()">Clear Workspace</button>
                 </div>
 
                 <div id="editor-preview-pane">
@@ -111,6 +111,7 @@
                 </div>
             </div>
         </div>
+
     </template>
 
         <script type="module" src="./index.js"></script>
