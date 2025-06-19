@@ -13,7 +13,7 @@
                 <h2>Power Library</h2>
                 <div id="power-list"
                      hx-get="/api/powers"
-                     hx-trigger="load, powerSaved from:body" hx-swap="innerHTML">
+                     hx-trigger="load, power-saved from:window" hx-swap="innerHTML">
 
                     <p style="padding: 0 8px; color: #888;">Loading powers...</p>
                 </div>
@@ -43,7 +43,7 @@
 
             <div x-data="{ isOpen: false }"
                  @open-save-modal.window="isOpen = true"
-                 @power-saved-successfully.window="isOpen = false"
+                 @power-saved.window="isOpen = false"
                  @keydown.escape.window="isOpen = false"
                  class="modal-root">
 

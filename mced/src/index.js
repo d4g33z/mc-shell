@@ -258,28 +258,15 @@ async function init() {
                 const result = await response.json();
                 console.log("Power saved successfully!", result);
                 alert(`Power "${formDataObject.name}" saved successfully!`);
+                // // Announce that the modal should close AND that #power-list should reload
+                // console.log("Save successful. Dispatching 'power-saved' event.");
+                // window.dispatchEvent(new CustomEvent('power-saved', { bubbles: true }));
 
-                // --- FIX: Dispatch events instead of manipulating state ---
-                // Announce that the modal should close
-                window.dispatchEvent(new CustomEvent('power-saved-successfully'));
-                // Announce that the library list should refresh
-                // window.htmlx.trigger(document.getElementById('power-list'), 'load');
-
-                // // Dispatch the custom event to close the modal
-                // window.dispatchEvent(new CustomEvent('close-save-modal'));
-                //
-                // // Trigger a refresh of the power list using htmx
-                // const powerListElement = document.getElementById('power-list');
-                // // --- THE FIX ---
-                // // Announce that a power was saved by dispatching a custom event on the body.
-                // console.log("Save successful. Dispatching 'powerSaved' event.");
-                // document.body.dispatchEvent(new CustomEvent('powerSaved', { bubbles: true }));
-                // --- END OF FIX ---
-
-        //         if (powerListElement) {
-        //             htmx.trigger(powerListElement, 'load');
-        //         }
-
+                // Dispatch the standardized 'power-saved' event.
+                // The #power-list div will hear this because of "from:document".
+                console.log("Save successful. Dispatching 'power-saved' event.");
+                // Dispatching on window or body is fine, as it will bubble up to the document.
+                window.dispatchEvent(new CustomEvent('power-saved', { bubbles: true }));
             } else {
                 console.error('Error saving power:', response.status, await response.text());
                 alert('Failed to save power. See console for details.');
@@ -289,14 +276,6 @@ async function init() {
             alert('Network error. Could not save power.');
         }
     }
-
-    // Ensure the event listener for the save button is active in your init() function
-    // This code should already be in your init() function
-    // const confirmSaveButton = document.getElementById('confirmSaveButton');
-    // if (confirmSaveButton) {
-    //     confirmSaveButton.addEventListener('click', handleSavePower);
-    // }
-
 
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
