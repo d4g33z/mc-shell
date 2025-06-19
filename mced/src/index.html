@@ -7,8 +7,14 @@
         <link rel="stylesheet" href="./editor.css">
 
     </head>
-    <body x-data="{ isModalOpen: false }" @close-save-modal.window="isModalOpen = false">
-<!--    <body x-data="{ isModalOpen: false }">-->
+<!--    <body x-data="{ isModalOpen: false }" @close-save-modal.window="isModalOpen = false">-->
+    <body x-data="{
+          isSaveModalOpen: false,
+          isConfirmModalOpen: false,
+          confirmMessage: '',
+          onConfirmAction: () => {}
+      }"
+      @close-save-modal.window="isSaveModalOpen = false">
 
         <div class="editor-layout">
             <aside id="power-library-panel">
@@ -28,12 +34,21 @@
 
                 <div id="controls">
                     <button id="newPowerButton">New Power</button>
-                    <button id="savePowerAsButton" @click="isModalOpen = true">Save Power As...</button>
+                    <button id="savePowerAsButton" @click="isSaveModalOpen = true">Save Power As...</button>
 
                     <button id="loadPowerFromFileButton">Load from File...</button>
 
                     <button id="executePowerButton">Execute (Debug)</button>
-                    <button id="clearWorkspaceButton">Clear Workspace</button>
+<!--                    <button id="clearWorkspaceButton">Clear Workspace</button>-->
+                    <button @click="
+                        confirmMessage = 'Are you sure you want to clear the workspace? This cannot be undone.';
+                        onConfirmAction = () => {
+                            workspace.clear();
+                            localStorage.removeItem('mcEdWorkspaceAutosave');
+                            console.log('Workspace and autosave data cleared.');
+                        };
+                        isConfirmModalOpen = true;
+                    ">Clear Workspace</button>
                 </div>
 
                 <div id="editor-preview-pane">
@@ -46,19 +61,19 @@
 
         <template x-teleport="body">
 
-            <div @keydown.escape.window="isModalOpen = false" class="modal-root">
+            <div @keydown.escape.window="isSaveModalOpen = false" class="modal-root">
 
-                <div x-show="isModalOpen" x-cloak class="modal-overlay"
+                <div x-show="isSaveModalOpen" x-cloak class="modal-overlay"
                      x-transition:enter="transition ease-out duration-200"
                      x-transition:enter-start="opacity-0"
                      x-transition:enter-end="opacity-100"
                      x-transition:leave="transition ease-in duration-200"
                      x-transition:leave-start="opacity-100"
                      x-transition:leave-end="opacity-0"
-                     @click="isModalOpen = false">
+                     @click="isSaveModalOpen = false">
                 </div>
 
-                <div x-show="isModalOpen" x-cloak class="modal-content" x-transition>
+                <div x-show="isSaveModalOpen" x-cloak class="modal-content" x-transition>
                     <h3>Save Power</h3>
                     <form id="savePowerForm">
                         <div class="form-group">
@@ -75,12 +90,28 @@
                         </div>
                     </form>
                     <div class="modal-actions">
-                        <button type="button" class="btn-secondary" @click="isModalOpen = false">Cancel</button>
+                        <button type="button" class="btn-secondary" @click="isSaveModalOpen = false">Cancel</button>
                         <button type="button" class="btn-primary" id="confirmSaveButton">Save to Library</button>
                     </div>
                 </div>
             </div>
-        </template>
+
+            <div @keydown.escape.window="isConfirmModalOpen = false" class="modal-root">
+
+            <div x-show="isConfirmModalOpen" x-cloak class="modal-overlay" @click="isConfirmModalOpen = false"></div>
+
+            <div x-show="isConfirmModalOpen" x-cloak class="modal-content" x-transition>
+                <h3>Confirm Action</h3>
+                <p x-text="confirmMessage">Are you sure?</p>
+
+                <div class="modal-actions">
+                    <button class="btn-secondary" @click="isConfirmModalOpen = false">Cancel</button>
+
+                    <button class="btn-primary btn-danger" @click="onConfirmAction(); isConfirmModalOpen = false;">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </template>
 
         <script type="module" src="./index.js"></script>
     </body>

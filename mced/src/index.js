@@ -1106,19 +1106,19 @@ async function init() {
         debouncedAutosave();
     });
 
-    // --- 5. Update the "Clear Workspace" button ---
-    const clearWorkspaceButton = document.getElementById('clearWorkspaceButton');
-
-    if (clearWorkspaceButton) {
-        clearWorkspaceButton.addEventListener('click', () => {
-            if (confirm("Are you sure you want to clear the workspace? This cannot be undone.")) {
-                workspace.clear();
-                // Crucially, remove the autosaved data as well
-                localStorage.removeItem(AUTOSAVE_KEY);
-                console.log("Workspace and autosave data cleared.");
-            }
-        });
-    }
+    // // --- 5. Update the "Clear Workspace" button ---
+    // const clearWorkspaceButton = document.getElementById('clearWorkspaceButton');
+    //
+    // if (clearWorkspaceButton) {
+    //     clearWorkspaceButton.addEventListener('click', () => {
+    //         if (confirm("Are you sure you want to clear the workspace? This cannot be undone.")) {
+    //             workspace.clear();
+    //             // Crucially, remove the autosaved data as well
+    //             localStorage.removeItem(AUTOSAVE_KEY);
+    //             console.log("Workspace and autosave data cleared.");
+    //         }
+    //     });
+    // }
     // --- LIVE GENERATION & HIGHLIGHTING LOGIC ---
 
     // Get a reference to the <code> element where code will be displayed
@@ -1177,7 +1177,7 @@ async function init() {
         loadButton.addEventListener('click', handleLoadPowerFromFile);
     }
 
-       // --- Wire up the "Execute (Debug)" Button ---
+    // --- Wire up the "Execute (Debug)" Button ---
     const executeButton = document.getElementById('executePowerButton');
     if (executeButton) {
         executeButton.addEventListener('click', async () => {
@@ -1207,6 +1207,49 @@ async function init() {
             }
         });
     }
+
+    // --- Add the event listener for loading powers ---
+    document.body.addEventListener('loadPower', function(event) {
+        if (!event.detail || !event.detail.powerData) {
+            console.error("loadPower event triggered without powerData.", event.detail);
+            return;
+        }
+
+        const powerData = event.detail.powerData;
+        const mode = event.detail.mode; // 'replace' or 'add'
+
+        console.log(`Received power to load: '${powerData.name}' in '${mode}' mode.`);
+
+        // Check if there is actual block data to load
+        if (!powerData.blockly_json) {
+            alert(`Error: The power '${powerData.name}' has no saved block data.`);
+            return;
+        }
+
+        try {
+            if (mode === 'replace') {
+                // Confirm with the user before overwriting their work
+                if (workspace.getAllBlocks(false).length > 0) {
+                    if (!confirm("This will replace your current workspace. Are you sure?")) {
+                        return; // User clicked cancel
+                    }
+                }
+                workspace.clear();
+            }
+
+            // Load the new blocks from the 'blockly_json' field of the power data
+            Blockly.serialization.workspaces.load(powerData.blockly_json, workspace);
+
+            // After loading, update the autosave with this new state
+            autosaveWorkspace();
+
+        } catch (e) {
+            console.error("Error deserializing or loading workspace:", e);
+            alert("Could not load the power. The file may be corrupted.");
+        }
+    });
+
+
 }
 
 // --- Main Execution ---
