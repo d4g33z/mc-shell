@@ -170,7 +170,8 @@ def save_new_power():
         # --- CORRECTED: Send multiple triggers back to the client ---
         # 1. Create a dictionary with ALL events we want to fire on the client.
         trigger_data = {
-            "power-saved": f"A power with id {power_id} was saved.",
+            # "power-saved": f"A power with id {power_id} was saved.",
+            "library-changed": f"Power {power_id} was saved.",
             "closeSaveModal": True # This event will tell Alpine.js to close the modal.
         }
 

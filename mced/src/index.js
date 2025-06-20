@@ -305,9 +305,9 @@ async function init() {
 
                 // Dispatch the standardized 'power-saved' event.
                 // The #power-list div will hear this because of "from:document".
-                console.log("Save successful. Dispatching 'power-saved' event.");
+                console.log("Save successful. Dispatching 'library-changed' event.");
                 // Dispatching on window or body is fine, as it will bubble up to the document.
-                window.dispatchEvent(new CustomEvent('power-saved', { bubbles: true }));
+                window.dispatchEvent(new CustomEvent('library-changed', { bubbles: true }));
             } else {
                 console.error('Error saving power:', response.status, await response.text());
                 alert('Failed to save power. See console for details.');
