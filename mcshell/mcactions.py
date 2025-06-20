@@ -272,3 +272,24 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         # Now call pyncraft with the correct integer ID 1 unit above the requested position for safety
         self.mcplayer.pc.spawnEntity(position_vec3.x, position_vec3.y + 1, position_vec3.z, entity_id_int)
 
+    def set_block(self, position_vec3, block_type):
+        """
+        Blockly action to set a single block in the Minecraft world.
+
+        Args:
+            position_vec3 (Vec3): A Vec3 instance for the block's location.
+            block_type (str): The Blockly-generated ID for the block (e.g., 'STONE', 'OAK_FENCE').
+        """
+        # The position is already a Vec3 object.
+        # The block_type is a string ID that needs to be parsed into a Minecraft ID.
+        # parsed_block_type_id = self._parse_block_type(block_type)
+        parsed_block_type_id = block_type
+
+        # Access coordinates directly from the Vec3 object
+        x, y, z = (int(position_vec3.x), int(position_vec3.y), int(position_vec3.z))
+
+        print(f"ACTION: Setting block at ({x},{y},{z}) to {parsed_block_type_id} "
+              f"for player {getattr(self.mcplayer, 'name', 'N/A')}")
+
+        # This is where you would call the actual pyncraft or Minecraft API method
+        self.mcplayer.pc.setBlock(x, y, z, parsed_block_type_id)

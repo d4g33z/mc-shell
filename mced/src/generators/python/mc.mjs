@@ -1,7 +1,7 @@
 
 import {MCED} from "../../lib/constants.mjs"; //Importing here!
 
-export function installMCGenerator(pythonGenerator,Order) {
+export function installMCGenerator(pythonGenerator) {
     // Set the standard Python indent to 4 spaces
     pythonGenerator.INDENT = '    ';
 
@@ -192,7 +192,7 @@ ${indentedBlockCode}
         const zValue = block.getFieldValue('Z');
 
        let code = `Vec3(${xValue},${yValue},${zValue})`
-       return [code,Order.ATOMIC];
+       return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_vector_delta'] = function (block,generator) {
@@ -201,22 +201,22 @@ ${indentedBlockCode}
         const zValue = block.getFieldValue('Z');
 
         let code = `Vec3(${xValue},${yValue},${zValue})`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_position_get_direction'] = function (block,generator) {
         let code = `self.action_implementer.mcplayer.direction`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_position_player'] = function (block,generator) {
         let code = `self.action_implementer.mcplayer.position`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_position_here'] = function (block,generator) {
         let code = `self.action_implementer.mcplayer.here`
-        return [code,Order.ATOMIC];
+        return [code,generator.ORDER_ATOMIC];
     }
 
     pythonGenerator.forBlock['minecraft_vector_arithmetic'] = function(block, generator) {
@@ -345,7 +345,6 @@ ${indentedBlockCode}
     };
 
 
-
     pythonGenerator.forBlock['minecraft_action_spawn_entity'] = function(block, generator) {
         // Get the code for the connected value inputs, with defaults
         const entityType = generator.valueToCode(block, 'ENTITY_TYPE', generator.ORDER_ATOMIC) || "'PIG'";
@@ -353,6 +352,17 @@ ${indentedBlockCode}
 
         // Construct the Python code string using keyword arguments
         const code = `self.action_implementer.spawn_entity(position_vec3=${position}, entity_type=${entityType})\n`;
+
+        return code;
+    };
+
+    pythonGenerator.forBlock['minecraft_action_set_block'] = function(block, generator) {
+        // Get the code for the connected value inputs, with defaults
+        const blockType = generator.valueToCode(block, 'BLOCK_TYPE', generator.ORDER_ATOMIC) || "'STONE'";
+        const position = generator.valueToCode(block, 'POSITION', generator.ORDER_ATOMIC) || "Vec3(0, 0, 0)";
+
+        // Construct the Python code string using keyword arguments
+        const code = `self.action_implementer.set_block(position_vec3=${position}, block_type=${blockType})\n`;
 
         return code;
     };

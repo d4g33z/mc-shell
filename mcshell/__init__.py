@@ -342,20 +342,50 @@ class MCShell(Magics):
         print(f"requested player will be available as the variable {_player_name} locally")
         local_ns[_player_name] = MCPlayer(_player_name,**self.server_data).build()
 
-    @needs_local_scope
+    # @needs_local_scope
+    # @line_magic
+    # def mc_create_script(self,line,local_ns):
+    #     _uuid = str(uuid.uuid1())[:4]
+    #     _var_name = f"power_{_uuid}"
+    #     _script_dir = pathlib.Path('.').absolute().joinpath('powers')
+    #     print(_script_dir)
+    #     if not _script_dir.exists():
+    #         print(f"Creating a directory {_script_dir} to hold powers for debugging")
+    #         _script_dir.mkdir(exist_ok=True)
+    #     _script_path = pathlib.Path('./powers').joinpath(f'{_var_name}.py')
+    #     print(f"Saving your new power as {_script_path}")
+    #     _script_path.write_text(line)
+    #     # local_ns.update({_var_name: line})
+
     @line_magic
-    def mc_create_script(self,line,local_ns):
-        _uuid = str(uuid.uuid1())[:4]
-        _var_name = f"power_{_uuid}"
-        _script_dir = pathlib.Path('.').absolute().joinpath('powers')
-        print(_script_dir)
-        if not _script_dir.exists():
-            print(f"Creating a directory {_script_dir} to hold powers for debugging")
-            _script_dir.mkdir(exist_ok=True)
-        _script_path = pathlib.Path('./powers').joinpath(f'{_var_name}.py')
-        print(f"Saving your new power as {_script_path}")
-        _script_path.write_text(line)
-        # local_ns.update({_var_name: line})
+    def mc_create_script(self, line):
+        """
+        Receives a block of Python code from the mc-ed editor,
+        saves it to a uniquely named file in powers/blockcode.
+        """
+        code_to_save = line
+        if not code_to_save:
+            print("Received empty code block. No script created.")
+            return
+
+        try:
+            # Create a unique filename for the power
+            power_dir = pathlib.Path("./powers/blockcode")
+            power_dir.mkdir(parents=True, exist_ok=True)
+
+            # Generate a unique suffix for the filename
+            file_hash = uuid.uuid4().hex[:6]
+            filename = f"power_{file_hash}.py"
+            filepath = power_dir / filename
+
+            with open(filepath, 'w') as f:
+                f.write(code_to_save)
+
+            print(f"Successfully saved power to: {filepath}")
+            print(f"To use it, you can now run:\nfrom powers.blockcode.{filename.replace('.py','')} import *")
+
+        except Exception as e:
+            print(f"Error saving script: {e}")
 
     # @line_magic
     # def mc_use_power(self,line):
@@ -426,7 +456,8 @@ class MCShell(Magics):
             return f"Error: Your Linux user '{linux_user}' is not registered to a Minecraft player. Please contact your administrator."
 
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
-        start_app_server(self.server_data,minecraft_name)
+        start_app_server(self.server_data,minecraft_name,self.shell)
+
         return f"mc-ed application server started for player '{minecraft_name}'."
 
     @line_magic
