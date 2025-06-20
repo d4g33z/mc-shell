@@ -1,15 +1,18 @@
 import ast
 import threading
 from threading import Thread, Event
+from io import StringIO
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_socketio import SocketIO
 from flask import Flask, render_template_string, make_response
+
 
 
 from mcshell.mcactions import MCActions
 from mcshell.mcplayer import MCPlayer
 from mcshell.constants import *
+from mcshell.mcrepo import JsonFileRepository
 
 class ServerShutdownException(Exception):
     """Custom exception to signal a clean server shutdown."""
@@ -18,6 +21,16 @@ class ServerShutdownException(Exception):
 # --- Server Setup ---
 app = Flask(__name__, static_folder=str(MC_APP_DIR)) # Serve files from Parcel's build output
 socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_mode='threading')
+
+app.secret_key = str(uuid.uuid4())
+
+import logging
+# --- Suppress Flask's Default Console Logging ---
+flask_logger = logging.getLogger('werkzeug') # Get Werkzeug logger (Flask's dev server)
+#flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+# Alternatively, to completely remove the default Werkzeug console handler:
+# flask_logger.handlers = [] # Remove all handlers, including console
 
 # --- State Management for Running Powers ---
 # This dictionary will hold the state of each running power
@@ -100,31 +113,33 @@ def execute_power_thread(code_to_execute, player_name, power_id, cancel_event, s
 
 @app.route('/execute_power', methods=['POST'])
 def execute_power():
+    """
+    Executes a saved power by its ID.
+    The client no longer sends the code, only the ID of the power to run.
+    """
+    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
+
     data = request.get_json()
-    python_code = data.get('code')
-    player_name = data.get('playerName') # Get player name from request
+    power_id = data.get('power_id')
 
-    # --- Get the server data from the app's config ---
-    server_data_for_thread = app.config.get('MCSHELL_SERVER_DATA')
-    print(server_data_for_thread)
+    if not all([power_id, player_name]):
+        return jsonify({"error": "Missing power_id or not authorized"}), 400
 
-    if not python_code:
-        return jsonify({"error": "No code provided"}), 400
+    # 1. Load the full power data, including the python_code
+    full_power_data = power_repo.get_full_power(power_id)
 
-    power_id = str(uuid.uuid4())
-    cancel_event = Event()
+    if not full_power_data:
+        return jsonify({"error": "Power not found"}), 404
 
-    # Create and start the thread
-    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event,server_data_for_thread))
-    thread.daemon = True # Allows main program to exit even if threads are running
-    thread.start()
+    python_code = full_power_data.get("python_code")
 
-    # Store the thread and its cancellation event
-    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
-
-    print(f"Dispatched power {power_id} for execution.")
+    # 2. The rest of the logic remains the same: start the thread with this code
+    server_data = app.config.get('MCSHELL_SERVER_DATA')
+    # ... create cancel_event, start thread ...
+    # thread = Thread(target=execute_power_thread, args=(python_code, ...))
+    # ...
     return jsonify({"status": "dispatched", "power_id": power_id})
-
 
 @app.route('/cancel_power', methods=['POST'])
 def cancel_power():
@@ -138,54 +153,243 @@ def cancel_power():
     else:
         return jsonify({"error": "Invalid or unknown power_id"}), 404
 
+@app.route('/api/powers', methods=['POST'])
+def save_new_power():
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
 
-# --- NEW Endpoint to get the list of powers as HTML widgets ---
-@app.route('/api/get_powers')
-def get_powers():
+    if not power_repo or not player_id:
+        trigger_data = {"showError": {"errorMessage": "Server not fully configured."}}
+        return make_response("", 500, {"HX-Trigger": json.dumps(trigger_data)})
+
+    power_data = request.get_json()
+    if not power_data or not power_data.get("name"):
+        return jsonify({"error": "Invalid power data"}), 400
+
+    try:
+        power_id = power_repo.save_power(power_data)
+
+        # --- CORRECTED: Send multiple triggers back to the client ---
+        # 1. Create a dictionary with ALL events we want to fire on the client.
+        trigger_data = {
+            # "power-saved": f"A power with id {power_id} was saved.",
+            "library-changed": f"Power {power_id} was saved.",
+            "closeSaveModal": True # This event will tell Alpine.js to close the modal.
+        }
+
+        # 2. Convert the dictionary to a JSON string for the header.
+        headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+        # 3. Return the response with the headers.
+        return jsonify({"success": True, "power_id": power_id}), 201, headers
+
+    except Exception as e:
+        print(f"Error saving power for player {player_id}: {e}")
+        return jsonify({"error": "An internal error occurred while saving the power."}), 500
+
+# @app.route('/api/power/<power_id>', methods=['DELETE'])
+# def delete_power_by_id(power_id):
+#     """Deletes a specific power by its ID for the authorized player."""
+#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+#     power_repo = app.config.get('POWER_REPO')
+#
+#     if not player_id or not power_repo:
+#         return jsonify({"error": "Not authorized or repository not configured"}), 500
+#
+#     print(f"Received request to delete power '{power_id}' for player '{player_id}'")
+#
+#     try:
+#         success = power_repo.delete_power(power_id)
+#         if success:
+#             # On successful deletion, return a 200 OK with a success message.
+#             # We will also trigger a library refresh on the client.
+#             trigger_data = {"library-changed": "A power was deleted."}
+#             headers = {"HX-Trigger": json.dumps(trigger_data)}
+#             return jsonify({"success": True, "deleted_id": power_id}), 200, headers
+#         else:
+#             # The power ID was not found for this user.
+#             return jsonify({"error": "Power not found"}), 404
+#     except Exception as e:
+#         print(f"Error deleting power {power_id}: {e}")
+#         return jsonify({"error": "An internal error occurred during deletion."}), 500
+
+@app.route('/api/power/<power_id>', methods=['DELETE'])
+def delete_power_by_id(power_id):
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
+
+    if not player_id or not power_repo:
+        return jsonify({"error": "Not authorized or repository not configured"}), 500
+
+    print(f"Received request to delete power '{power_id}' for player '{player_id}'")
+
+    try:
+        success = power_repo.delete_power(power_id)
+        if success:
+            # --- THIS IS THE FIX ---
+            # Instead of an empty response, we now trigger the 'library-changed' event.
+            trigger_data = {"library-changed": f"Power {power_id} was deleted."}
+            headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+            # Return a 200 OK. The body can be empty. The header does the work.
+            return "", 200, headers
+        else:
+            return jsonify({"error": "Power not found"}), 404
+    except Exception as e:
+        print(f"Error deleting power {power_id}: {e}")
+        return jsonify({"error": "An internal error occurred during deletion."}), 500
+
+@app.route('/api/powers', methods=['GET'])
+def get_powers_list_as_html():
     """
-    Fetches the list of saved powers and renders them as HTML widgets.
-    This route now includes headers to prevent browser caching.
+    Fetches the list of saved powers for the authorized player,
+    groups them by category, and renders them as an HTML fragment using Jinja2.
     """
-    # For now, we'll use a hardcoded list of powers for demonstration.
-    powers_list = [
-        {"name": "Build Bridge", "id": "power-1"},
-        {"name": "Create Tower", "id": "power-2"},
-        {"name": "Fill Area", "id": "power-3"},
-        {"name": "Explode TNT", "id": "power-4"}
-    ]
+    # 1. Get the repository instance from the app config. It's already player-specific.
+    power_repo = app.config.get('POWER_REPO')
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME') # Still useful for logging/context
 
-    widget_template = """
-    <div class="power-widget" id="{{ power.id }}">
-        <span class="power-name">{{ power.name }}</span>
-        <span class="status">Status: Idle</span>
-        <button class="execute-btn"
-                hx-post="/api/execute_power_by_name"
-                hx-vals='{"power_name": "{{ power.name }}"}'
-                hx-target="#{{ power.id }} .status"
-                hx-swap="innerHTML">
-            Execute
-        </button>
-    </div>
+    if not power_repo or not player_id:
+        # Error handling remains the same
+        trigger_data = {"showError": {"errorMessage": "Server not fully configured."}}
+        return make_response("", 500, {"HX-Trigger": json.dumps(trigger_data)})
+
+    # 2. Fetch the flat list of power summaries from the repository.
+    #    No player_id is passed to the method, as requested.
+    powers_summary_list = power_repo.list_powers()
+
+    if not powers_summary_list:
+        return "<p style='padding: 0 10px; color: #666;'>No powers saved yet. Create one!</p>"
+
+    # 3. Process the data: group the flat list of powers by category.
+    powers_by_category = {}
+    for power in powers_summary_list:
+        category = power.get('category', 'Uncategorized')
+        if category not in powers_by_category:
+            powers_by_category[category] = []
+        powers_by_category[category].append(power)
+
+    # 4. Define the Jinja2 template for rendering the library.
+    #    This template includes Alpine.js directives for collapsible sections.
+# Gemini, come on!
+
+
+    library_template_string = """
+    {% for category, powers in categories.items()|sort %}
+      <div class="power-category" x-data="{ open: true }">
+        <h3 @click="open = !open">
+          <span class="category-toggle" x-text="open ? '▼' : '▶'"></span>
+          {{ category }} ({{ powers|length }})
+        </h3>
+        <ul class="power-item-list" x-show="open" x-transition>
+          {% for power in powers %}
+            <li class="power-item" x-data="{ open: false }" id="power-item-{{ power.power_id }}">
+              <div class="power-item-header" @click="open = !open">
+                <span class="power-toggle" x-text="open ? '▼' : '▶'"></span>
+                <span class="power-name">{{ power.name }}</span>
+              </div>
+              <div class="power-item-details" x-show="open" x-transition>
+                <p class="power-description">{{ power.description or 'No description.' }}</p>
+                <div class="power-item-actions">
+
+                  <button class="btn-small"
+                          hx-get="/api/power/{{ power.power_id }}?mode=replace"
+                          hx-swap="none"
+                          title="Clear workspace and load this power">
+                      Load (Replace)
+                  </button>
+                  
+                  <button class="btn-small"
+                          hx-get="/api/power/{{ power.power_id }}?mode=add"
+                          hx-swap="none"
+                          title="Add this power's blocks to the current workspace">
+                      Add to Workspace
+                  </button> 
+                  
+                  <button class="btn-small btn-danger"
+                          @click="$dispatch('open-delete-confirm', { 
+                              powerId: '{{ power.power_id }}', 
+                              powerName: '{{ power.name | replace("'", "\\'") }}' 
+                          })">
+                      Delete
+                  </button>
+                </div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
     """
 
-    html_response_string = "".join([render_template_string(widget_template, power=p) for p in powers_list])
+    # 5. Render the HTML fragment using the template and the grouped data.
+    html_response_string = render_template_string(
+        library_template_string,
+        categories=powers_by_category
+    )
 
-    # --- THIS IS THE FIX ---
-    # 1. Create a response object from our HTML string.
+    # 6. Create the final response with headers to prevent caching.
     response = make_response(html_response_string)
-
-    # 2. Add headers to prevent caching.
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache' # For HTTP/1.0 backward compatibility
-    response.headers['Expires'] = '0' # Expire immediately
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
 
-    # 3. Return the response object.
     return response
+
+@app.route('/api/power/<power_id>', methods=['GET'])
+def get_power_detail(power_id):
+    """
+    Gets the full data for a single power by its ID.
+    Returns the data in an HX-Trigger header for the client-side JS to handle.
+    """
+
+    # Get the 'mode' from the URL's query string (e.g., ?mode=add).
+    # Default to 'replace' if the parameter is missing for any reason.
+    mode = request.args.get('mode', 'replace')
+
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
+
+    if not player_id or not power_repo:
+        # Handle error case
+        err_trigger = {"showError": {"errorMessage": "Server or player not configured."}}
+        return make_response("", 401, {"HX-Trigger": json.dumps(err_trigger)})
+
+    full_power_data = power_repo.get_full_power(power_id)
+
+    if not full_power_data:
+        err_trigger = {"showError": {"errorMessage": f"Power with ID {power_id} not found."}}
+        return make_response("", 404, {"HX-Trigger": json.dumps(err_trigger)})
+
+    # --- NEW: If replacing, set this as the current power in the session ---
+    if mode == 'replace':
+        session['current_power'] = {
+            "power_id": power_id,
+            "name": full_power_data.get("name"),
+            "description": full_power_data.get("description"),
+            "category": full_power_data.get("category")
+        }
+        print(f"Session 'current_power' set to: {full_power_data.get('name')}")
+    # --- The Htmx Event Trigger Response ---
+    # We are defining a custom event 'loadPower' and passing the full power data
+    # and the loading 'mode' inside the event's detail.
+    trigger_data = {
+        "loadPower": {
+            "powerData": full_power_data,
+            "mode": mode # Signal to the client to replace the workspace
+        }
+    }
+
+    headers = {"HX-Trigger": json.dumps(trigger_data)}
+
+    # We don't need to send a body, just the trigger header. Status 204 No Content is perfect.
+    return "", 204, headers
 
 # You will also need a new endpoint for execution by name,
 # which would load the code and then call the existing execute_power_thread.
 @app.route('/execute_power_by_name', methods=['POST'])
 def execute_power_by_name():
+    power_repo = app.config.get('POWER_REPO')
     power_name = request.form.get('power_name')
     print(f"Received request to execute power by name: {power_name}")
 
@@ -208,6 +412,45 @@ def execute_power_by_name():
 
     # Return the initial status update for the widget
     return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
+
+@app.route('/api/ipython_magic', methods=['POST'])
+def execute_ipython_magic():
+    """Receives a magic command and its arguments to be executed in the shell."""
+    data = request.get_json()
+    command = data.get('command')
+    arguments = data.get('arguments', '') # Arguments are the rest of the line
+
+    if not command:
+        return jsonify({"error": "No command provided"}), 400
+
+    # Retrieve the shell instance we stored in the config
+    shell = app.config.get('IPYTHON_SHELL')
+    if not shell:
+        return jsonify({"error": "IPython shell not available in server."}), 500
+
+    # --- Capture stdout to send back to the client ---
+    old_stdout = sys.stdout
+    redirected_output = sys.stdout = StringIO()
+
+    try:
+        # Use run_line_magic to execute the command
+        # It takes the magic name (without %) and the rest of the line as an argument string
+        magic_name = command.lstrip('%')
+        shell.run_line_magic(magic_name, arguments)
+
+        # Get the output that was printed to the console
+        output = redirected_output.getvalue()
+        old_stdout.write(output)
+        return jsonify({"success": True, "output": output})
+
+    except Exception as e:
+        # If the magic itself throws an error, capture it
+        print(f"Error executing magic command '{command}': {e}")
+        return jsonify({"error": str(e)}), 500
+    finally:
+        # ALWAYS restore stdout
+        sys.stdout = old_stdout
+
 # --- Static File Serving ---
 
 @app.route('/')
@@ -235,7 +478,7 @@ def handle_shutdown_request():
 
 # --- CORRECTED Thread Management Functions ---
 
-def start_app_server(server_data,mc_name):
+def start_app_server(server_data,mc_name,ipy_shell):
     """Starts the main Flask-SocketIO application server in a separate thread."""
     # Attach the server_data dict to the Flask app's config object.
     # This makes the data available anywhere we have access to the app context.
@@ -243,6 +486,15 @@ def start_app_server(server_data,mc_name):
     # The Flask server will now start with the correct, non-spoofable identity.
     app.config['MCSHELL_SERVER_DATA'] = server_data
     app.config['MINECRAFT_PLAYER_NAME'] = mc_name
+    app.config['IPYTHON_SHELL'] = ipy_shell # <--- ADD THIS LINE
+
+    # --- Instantiate the chosen repository ---
+    # You can later make this configurable (e.g., via an environment variable)
+    # to switch between JsonFileRepository, SqliteRepository, etc.
+    power_repo = JsonFileRepository(mc_name)
+
+    app.config['POWER_REPO'] = power_repo
+
 
     global app_server_thread
     if app_server_thread and app_server_thread.is_alive():
@@ -296,8 +548,3 @@ def stop_app_server():
         print("Application server thread has shut down successfully.")
 
     app_server_thread = None
-
-# if __name__ == '__main__':
-#     start_app_server()
-#     time.sleep(10)
-#     stop_app_server()

@@ -133,6 +133,19 @@ export function defineMineCraftConstants(Blockly) {
     // MCED.BlocklyUtils.configureShadow(this, "ENTITY_TYPE");
     // MCED.BlocklyUtils.configureShadow(this, "POSITION");
 
+    MCED.Defaults.values['minecraft_action_set_block'] = {
+        BLOCK_TYPE: {
+            // Use the standard miscellaneous picker with STONE as the default
+            shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="MATERIAL_ID">STONE</field></shadow>'
+        },
+        POSITION: {
+            shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
+        }
+    };
+    // Apply the shadows
+    // MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
+    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
+
     // TODO do we even need this stuff??
     // Add Blockly.ALIGN_RIGHT
     Blockly.ALIGN_RIGHT = 'RIGHT'; //<-- Assign to Blockly.ALIGN_RIGHT
