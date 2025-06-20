@@ -1277,7 +1277,7 @@ async function init() {
         });
     }
 
-    // --- Add the event listener for loading powers ---
+
     document.body.addEventListener('loadPower', function(event) {
         if (!event.detail || !event.detail.powerData) {
             console.error("loadPower event triggered without powerData.", event.detail);
@@ -1285,31 +1285,61 @@ async function init() {
         }
 
         const powerData = event.detail.powerData;
-        const mode = event.detail.mode; // 'replace' or 'add'
+        const mode = event.detail.mode;
 
         console.log(`Received power to load: '${powerData.name}' in '${mode}' mode.`);
 
-        // Check if there is actual block data to load
-        if (!powerData.blockly_json) {
+        if (!powerData.blockly_json || !powerData.blockly_json.blocks || !Array.isArray(powerData.blockly_json.blocks.blocks)) {
             alert(`Error: The power '${powerData.name}' has no saved block data.`);
             return;
         }
 
         try {
             if (mode === 'replace') {
-                // Confirm with the user before overwriting their work
                 if (workspace.getAllBlocks(false).length > 0) {
                     if (!confirm("This will replace your current workspace. Are you sure?")) {
-                        return; // User clicked cancel
+                        return;
                     }
                 }
                 workspace.clear();
+                Blockly.serialization.workspaces.load(powerData.blockly_json, workspace);
+                console.log("Workspace replaced successfully.");
+
+            } else { // mode === 'add'
+
+                // --- CORRECTED APPEND AND POSITIONING LOGIC ---
+                console.log("Appending blocks to workspace...");
+
+                // Get the array of top-level block definitions from the JSON.
+                const topBlocksJson = powerData.blockly_json.blocks.blocks;
+
+                // 1. Get the metrics of the visible workspace area.
+                const metrics = workspace.getMetrics();
+
+                // 2. Define a starting position for the new blocks, e.g., top-left of the view.
+                //    Add a small offset to avoid placing blocks right at the edge.
+                const PADDING = 20;
+                let cursorX = metrics.viewLeft + PADDING;
+                let cursorY = metrics.viewTop + PADDING;
+
+                // 3. Iterate through each top-level block definition in the array.
+                for (const blockJson of topBlocksJson) {
+                    // Set the position for the new block stack.
+                    blockJson.x = cursorX;
+                    blockJson.y = cursorY;
+
+                    // 4. Use blocks.append to add the block structure.
+                    Blockly.serialization.blocks.append(blockJson, workspace);
+
+                    // 5. Update the cursor position for the next block stack to avoid overlap.
+                    //    This creates a cascading effect.
+                    cursorY += PADDING * 2;
+                }
+                console.log(`Appended ${topBlocksJson.length} new block stack(s) to the workspace.`);
+                // --- END OF CORRECTED LOGIC ---
             }
 
-            // Load the new blocks from the 'blockly_json' field of the power data
-            Blockly.serialization.workspaces.load(powerData.blockly_json, workspace);
-
-            // After loading, update the autosave with this new state
+            // After loading, update the autosave with this new combined state
             autosaveWorkspace();
 
         } catch (e) {
@@ -1317,7 +1347,6 @@ async function init() {
             alert("Could not load the power. The file may be corrupted.");
         }
     });
-
     // --- TEMPORARY DEBUGGING LISTENER ---
     // Add this anywhere inside the init() function.
     document.body.addEventListener('library-changed', (event) => {

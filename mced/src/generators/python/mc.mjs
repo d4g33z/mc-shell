@@ -345,7 +345,6 @@ ${indentedBlockCode}
     };
 
 
-
     pythonGenerator.forBlock['minecraft_action_spawn_entity'] = function(block, generator) {
         // Get the code for the connected value inputs, with defaults
         const entityType = generator.valueToCode(block, 'ENTITY_TYPE', generator.ORDER_ATOMIC) || "'PIG'";

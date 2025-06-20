@@ -291,13 +291,18 @@ def get_powers_list_as_html():
                 <div class="power-item-actions">
 
                   <button class="btn-small"
-                          hx-get="/api/power/{{ power.power_id }}"
+                          hx-get="/api/power/{{ power.power_id }}?mode=replace"
                           hx-swap="none"
                           title="Clear workspace and load this power">
                       Load (Replace)
                   </button>
                   
-                  <button class="btn-small">Add to Workspace</button>
+                  <button class="btn-small"
+                          hx-get="/api/power/{{ power.power_id }}?mode=add"
+                          hx-swap="none"
+                          title="Add this power's blocks to the current workspace">
+                      Add to Workspace
+                  </button> 
                   
                   <button class="btn-small btn-danger"
                           @click="$dispatch('open-delete-confirm', { 
@@ -335,6 +340,11 @@ def get_power_detail(power_id):
     Gets the full data for a single power by its ID.
     Returns the data in an HX-Trigger header for the client-side JS to handle.
     """
+
+    # Get the 'mode' from the URL's query string (e.g., ?mode=add).
+    # Default to 'replace' if the parameter is missing for any reason.
+    mode = request.args.get('mode', 'replace')
+
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
     power_repo = app.config.get('POWER_REPO')
 
@@ -355,7 +365,7 @@ def get_power_detail(power_id):
     trigger_data = {
         "loadPower": {
             "powerData": full_power_data,
-            "mode": "replace" # Signal to the client to replace the workspace
+            "mode": mode # Signal to the client to replace the workspace
         }
     }
 
