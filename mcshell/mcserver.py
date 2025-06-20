@@ -185,9 +185,34 @@ def save_new_power():
         print(f"Error saving power for player {player_id}: {e}")
         return jsonify({"error": "An internal error occurred while saving the power."}), 500
 
+# @app.route('/api/power/<power_id>', methods=['DELETE'])
+# def delete_power_by_id(power_id):
+#     """Deletes a specific power by its ID for the authorized player."""
+#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+#     power_repo = app.config.get('POWER_REPO')
+#
+#     if not player_id or not power_repo:
+#         return jsonify({"error": "Not authorized or repository not configured"}), 500
+#
+#     print(f"Received request to delete power '{power_id}' for player '{player_id}'")
+#
+#     try:
+#         success = power_repo.delete_power(power_id)
+#         if success:
+#             # On successful deletion, return a 200 OK with a success message.
+#             # We will also trigger a library refresh on the client.
+#             trigger_data = {"library-changed": "A power was deleted."}
+#             headers = {"HX-Trigger": json.dumps(trigger_data)}
+#             return jsonify({"success": True, "deleted_id": power_id}), 200, headers
+#         else:
+#             # The power ID was not found for this user.
+#             return jsonify({"error": "Power not found"}), 404
+#     except Exception as e:
+#         print(f"Error deleting power {power_id}: {e}")
+#         return jsonify({"error": "An internal error occurred during deletion."}), 500
+
 @app.route('/api/power/<power_id>', methods=['DELETE'])
 def delete_power_by_id(power_id):
-    """Deletes a specific power by its ID for the authorized player."""
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
     power_repo = app.config.get('POWER_REPO')
 
@@ -199,13 +224,14 @@ def delete_power_by_id(power_id):
     try:
         success = power_repo.delete_power(power_id)
         if success:
-            # On successful deletion, return a 200 OK with a success message.
-            # We will also trigger a library refresh on the client.
-            trigger_data = {"library-changed": "A power was deleted."}
+            # --- THIS IS THE FIX ---
+            # Instead of an empty response, we now trigger the 'library-changed' event.
+            trigger_data = {"library-changed": f"Power {power_id} was deleted."}
             headers = {"HX-Trigger": json.dumps(trigger_data)}
-            return jsonify({"success": True, "deleted_id": power_id}), 200, headers
+
+            # Return a 200 OK. The body can be empty. The header does the work.
+            return "", 200, headers
         else:
-            # The power ID was not found for this user.
             return jsonify({"error": "Power not found"}), 404
     except Exception as e:
         print(f"Error deleting power {power_id}: {e}")
@@ -243,6 +269,9 @@ def get_powers_list_as_html():
 
     # 4. Define the Jinja2 template for rendering the library.
     #    This template includes Alpine.js directives for collapsible sections.
+# Gemini, come on!
+
+
     library_template_string = """
     {% for category, powers in categories.items()|sort %}
       <div class="power-category" x-data="{ open: true }">
@@ -269,10 +298,11 @@ def get_powers_list_as_html():
                   </button>
                   
                   <button class="btn-small">Add to Workspace</button>
+                  
                   <button class="btn-small btn-danger"
                           @click="$dispatch('open-delete-confirm', { 
                               powerId: '{{ power.power_id }}', 
-                              powerName: '{{ power.name | replace("'", "\\'") }}'
+                              powerName: '{{ power.name | replace("'", "\\'") }}' 
                           })">
                       Delete
                   </button>
