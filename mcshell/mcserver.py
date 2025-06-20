@@ -3,7 +3,7 @@ import threading
 from threading import Thread, Event
 from io import StringIO
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_socketio import SocketIO
 from flask import Flask, render_template_string, make_response
 
@@ -21,6 +21,8 @@ class ServerShutdownException(Exception):
 # --- Server Setup ---
 app = Flask(__name__, static_folder=str(MC_APP_DIR)) # Serve files from Parcel's build output
 socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_mode='threading')
+
+app.secret_key = str(uuid.uuid4())
 
 import logging
 # --- Suppress Flask's Default Console Logging ---
@@ -359,6 +361,15 @@ def get_power_detail(power_id):
         err_trigger = {"showError": {"errorMessage": f"Power with ID {power_id} not found."}}
         return make_response("", 404, {"HX-Trigger": json.dumps(err_trigger)})
 
+    # --- NEW: If replacing, set this as the current power in the session ---
+    if mode == 'replace':
+        session['current_power'] = {
+            "power_id": power_id,
+            "name": full_power_data.get("name"),
+            "description": full_power_data.get("description"),
+            "category": full_power_data.get("category")
+        }
+        print(f"Session 'current_power' set to: {full_power_data.get('name')}")
     # --- The Htmx Event Trigger Response ---
     # We are defining a custom event 'loadPower' and passing the full power data
     # and the loading 'mode' inside the event's detail.
