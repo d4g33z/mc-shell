@@ -1095,6 +1095,20 @@ async function init() {
         <block type="minecraft_picker_entity_utility_and_special"></block>
     </category>
     <category name="World Actions" colour="#4C97FF">
+        <block type="minecraft_action_set_block">
+            <value name="BLOCK_TYPE">
+                <shadow type="minecraft_picker_miscellaneous">
+                    <field name="MATERIAL_ID">STONE</field>
+                </shadow>
+            </value>
+            <value name="POSITION">
+                <shadow type="minecraft_vector_3d">
+                    <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                    <value name="Y"><shadow type="math_number"><field name="NUM">5</field></shadow></value>
+                    <value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                </shadow>
+            </value>
+        </block>
         <block type="minecraft_action_spawn_entity">
             <value name="ENTITY_TYPE">
                 <shadow type="minecraft_picker_entity_passive_mobs">

@@ -356,4 +356,15 @@ ${indentedBlockCode}
 
         return code;
     };
+
+    pythonGenerator.forBlock['minecraft_action_set_block'] = function(block, generator) {
+        // Get the code for the connected value inputs, with defaults
+        const blockType = generator.valueToCode(block, 'BLOCK_TYPE', generator.ORDER_ATOMIC) || "'STONE'";
+        const position = generator.valueToCode(block, 'POSITION', generator.ORDER_ATOMIC) || "Vec3(0, 0, 0)";
+
+        // Construct the Python code string using keyword arguments
+        const code = `self.action_implementer.set_block(position_vec3=${position}, block_type=${blockType})\n`;
+
+        return code;
+    };
 }

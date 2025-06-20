@@ -452,5 +452,25 @@ export function defineMineCraftBlocks(Blockly) {
 
       }
     };
+
+    Blockly.Blocks['minecraft_action_set_block'] = {
+      init: function() {
+        this.appendValueInput("BLOCK_TYPE")
+            .setCheck("Block")
+            .appendField("set block"); // Label is concise
+        this.appendValueInput("POSITION")
+            .setCheck("3DVector")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("at");
+
+        this.setPreviousStatement(true, null); // It's an action, so it connects to other statements
+        this.setNextStatement(true, null);
+        this.setColour(65); // The "action" color
+        this.setTooltip("Places a single block at a specified location.");
+        this.setInputsInline(true); // Makes the block more compact and readable
+
+      }
+    };
+
 }
 
