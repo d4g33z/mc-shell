@@ -1372,6 +1372,20 @@ async function init() {
     // Also resize when the window resizes
     window.addEventListener('resize', debouncedResize);
 
+    // --- NEW: A dedicated function to trigger a Blockly resize ---
+    const triggerBlocklyResize = debounce(() => {
+        if (workspace) {
+            console.log("Triggering Blockly resize...");
+            // This is the official Blockly API to notify it of a container size change.
+            Blockly.svgResize(workspace);
+        }
+    }, 100); // A 100ms debounce is plenty
+
+    window.triggerBlocklyResize = triggerBlocklyResize;
+
+    // --- Update the existing window resize listener to use the new helper ---
+    window.addEventListener('resize', triggerBlocklyResize);
+    
     // --- TEMPORARY DEBUGGING LISTENER ---
     // Add this anywhere inside the init() function.
     document.body.addEventListener('library-changed', (event) => {

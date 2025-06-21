@@ -18,9 +18,17 @@
 <!--                <h2>Power Library</h2>-->
                 <div class="panel-header">
                     <h2 x-show="!isLibraryCollapsed">Power Library</h2>
-                    <button class="toggle-btn" @click="isLibraryCollapsed = !isLibraryCollapsed" title="Toggle Library Panel">
+                        <button class="toggle-btn"
+                            @click="
+                                isLibraryCollapsed = !isLibraryCollapsed;
+                                triggerBlocklyResize();
+                            "
+                            title="Toggle Library Panel">
                         <span x-text="isLibraryCollapsed ? '▶' : '◀'"></span>
                     </button>
+<!--                    <button class="toggle-btn" @click="isLibraryCollapsed = !isLibraryCollapsed" title="Toggle Library Panel">-->
+<!--                        <span x-text="isLibraryCollapsed ? '▶' : '◀'"></span>-->
+<!--                    </button>-->
                 </div>
                 <div id="power-list"
                      hx-get="/api/powers"
@@ -46,7 +54,12 @@
                     <div id="blocklyDiv"></div>
                     <div class="panel-header code-header">
                         <span>Python Code</span>
-                        <button class="toggle-btn" @click="isCodeCollapsed = !isCodeCollapsed" title="Toggle Code Preview">
+                        <button class="toggle-btn"
+                                @click="
+                                    isCodeCollapsed = !isCodeCollapsed;
+                                    triggerBlocklyResize();
+                                "
+                                title="Toggle Code Preview">
                             <span x-text="isCodeCollapsed ? '▲' : '▼'"></span>
                         </button>
                     </div>
