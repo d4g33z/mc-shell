@@ -1347,6 +1347,45 @@ async function init() {
             alert("Could not load the power. The file may be corrupted.");
         }
     });
+
+    // --- Logic to handle resizing Blockly when panels collapse ---
+
+    // Find the toggle buttons
+    const libraryToggleBtn = document.querySelector('#power-library-panel .toggle-btn');
+    const codeToggleBtn = document.querySelector('#editor-preview-pane .toggle-btn');
+
+    // Create a debounced resize function
+    const debouncedResize = debounce(() => {
+        console.log("Resizing Blockly canvas...");
+        // This is the official Blockly API to notify it of a resize.
+        Blockly.svgResize(workspace);
+    }, 100); // A short debounce is fine here
+
+    // When either toggle button is clicked, call the resize function
+    if (libraryToggleBtn) {
+        libraryToggleBtn.addEventListener('click', debouncedResize);
+    }
+    if (codeToggleBtn) {
+        codeToggleBtn.addEventListener('click', debouncedResize);
+    }
+
+    // Also resize when the window resizes
+    window.addEventListener('resize', debouncedResize);
+
+    // --- NEW: A dedicated function to trigger a Blockly resize ---
+    const triggerBlocklyResize = debounce(() => {
+        if (workspace) {
+            console.log("Triggering Blockly resize...");
+            // This is the official Blockly API to notify it of a container size change.
+            Blockly.svgResize(workspace);
+        }
+    }, 100); // A 100ms debounce is plenty
+
+    window.triggerBlocklyResize = triggerBlocklyResize;
+
+    // --- Update the existing window resize listener to use the new helper ---
+    window.addEventListener('resize', triggerBlocklyResize);
+    
     // --- TEMPORARY DEBUGGING LISTENER ---
     // Add this anywhere inside the init() function.
     document.body.addEventListener('library-changed', (event) => {

@@ -179,3 +179,97 @@ html, body {
     opacity: 0;
     transform: translate(-50%, -50%) scale(0.95);
 }
+
+/* In src/editor.css */
+
+/* --- ADD these styles for the collapsible logic --- */
+
+/* Add a transition to the grid layout for smooth sidebar animation */
+.editor-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    transition: grid-template-columns 0.25s ease-in-out;
+    /* ... other existing styles ... */
+}
+
+/* When the library is collapsed, animate the grid column to a small width */
+.editor-layout.library-collapsed {
+    grid-template-columns: 45px 1fr; /* Shrink to just wide enough for the button */
+}
+
+/* Add a transition for the code container's height and padding */
+#code-container {
+    transition: height 0.25s ease-in-out, padding 0.25s ease-in-out, border 0.25s ease-in-out;
+    /* ... all your other existing styles for #code-container ... */
+}
+
+/* When the code pane is collapsed, set the code container's height to 0 */
+#editor-preview-pane.code-pane-collapsed #code-container {
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+}
+
+/* --- You may also need to add these styles for the new panel-header --- */
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+    flex-shrink: 0; /* Prevent header from shrinking when content scrolls */
+}
+#power-library-panel h2 {
+    padding: 0; /* Remove padding from h2 since it's now in panel-header */
+    border-bottom: none;
+    margin: 0;
+    font-size: 16px;
+}
+.code-header {
+    padding: 4px 10px;
+    background-color: #f7f7f7;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    color: #555;
+    font-size: 13px;
+    font-weight: 500;
+}
+.toggle-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 6px;
+}
+.toggle-btn:hover {
+    background-color: #e0e0e0;
+}
+
+
+/* --- THE FIX --- */
+
+/* When the parent pane is marked as collapsed... */
+#editor-preview-pane.code-pane-collapsed .code-header {
+    /* You might want to keep the header visible to allow re-opening,
+       but we can hide the text inside it if we want.
+       Or just let it be. The toggle button is what matters. */
+}
+
+/* ...target the code container and set its height to 0. */
+/* This makes it take up no space in the flex layout. */
+#editor-preview-pane.code-pane-collapsed #code-container {
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-width: 0;
+    overflow: hidden; /* Hide scrollbars during collapse */
+}
+
+/*
+Because #code-container now takes up 0 height, the #blocklyDiv (with its flex-grow: 1)
+will automatically expand to fill the space that was just freed up inside the
+#editor-preview-pane flex container.
+*/
