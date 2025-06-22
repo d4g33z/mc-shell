@@ -2,23 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>MC-ED Control</title>
 
     <link rel="stylesheet" href="./control.css">
-    <script type="module" src="./control.js"></script>
-
 </head>
-    <body>
-        <header>
-            <h1>MC-ED Control Panel</h1>
-        </header>
+<body x-data>
 
-        <main>
-            <div id="power-grid"
-                 hx-get="/api/powers" hx-trigger="load"    hx-swap="innerHTML">
-                <div class="loading-indicator">Loading Powers...</div>
+    <header>
+        <h1>MC-ED Control Panel</h1>
+        <button hx-get="/api/control/powers" hx-target="#control-library-list"
+                hx-swap="innerHTML">
+            Add Power to Grid
+        </button>
+    </header>
+    <main>
+        <div id="control-grid"></div>
+    </main>
+    <div id="control-library-panel">
+        <h2>Available Powers</h2>
+        <div id="control-library-list">
             </div>
-        </main>
-    </body>
+    </div>
+
+    <script type="module" src="./control.js"></script>
+</body>
 </html>

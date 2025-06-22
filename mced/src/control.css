@@ -1,15 +1,19 @@
-/* Basic styles for the control page */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #2c2c2e;
-    color: #f2f2f7;
+/* src/control.css */
+
+/* Basic styles for a dark-themed, touch-friendly UI */
+html, body {
+    height: 100vh;
     margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #1c1c1e; /* Dark background */
+    color: #f2f2f7;
+    overflow-x: hidden;
 }
 
 header {
     padding: 10px 20px;
-    background-color: #1c1c1e;
-    border-bottom: 1px solid #444;
+    background-color: #2c2c2e;
+    border-bottom: 1px solid #38383a;
 }
 
 main {
@@ -19,18 +23,18 @@ main {
 /* The Grid for Power Widgets */
 #power-grid {
     display: grid;
-    /* Create responsive columns: minimum 150px wide, max 1fr (take up equal space) */
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    /* Create responsive columns that are at least 180px wide */
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
     gap: 20px; /* Space between widgets */
 }
 
-/* Styling for a single Power Widget */
+/* Initial styling for a Power Widget card */
 .power-widget {
     background-color: #3a3a3c;
     border-radius: 12px;
     padding: 15px;
     text-align: center;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -38,28 +42,6 @@ main {
 
 .power-widget .power-name {
     font-weight: 600;
+    font-size: 18px;
     margin-bottom: 15px;
-}
-
-.power-widget .execute-btn {
-    background-color: #0a84ff;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 16px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.power-widget .execute-btn:hover {
-    background-color: #3499ff;
-}
-
-.power-widget .status {
-    font-size: 12px;
-    color: #8e8e93;
-    margin-top: 10px;
-    min-height: 1.2em; /* Reserve space for status text */
 }
