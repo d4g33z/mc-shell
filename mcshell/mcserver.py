@@ -239,8 +239,50 @@ def delete_power_by_id(power_id):
         print(f"Error deleting power {power_id}: {e}")
         return jsonify({"error": "An internal error occurred during deletion."}), 500
 
-@app.route('/api/powers', methods=['GET'])
-def get_powers_list_as_html():
+@app.route('/api/control/powers', methods=['GET'])
+def get_powers_for_control_panel():
+    """
+    Fetches power summaries and renders them as a simple list with "Add" buttons,
+    specifically for the control UI's library panel.
+    """
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
+    if not player_id or not power_repo:
+        return "<p>Error: Not authorized</p>", 401
+
+    powers_summary_list = power_repo.list_powers()
+
+    # This template is simpler than the editor's.
+    # Its only job is to provide a button to add a widget to the control grid.
+    control_library_template = """
+    <h4>Available Powers</h4>
+    <ul>
+    {% for power in powers %}
+        <li class="control-library-item">
+            <span>{{ power.name }}</span>
+            <button class="btn-small"
+                    hx-get="/api/control_widget/{{ power.power_id }}"
+                    hx-target="#control-grid"
+                    hx-swap="beforeend">
+                Add to Grid
+            </button>
+        </li>
+    {% endfor %}
+    </ul>
+    """
+
+    html_response_string = render_template_string(
+        control_library_template,
+        powers=powers_summary_list
+    )
+
+    response = make_response(html_response_string)
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Expires'] = '0'
+    return response
+
+@app.route('/api/editor/powers', methods=['GET'])
+def get_powers_for_editor_sidebar():
     """
     Fetches the list of saved powers for the authorized player,
     groups them by category, and renders them as an HTML fragment using Jinja2.
