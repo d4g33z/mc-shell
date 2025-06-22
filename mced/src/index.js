@@ -279,17 +279,14 @@ async function init() {
      * Gathers data from the editor modal and the Blockly workspace,
      * then POSTs the complete "Power Object" to the server.
      */
+
+
     async function handleSavePower() {
         console.log("Handling save power...");
 
-        // 1. Get the form element itself
+        // Get metadata from the modal form
         const formElement = document.getElementById('savePowerForm');
-        if (!formElement) {
-            console.error("Save Power form not found!");
-            return;
-        }
-
-        // 2. Use the FormData API to easily get all form values into an object
+        if (!formElement) { return; }
         const formData = new FormData(formElement);
         const formDataObject = Object.fromEntries(formData.entries());
 
@@ -298,23 +295,53 @@ async function init() {
             return;
         }
 
-        // 3. Get the current state of the Blockly workspace
+        // Get the workspace state and generated code
         const blocklyJson = Blockly.serialization.workspaces.save(workspace);
         const pythonCode = pythonGenerator.workspaceToCode(workspace);
 
-        // 4. Assemble the complete "Power Object" by merging the form data and workspace data
+        // --- CORRECTED: Extract Parameters from the LIVE Function Block ---
+        let powerParameters = [];
+        // Get all top-level blocks from the live workspace
+        const topBlocks = workspace.getTopBlocks(false);
+
+        // Find the first function definition block among the top-level blocks
+        const funcDefBlock = topBlocks.find(b =>
+            b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn'
+        );
+
+        if (funcDefBlock) {
+            console.log("Found function definition block, extracting parameters...");
+            // getVars() is the correct method to get the argument names from the live block instance.
+            const argNames = funcDefBlock.getVars();
+
+            if (argNames.length > 0) {
+                powerParameters = argNames.map(argName => {
+                    console.log(`- Found parameter: ${argName}`);
+                    return {
+                        name: argName,
+                        type: 'Number', // Defaulting type for now
+                        default: 0      // Defaulting value for now
+                    };
+                });
+            }
+        } else {
+            console.log("No function definition block found in workspace. Saving as a simple power.");
+        }
+        // --- END OF CORRECTION ---
+
+        // Assemble the complete "Power Object"
         const powerDataObject = {
             name: formDataObject.name,
             description: formDataObject.description,
             category: formDataObject.category || "General",
+            power_id: formDataObject.power_id || null,
             blockly_json: blocklyJson,
             python_code: pythonCode,
-            parameters: [] // Placeholder for now
+            parameters: powerParameters // Add the correctly extracted parameters
         };
 
         console.log("Sending power data to server:", powerDataObject);
 
-        // 5. POST the complete object to the new Flask endpoint
         try {
             const response = await fetch('/api/powers', {
                 method: 'POST',
@@ -326,15 +353,10 @@ async function init() {
                 const result = await response.json();
                 console.log("Power saved successfully!", result);
                 alert(`Power "${formDataObject.name}" saved successfully!`);
-                // // Announce that the modal should close AND that #power-list should reload
-                // console.log("Save successful. Dispatching 'power-saved' event.");
-                // window.dispatchEvent(new CustomEvent('power-saved', { bubbles: true }));
 
-                // Dispatch the standardized 'power-saved' event.
-                // The #power-list div will hear this because of "from:document".
-                console.log("Save successful. Dispatching 'library-changed' event.");
-                // Dispatching on window or body is fine, as it will bubble up to the document.
+                // Dispatch the standardized 'library-changed' event
                 window.dispatchEvent(new CustomEvent('library-changed', { bubbles: true }));
+
             } else {
                 console.error('Error saving power:', response.status, await response.text());
                 alert('Failed to save power. See console for details.');
@@ -344,7 +366,6 @@ async function init() {
             alert('Network error. Could not save power.');
         }
     }
-
 
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
