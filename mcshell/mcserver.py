@@ -156,40 +156,6 @@ def cancel_power():
     else:
         return jsonify({"error": "Invalid or unknown power_id"}), 404
 
-@app.route('/api/powers', methods=['POST'])
-def save_new_power():
-    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-    power_repo = app.config.get('POWER_REPO')
-
-    if not power_repo or not player_id:
-        trigger_data = {"showError": {"errorMessage": "Server not fully configured."}}
-        return make_response("", 500, {"HX-Trigger": json.dumps(trigger_data)})
-
-    power_data = request.get_json()
-    if not power_data or not power_data.get("name"):
-        return jsonify({"error": "Invalid power data"}), 400
-
-    try:
-        power_id = power_repo.save_power(power_data)
-
-        # --- CORRECTED: Send multiple triggers back to the client ---
-        # 1. Create a dictionary with ALL events we want to fire on the client.
-        trigger_data = {
-            # "power-saved": f"A power with id {power_id} was saved.",
-            "library-changed": f"Power {power_id} was saved.",
-            "closeSaveModal": True # This event will tell Alpine.js to close the modal.
-        }
-
-        # 2. Convert the dictionary to a JSON string for the header.
-        headers = {"HX-Trigger": json.dumps(trigger_data)}
-
-        # 3. Return the response with the headers.
-        return jsonify({"success": True, "power_id": power_id}), 201, headers
-
-    except Exception as e:
-        print(f"Error saving power for player {player_id}: {e}")
-        return jsonify({"error": "An internal error occurred while saving the power."}), 500
-
 @app.route('/api/power/<power_id>', methods=['DELETE'])
 def delete_power_by_id(power_id):
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
