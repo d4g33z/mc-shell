@@ -6,7 +6,7 @@
   "scripts": {
     "start": "parcel",
     "start:control": "parcel src/control.html",
-    "build": "parcel build"
+    "build": "parcel build src/index.html src/control.html"
   },
   "dependencies": {
     "alpinejs": "^3.14.9",
