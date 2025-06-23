@@ -123,6 +123,9 @@ def execute_power():
     data = request.get_json()
     power_id = data.get('power_id')
 
+    # --- ADD THIS FOR TESTING ---
+    print(f"--- Received /execute_power request with data ---\n{json.dumps(data, indent=2)}")
+
     if not all([power_id, player_name]):
         return jsonify({"error": "Missing power_id or not authorized"}), 400
 
@@ -140,32 +143,6 @@ def execute_power():
     # thread = Thread(target=execute_power_thread, args=(python_code, ...))
     # ...
     return jsonify({"status": "dispatched", "power_id": power_id})
-
-@app.route('/execute_power_by_name', methods=['POST'])
-def execute_power_by_name():
-    power_repo = app.config.get('POWER_REPO')
-    power_name = request.form.get('power_name')
-    print(f"Received request to execute power by name: {power_name}")
-
-    # 1. Load the power's code from your repository
-    # python_code = power_repo.load_power(player_id, power_name)
-    # For now, just a placeholder:
-    python_code = f"# This is the placeholder code for '{power_name}'"
-
-    # 2. Reuse the existing threading logic to execute the code
-    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
-    server_data = app.config.get('MCSHELL_SERVER_DATA')
-    power_id = str(uuid.uuid4())
-    cancel_event = Event()
-
-    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event, server_data))
-    thread.daemon = True
-    thread.start()
-
-    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
-
-    # Return the initial status update for the widget
-    return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
 
 @app.route('/cancel_power', methods=['POST'])
 def cancel_power():
