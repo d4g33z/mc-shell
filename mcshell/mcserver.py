@@ -141,6 +141,32 @@ def execute_power():
     # ...
     return jsonify({"status": "dispatched", "power_id": power_id})
 
+@app.route('/execute_power_by_name', methods=['POST'])
+def execute_power_by_name():
+    power_repo = app.config.get('POWER_REPO')
+    power_name = request.form.get('power_name')
+    print(f"Received request to execute power by name: {power_name}")
+
+    # 1. Load the power's code from your repository
+    # python_code = power_repo.load_power(player_id, power_name)
+    # For now, just a placeholder:
+    python_code = f"# This is the placeholder code for '{power_name}'"
+
+    # 2. Reuse the existing threading logic to execute the code
+    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
+    server_data = app.config.get('MCSHELL_SERVER_DATA')
+    power_id = str(uuid.uuid4())
+    cancel_event = Event()
+
+    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event, server_data))
+    thread.daemon = True
+    thread.start()
+
+    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
+
+    # Return the initial status update for the widget
+    return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
+
 @app.route('/cancel_power', methods=['POST'])
 def cancel_power():
     data = request.get_json()
@@ -186,32 +212,6 @@ def save_new_power():
     except Exception as e:
         print(f"Error saving power for player {player_id}: {e}")
         return jsonify({"error": "An internal error occurred while saving the power."}), 500
-
-# @app.route('/api/power/<power_id>', methods=['DELETE'])
-# def delete_power_by_id(power_id):
-#     """Deletes a specific power by its ID for the authorized player."""
-#     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
-#     power_repo = app.config.get('POWER_REPO')
-#
-#     if not player_id or not power_repo:
-#         return jsonify({"error": "Not authorized or repository not configured"}), 500
-#
-#     print(f"Received request to delete power '{power_id}' for player '{player_id}'")
-#
-#     try:
-#         success = power_repo.delete_power(power_id)
-#         if success:
-#             # On successful deletion, return a 200 OK with a success message.
-#             # We will also trigger a library refresh on the client.
-#             trigger_data = {"library-changed": "A power was deleted."}
-#             headers = {"HX-Trigger": json.dumps(trigger_data)}
-#             return jsonify({"success": True, "deleted_id": power_id}), 200, headers
-#         else:
-#             # The power ID was not found for this user.
-#             return jsonify({"error": "Power not found"}), 404
-#     except Exception as e:
-#         print(f"Error deleting power {power_id}: {e}")
-#         return jsonify({"error": "An internal error occurred during deletion."}), 500
 
 @app.route('/api/power/<power_id>', methods=['DELETE'])
 def delete_power_by_id(power_id):
@@ -280,6 +280,69 @@ def get_powers_for_control_panel():
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Expires'] = '0'
     return response
+
+@app.route('/api/control_widget/<power_id>')
+def get_control_widget(power_id):
+    """
+    Loads a power's full metadata and renders the HTML for its
+    interactive control widget.
+    """
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
+    power_data = power_repo.get_full_power(power_id)
+
+    if not power_data:
+        return "<div class='error'>Power not found.</div>", 404
+
+    # This Jinja2 template dynamically builds the widget based on the power's metadata
+    widget_template = """
+    <div class="power-widget" id="widget-{{ power.power_id }}" x-data>
+        <div class="power-header">
+            <span class="power-name">{{ power.name }}</span>
+            </div>
+
+        <form class="power-params" id="form-{{ power.power_id }}">
+            {% for param in power.parameters %}
+                <div class="param-control">
+                    <label for="param-{{ power.power_id }}-{{ param.name }}">{{ param.name }}:</label>
+                    
+                    {# Dynamically render the correct input based on parameter type #}
+                    {% if param.type == 'Number' %}
+                        <div class="param-slider">
+                            <input type="range" name="{{ param.name }}" value="{{ param.default }}" min="1" max="100"
+                                   oninput="this.nextElementSibling.value = this.value">
+                            <output>{{ param.default }}</output>
+                        </div>
+                    {% elif param.type == 'Block' %}
+                        <select name="{{ param.name }}">
+                            {# This should be populated with a relevant list of blocks #}
+                            <option value="STONE" {% if param.default == 'STONE' %}selected{% endif %}>Stone</option>
+                            <option value="OAK_PLANKS" {% if param.default == 'OAK_PLANKS' %}selected{% endif %}>Oak Planks</option>
+                            <option value="GLASS" {% if param.default == 'GLASS' %}selected{% endif %}>Glass</option>
+                            <option value="DIAMOND_BLOCK" {% if param.default == 'DIAMOND_BLOCK' %}selected{% endif %}>Diamond Block</option>
+                        </select>
+                    {# Add more elif cases here for Entity, MinecraftColour, String etc. #}
+                    {% else %}
+                        <input type="text" name="{{ param.name }}" value="{{ param.default or '' }}">
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </form>
+        
+        <div class="power-status" id="status-{{ power.power_id }}">Status: Idle</div>
+        
+        <button class="execute-btn"
+                hx-post="/api/execute_power"
+                hx-include="#form-{{ power.power_id }}"
+                hx-vals='{"power_id": "{{ power.power_id }}"}'
+                hx-target="#status-{{ power.power_id }}"
+                hx-swap="innerHTML">
+            Execute
+        </button>
+    </div>
+    """
+
+    return render_template_string(widget_template, power=power_data)
 
 @app.route('/api/editor/powers', methods=['GET'])
 def get_powers_for_editor_sidebar():
@@ -427,34 +490,6 @@ def get_power_detail(power_id):
     # We don't need to send a body, just the trigger header. Status 204 No Content is perfect.
     return "", 204, headers
 
-# You will also need a new endpoint for execution by name,
-# which would load the code and then call the existing execute_power_thread.
-@app.route('/execute_power_by_name', methods=['POST'])
-def execute_power_by_name():
-    power_repo = app.config.get('POWER_REPO')
-    power_name = request.form.get('power_name')
-    print(f"Received request to execute power by name: {power_name}")
-
-    # 1. Load the power's code from your repository
-    # python_code = power_repo.load_power(player_id, power_name)
-    # For now, just a placeholder:
-    python_code = f"# This is the placeholder code for '{power_name}'"
-
-    # 2. Reuse the existing threading logic to execute the code
-    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
-    server_data = app.config.get('MCSHELL_SERVER_DATA')
-    power_id = str(uuid.uuid4())
-    cancel_event = Event()
-
-    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event, server_data))
-    thread.daemon = True
-    thread.start()
-
-    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
-
-    # Return the initial status update for the widget
-    return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
-
 @app.route('/api/ipython_magic', methods=['POST'])
 def execute_ipython_magic():
     """Receives a magic command and its arguments to be executed in the shell."""
@@ -505,6 +540,10 @@ def serve_static(path):
     # Serve any other static files (JS, CSS) from the 'dist' directory
     return send_from_directory(app.static_folder, path)
 
+
+
+
+# -- Server Control ---
 app_server_thread = None
 
 # --- NEW SOCKET.IO SHUTDOWN HANDLER ---
