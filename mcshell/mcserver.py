@@ -111,7 +111,7 @@ def execute_power_thread(code_to_execute, player_name, power_id, cancel_event, s
 
 # --- API Endpoints ---
 
-@app.route('/execute_power', methods=['POST'])
+@app.route('/api/execute_power', methods=['POST'])
 def execute_power():
     """
     Executes a saved power by its ID.
@@ -144,7 +144,36 @@ def execute_power():
     # ...
     return jsonify({"status": "dispatched", "power_id": power_id})
 
-@app.route('/cancel_power', methods=['POST'])
+# You will also need a new endpoint for execution by name,
+# which would load the code and then call the existing execute_power_thread.
+@app.route('/execute_power_by_name', methods=['POST'])
+def execute_power_by_name():
+    power_repo = app.config.get('POWER_REPO')
+    power_name = request.form.get('power_name')
+    print(f"Received request to execute power by name: {power_name}")
+
+    # 1. Load the power's code from your repository
+    # python_code = power_repo.load_power(player_id, power_name)
+    # For now, just a placeholder:
+    python_code = f"# This is the placeholder code for '{power_name}'"
+
+    # 2. Reuse the existing threading logic to execute the code
+    player_name = app.config.get('MINECRAFT_PLAYER_NAME')
+    server_data = app.config.get('MCSHELL_SERVER_DATA')
+    power_id = str(uuid.uuid4())
+    cancel_event = Event()
+
+    thread = Thread(target=execute_power_thread, args=(python_code, player_name, power_id, cancel_event, server_data))
+    thread.daemon = True
+    thread.start()
+
+    RUNNING_POWERS[power_id] = {'thread': thread, 'cancel_event': cancel_event}
+
+    # Return the initial status update for the widget
+    return f'<span class="status" style="color: orange;">Running... (ID: {power_id[:4]})</span>'
+
+
+@app.route('/api/cancel_power', methods=['POST'])
 def cancel_power():
     data = request.get_json()
     power_id = data.get('power_id')
@@ -182,47 +211,109 @@ def delete_power_by_id(power_id):
         print(f"Error deleting power {power_id}: {e}")
         return jsonify({"error": "An internal error occurred during deletion."}), 500
 
-@app.route('/api/control/powers', methods=['GET'])
-def get_powers_for_control_panel():
+# This one function now handles both editor and control views.
+@app.route('/api/powers', methods=['GET'])
+def get_powers_list_as_html():
     """
-    Fetches power summaries and renders them as a simple list with "Add" buttons,
-    specifically for the control UI's library panel.
+    Gets the list of saved powers and renders the appropriate HTML fragment
+    based on the 'view' query parameter ('editor' or 'control').
     """
+    # Get the view type from the URL, e.g., /api/powers?view=editor
+    view_type = request.args.get('view', 'editor') # Default to editor view
+
     player_id = app.config.get('MINECRAFT_PLAYER_NAME')
     power_repo = app.config.get('POWER_REPO')
+
     if not player_id or not power_repo:
         return "<p>Error: Not authorized</p>", 401
 
     powers_summary_list = power_repo.list_powers()
 
-    # This template is simpler than the editor's.
-    # Its only job is to provide a button to add a widget to the control grid.
-    control_library_template = """
-    <h4>Available Powers</h4>
-    <ul>
-    {% for power in powers %}
-        <li class="control-library-item">
-            <span>{{ power.name }}</span>
-            <button class="btn-small"
-                    hx-get="/api/control_widget/{{ power.power_id }}"
-                    hx-target="#control-grid"
-                    hx-swap="beforeend">
-                Add to Grid
-            </button>
-        </li>
-    {% endfor %}
-    </ul>
-    """
+    # Group powers by category (logic remains the same)
+    powers_by_category = {}
+    for power in powers_summary_list:
+        category = power.get('category', 'Uncategorized')
+        if category not in powers_by_category:
+            powers_by_category[category] = []
+        powers_by_category[category].append(power)
 
-    html_response_string = render_template_string(
-        control_library_template,
-        powers=powers_summary_list
-    )
+    # --- Select the correct template based on the view type ---
+    if view_type == 'control':
+        # Use the simpler template for the control panel's library
+        template_string = """
+        <h4>Available Powers</h4>
+        <ul>
+        {% for power in powers_summary_list %}
+            <li class="control-library-item">
+                <span>{{ power.name }}</span>
+                <button class="btn-small"
+                        hx-get="/api/control_widget/{{ power.power_id }}"
+                        hx-target="#control-grid"
+                        hx-swap="beforeend">
+                    Add to Grid
+                </button>
+            </li>
+        {% endfor %}
+        </ul>
+        """
+        html_response_string = render_template_string(template_string, powers_summary_list=powers_summary_list)
+    else: # Default to the 'editor' view
+        # Use the detailed template for the editor sidebar
+        template_string = """
+        {% for category, powers in categories.items()|sort %}
+          <div class="power-category" x-data="{ open: true }">
+            <h3 @click="open = !open">
+              <span class="category-toggle" x-text="open ? '▼' : '▶'"></span>
+              {{ category }} ({{ powers|length }})
+            </h3>
+            <ul class="power-item-list" x-show="open" x-transition>
+              {% for power in powers %}
+                <li class="power-item" x-data="{ open: false }" id="power-item-{{ power.power_id }}">
+                  <div class="power-item-header" @click="open = !open">
+                    <span class="power-toggle" x-text="open ? '▼' : '▶'"></span>
+                    <span class="power-name">{{ power.name }}</span>
+                  </div>
+                  <div class="power-item-details" x-show="open" x-transition>
+                    <p class="power-description">{{ power.description or 'No description.' }}</p>
+                    <div class="power-item-actions">
 
+                      <button class="btn-small"
+                              hx-get="/api/power/{{ power.power_id }}?mode=replace"
+                              hx-swap="none"
+                              title="Clear workspace and load this power">
+                          Load (Replace)
+                      </button>
+                      
+                      <button class="btn-small"
+                              hx-get="/api/power/{{ power.power_id }}?mode=add"
+                              hx-swap="none"
+                              title="Add this power's blocks to the current workspace">
+                          Add to Workspace
+                      </button> 
+                      
+                      <button class="btn-small btn-danger"
+                              @click="$dispatch('open-delete-confirm', { 
+                                  powerId: '{{ power.power_id }}', 
+                                  powerName: '{{ power.name | replace("'", "\\'") }}' 
+                              })">
+                          Delete
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+        """
+        html_response_string = render_template_string(template_string, categories=powers_by_category)
+
+    # Create the final response with no-cache headers
     response = make_response(html_response_string)
     response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     response.headers['Expires'] = '0'
     return response
+
 
 @app.route('/api/control_widget/<power_id>')
 def get_control_widget(power_id):
@@ -287,102 +378,6 @@ def get_control_widget(power_id):
 
     return render_template_string(widget_template, power=power_data)
 
-@app.route('/api/editor/powers', methods=['GET'])
-def get_powers_for_editor_sidebar():
-    """
-    Fetches the list of saved powers for the authorized player,
-    groups them by category, and renders them as an HTML fragment using Jinja2.
-    """
-    # 1. Get the repository instance from the app config. It's already player-specific.
-    power_repo = app.config.get('POWER_REPO')
-    player_id = app.config.get('MINECRAFT_PLAYER_NAME') # Still useful for logging/context
-
-    if not power_repo or not player_id:
-        # Error handling remains the same
-        trigger_data = {"showError": {"errorMessage": "Server not fully configured."}}
-        return make_response("", 500, {"HX-Trigger": json.dumps(trigger_data)})
-
-    # 2. Fetch the flat list of power summaries from the repository.
-    #    No player_id is passed to the method, as requested.
-    powers_summary_list = power_repo.list_powers()
-
-    if not powers_summary_list:
-        return "<p style='padding: 0 10px; color: #666;'>No powers saved yet. Create one!</p>"
-
-    # 3. Process the data: group the flat list of powers by category.
-    powers_by_category = {}
-    for power in powers_summary_list:
-        category = power.get('category', 'Uncategorized')
-        if category not in powers_by_category:
-            powers_by_category[category] = []
-        powers_by_category[category].append(power)
-
-    # 4. Define the Jinja2 template for rendering the library.
-    #    This template includes Alpine.js directives for collapsible sections.
-# Gemini, come on!
-
-
-    library_template_string = """
-    {% for category, powers in categories.items()|sort %}
-      <div class="power-category" x-data="{ open: true }">
-        <h3 @click="open = !open">
-          <span class="category-toggle" x-text="open ? '▼' : '▶'"></span>
-          {{ category }} ({{ powers|length }})
-        </h3>
-        <ul class="power-item-list" x-show="open" x-transition>
-          {% for power in powers %}
-            <li class="power-item" x-data="{ open: false }" id="power-item-{{ power.power_id }}">
-              <div class="power-item-header" @click="open = !open">
-                <span class="power-toggle" x-text="open ? '▼' : '▶'"></span>
-                <span class="power-name">{{ power.name }}</span>
-              </div>
-              <div class="power-item-details" x-show="open" x-transition>
-                <p class="power-description">{{ power.description or 'No description.' }}</p>
-                <div class="power-item-actions">
-
-                  <button class="btn-small"
-                          hx-get="/api/power/{{ power.power_id }}?mode=replace"
-                          hx-swap="none"
-                          title="Clear workspace and load this power">
-                      Load (Replace)
-                  </button>
-                  
-                  <button class="btn-small"
-                          hx-get="/api/power/{{ power.power_id }}?mode=add"
-                          hx-swap="none"
-                          title="Add this power's blocks to the current workspace">
-                      Add to Workspace
-                  </button> 
-                  
-                  <button class="btn-small btn-danger"
-                          @click="$dispatch('open-delete-confirm', { 
-                              powerId: '{{ power.power_id }}', 
-                              powerName: '{{ power.name | replace("'", "\\'") }}' 
-                          })">
-                      Delete
-                  </button>
-                </div>
-              </div>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endfor %}
-    """
-
-    # 5. Render the HTML fragment using the template and the grouped data.
-    html_response_string = render_template_string(
-        library_template_string,
-        categories=powers_by_category
-    )
-
-    # 6. Create the final response with headers to prevent caching.
-    response = make_response(html_response_string)
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-
-    return response
 
 @app.route('/api/power/<power_id>', methods=['GET'])
 def get_power_detail(power_id):
@@ -470,6 +465,284 @@ def execute_ipython_magic():
     finally:
         # ALWAYS restore stdout
         sys.stdout = old_stdout
+
+
+# -------- Redundant
+@app.route('/api/editor/powers', methods=['GET'])
+def get_powers_for_editor_sidebar():
+    """
+    Fetches the list of saved powers for the authorized player,
+    groups them by category, and renders them as an HTML fragment using Jinja2.
+    """
+    # 1. Get the repository instance from the app config. It's already player-specific.
+    power_repo = app.config.get('POWER_REPO')
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')  # Still useful for logging/context
+
+    if not power_repo or not player_id:
+        # Error handling remains the same
+        trigger_data = {"showError": {"errorMessage": "Server not fully configured."}}
+        return make_response("", 500, {"HX-Trigger": json.dumps(trigger_data)})
+
+    # 2. Fetch the flat list of power summaries from the repository.
+    #    No player_id is passed to the method, as requested.
+    powers_summary_list = power_repo.list_powers()
+
+    if not powers_summary_list:
+        return "<p style='padding: 0 10px; color: #666;'>No powers saved yet. Create one!</p>"
+
+    # 3. Process the data: group the flat list of powers by category.
+    powers_by_category = {}
+    for power in powers_summary_list:
+        category = power.get('category', 'Uncategorized')
+        if category not in powers_by_category:
+            powers_by_category[category] = []
+        powers_by_category[category].append(power)
+
+    # 4. Define the Jinja2 template for rendering the library.
+    #    This template includes Alpine.js directives for collapsible sections.
+    # Gemini, come on!
+
+    library_template_string = """
+    {% for category, powers in categories.items()|sort %}
+      <div class="power-category" x-data="{ open: true }">
+        <h3 @click="open = !open">
+          <span class="category-toggle" x-text="open ? '▼' : '▶'"></span>
+          {{ category }} ({{ powers|length }})
+        </h3>
+        <ul class="power-item-list" x-show="open" x-transition>
+          {% for power in powers %}
+            <li class="power-item" x-data="{ open: false }" id="power-item-{{ power.power_id }}">
+              <div class="power-item-header" @click="open = !open">
+                <span class="power-toggle" x-text="open ? '▼' : '▶'"></span>
+                <span class="power-name">{{ power.name }}</span>
+              </div>
+              <div class="power-item-details" x-show="open" x-transition>
+                <p class="power-description">{{ power.description or 'No description.' }}</p>
+                <div class="power-item-actions">
+
+                  <button class="btn-small"
+                          hx-get="/api/power/{{ power.power_id }}?mode=replace"
+                          hx-swap="none"
+                          title="Clear workspace and load this power">
+                      Load (Replace)
+                  </button>
+
+                  <button class="btn-small"
+                          hx-get="/api/power/{{ power.power_id }}?mode=add"
+                          hx-swap="none"
+                          title="Add this power's blocks to the current workspace">
+                      Add to Workspace
+                  </button> 
+
+                  <button class="btn-small btn-danger"
+                          @click="$dispatch('open-delete-confirm', { 
+                              powerId: '{{ power.power_id }}', 
+                              powerName: '{{ power.name | replace("'", "\\'") }}' 
+                          })">
+                      Delete
+                  </button>
+                </div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+    """
+
+    # 5. Render the HTML fragment using the template and the grouped data.
+    html_response_string = render_template_string(
+        library_template_string,
+        categories=powers_by_category
+    )
+
+    # 6. Create the final response with headers to prevent caching.
+    response = make_response(html_response_string)
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+
+    return response
+
+@app.route('/api/control/powers', methods=['GET'])
+def get_powers_for_control_panel():
+    """
+    Fetches power summaries and renders them as a simple list with "Add" buttons,
+    specifically for the control UI's library panel.
+    """
+    player_id = app.config.get('MINECRAFT_PLAYER_NAME')
+    power_repo = app.config.get('POWER_REPO')
+    if not player_id or not power_repo:
+        return "<p>Error: Not authorized</p>", 401
+
+    powers_summary_list = power_repo.list_powers()
+
+    # This template is simpler than the editor's.
+    # Its only job is to provide a button to add a widget to the control grid.
+    control_library_template = """
+    <h4>Available Powers</h4>
+    <ul>
+    {% for power in powers %}
+        <li class="control-library-item">
+            <span>{{ power.name }}</span>
+            <button class="btn-small"
+                    hx-get="/api/control_widget/{{ power.power_id }}"
+                    hx-target="#control-grid"
+                    hx-swap="beforeend">
+                Add to Grid
+            </button>
+        </li>
+    {% endfor %}
+    </ul>
+    """
+
+    html_response_string = render_template_string(
+        control_library_template,
+        powers=powers_summary_list
+    )
+
+    response = make_response(html_response_string)
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Expires'] = '0'
+    return response
+
+# ############ THE NEW EXCUtION CODE !!!!
+# In mcshell/mcserver.py
+
+# ... (all your imports: Flask, request, jsonify, Thread, Event, etc.) ...
+# ... (your app, socketio, and RUNNING_POWERS definitions) ...
+# ... (your MCActionBase, MCActions, MCPlayer, Vec3, Matrix3 classes/imports) ...
+#
+#
+# @app.route('/api/execute_power', methods=['POST'])
+# def execute_power():
+#     """
+#     Executes a saved power by its ID with runtime parameters from the control UI.
+#     This endpoint receives a power_id and a dictionary of parameters, then
+#     spawns a background thread to run the power's logic.
+#     """
+#     if request.is_json:
+#         data = request.get_json()
+#     else:
+#         data = request.form.to_dict()
+#
+#     power_id = data.get('power_id')
+#     runtime_params = {k: v for k, v in data.items() if k != 'power_id'}
+#
+#     player_name = current_app.config.get('MINECRAFT_PLAYER_NAME')
+#     server_data = current_app.config.get('MCSHELL_SERVER_DATA')
+#     power_repo = current_app.config.get('POWER_REPO')
+#
+#     if not all([power_id, player_name, server_data, power_repo]):
+#         return jsonify({"error": "Server or player not configured, or missing power_id."}), 500
+#
+#     # Create a unique ID for this specific execution instance
+#     execution_id = str(uuid.uuid4())
+#     cancel_event = Event()
+#
+#     # Create and start the thread
+#     thread = Thread(target=execute_power_thread, args=(
+#         execution_id,
+#         power_id,
+#         player_name,
+#         server_data,
+#         runtime_params,
+#         cancel_event
+#     ))
+#     thread.daemon = True
+#     thread.start()
+#
+#     # Store the thread and its cancellation event using the unique execution_id
+#     RUNNING_POWERS[execution_id] = {'thread': thread, 'cancel_event': cancel_event}
+#
+#     print(f"Dispatched execution {execution_id} for power {power_id} with params {runtime_params}")
+#
+#     # Return the initial status update, including a "Cancel" button with the unique execution_id
+#     cancel_button_html = f"""
+#     <button class="btn-small btn-danger"
+#             hx-post="/api/cancel_power"
+#             hx-vals='{{"execution_id": "{execution_id}"}}'
+#             hx-target="closest .power-widget .power-status"
+#             hx-swap="innerHTML">
+#         Cancel
+#     </button>
+#     """
+#     return f'<span style="color: orange;">Executing...</span>{cancel_button_html}'
+#
+#
+# def execute_power_thread(execution_id, power_id, player_name, server_data, runtime_params, cancel_event):
+#     """
+#     This function runs in a separate thread. It loads the generated Python code
+#     for a power, instantiates all necessary classes, and executes the power's
+#     run_program() method with the provided runtime parameters.
+#     """
+#     print(f"Thread {execution_id}: Started for power '{power_id}' with params: {runtime_params}")
+#
+#     # Use socketio.emit for real-time status updates to the client
+#     socketio.emit('power_status', {
+#         'id': power_id, # The power's ID for the widget
+#         'execution_id': execution_id,
+#         'status': 'running'
+#     })
+#
+#     try:
+#         # We need access to the app context to get the repository
+#         with app.app_context():
+#             power_repo = current_app.config.get('POWER_REPO')
+#
+#             # 1. Load the full power data, including the python_code
+#             power_data = power_repo.get_full_power(power_id)
+#             if not power_data:
+#                 raise ValueError(f"Power with ID {power_id} not found in repository.")
+#
+#             python_code = power_data.get("python_code")
+#             if not python_code:
+#                 raise ValueError(f"Power {power_id} has no Python code to execute.")
+#
+#             # 2. Set up the execution environment
+#             mc_player = MCPlayer(player_name, **server_data)
+#             action_implementer = MCActions(mc_player)
+#
+#             # 3. Use exec() to define the BlocklyProgramRunner class in a temporary scope
+#             execution_scope = {
+#                 # Provide necessary classes/modules to the exec scope
+#                 'np': np,
+#                 'math': math,
+#                 'Vec3': Vec3,
+#                 'Matrix3': Matrix3
+#             }
+#             exec(python_code, execution_scope)
+#
+#             BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
+#             if not BlocklyProgramRunner:
+#                 raise RuntimeError("Could not find BlocklyProgramRunner class in the provided code.")
+#
+#             # 4. Instantiate the runner, passing the action implementer AND the runtime params
+#             runner = BlocklyProgramRunner(action_implementer, runtime_params)
+#
+#             # 5. Run the main program logic
+#             runner.run_program()
+#
+#             # (Advanced) Your long-running loops inside MCActions could periodically check cancel_event.is_set()
+#             if cancel_event.is_set():
+#                 print(f"Thread {execution_id}: Execution was cancelled.")
+#                 socketio.emit('power_status', {'id': power_id, 'status': 'cancelled'})
+#                 return
+#
+#         print(f"Thread {execution_id}: Execution completed successfully.")
+#         socketio.emit('power_status', {'id': power_id, 'status': 'finished'})
+#
+#     except Exception as e:
+#         # Report any errors that occur during execution
+#         print(f"Thread {execution_id}: Error during execution: {e}")
+#         import traceback
+#         traceback.print_exc()
+#         socketio.emit('power_status', {'id': power_id, 'status': 'error', 'message': str(e)})
+#     finally:
+#         # Clean up the power from our tracking dictionary
+#         if execution_id in RUNNING_POWERS:
+#             del RUNNING_POWERS[execution_id]
+
 
 # --- Static File Serving ---
 
