@@ -1,5 +1,6 @@
 import os
 import pathlib
+from io import StringIO
 
 import IPython
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
@@ -387,6 +388,68 @@ class MCShell(Magics):
 
         except Exception as e:
             print(f"Error saving script: {e}")
+
+    @line_magic
+    def mc_debug_and_define(self,line):
+        """
+        Receives a JSON payload containing a full script to run for debugging,
+        and the extracted metadata (especially parameter types) to save.
+        """
+        try:
+            payload = json.loads(line)
+            code_to_execute = payload.get("code")
+            metadata = payload.get("metadata", {}) # Contains function_name, parameters, and pure function code
+
+            if not code_to_execute or not metadata:
+                return "Error: Incomplete payload from editor."
+
+            # --- Part 1: Execute for Debug ---
+            print(f"--- Debugging power '{metadata.get('function_name')}' ---")
+
+            # player_name = self.shell.user_ns.get('player_name', 'default_debug_player')
+            player_name = self._get_mc_name()
+            mc_player = MCPlayer(player_name, **self.server_data)
+            action_implementer = MCActions(mc_player)
+
+            execution_scope = {}
+            exec(code_to_execute, execution_scope)
+            BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
+
+            # We instantiate with an EMPTY runtime_params dict for the debug run,
+            # as the values are hardcoded in the run_program() method.
+            runner = BlocklyProgramRunner(action_implementer, {})
+
+            # Capture stdout and run the program
+            old_stdout = sys.stdout
+            redirected_output = sys.stdout = StringIO()
+            try:
+                runner.run_program()
+                output = redirected_output.getvalue()
+            finally:
+                sys.stdout = old_stdout
+
+            print("--- Debug execution finished. ---")
+
+
+            # --- Part 2: Define/Save the Power Metadata ---
+            # power_repo = app.config.get('POWER_REPO')
+            power_repo = JsonFileRepository(player_name)
+            if power_repo:
+                print(f"--- Saving/Updating metadata for power '{metadata.get('function_name')}' ---")
+
+                # This is where you'd save the metadata to your JSON file.
+                # This logic assumes the user will click "Save Power As..." next to provide
+                # a name, description, and the blockly_json. The key is that we have
+                # now "stamped" the power with authoritative parameter types.
+                # For now, we will just print the metadata we successfully received.
+                print("Authoritative Parameter Metadata Received:")
+                print(json.dumps(metadata['parameters'], indent=2))
+
+            return output or "Debug run complete. Click 'Save Power As...' to save this power with its new types."
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return f"An unexpected error occurred in %mc_debug_and_define: {e}"
 
     # @line_magic
     # def mc_use_power(self,line):
