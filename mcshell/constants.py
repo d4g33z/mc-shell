@@ -27,6 +27,9 @@ from rich.pretty import pprint
 from mcshell.Matrix3 import Matrix3
 from mcshell.Vec3 import Vec3
 
+class PowerCancelledException(Exception):
+    pass
+
 try:
     from icecream import ic
     ic.configureOutput(includeContext=True)

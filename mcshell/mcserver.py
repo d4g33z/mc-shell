@@ -89,7 +89,8 @@ def execute_power_in_thread(execution_id, python_code, player_name, server_data,
     try:
         # We need the app context for config
         with app.app_context():
-            mc_player = MCPlayer(player_name, **server_data)
+            #we could pass cancel to MCPlayer here and make sword hits cancelable
+            mc_player = MCPlayer(player_name, **server_data,cancel_event=cancel_event)
             action_implementer = MCActions(mc_player)
 
             execution_scope = {
@@ -106,8 +107,11 @@ def execute_power_in_thread(execution_id, python_code, player_name, server_data,
             # --- Cancellation Check (if your MCActions methods support it) ---
             # You could pass the cancel_event to the runner if methods can check it.
             # runner.cancel_event = cancel_event
-
-            runner.run_program()
+            try:
+                runner.run_program()
+            except PowerCancelledException:
+                #we raise an exception only when polling for a sword strike
+                pass
 
             if cancel_event.is_set():
                 print(f"Thread {execution_id}: Execution was cancelled.")

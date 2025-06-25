@@ -4,11 +4,13 @@ from mcshell.constants import *
 # Define a tolerance for floating-point comparisons near zero
 DEFAULT_TOLERANCE = 1e-9
 
+
 class MCPlayer(MCClient):
-    def __init__(self,name,host=MC_SERVER_HOST,port=MC_SERVER_PORT,password=None,server_type=MC_SERVER_TYPE,fruit_juice_port=FJ_SERVER_PORT):
+    def __init__(self,name,host=MC_SERVER_HOST,port=MC_SERVER_PORT,password=None,server_type=MC_SERVER_TYPE,fruit_juice_port=FJ_SERVER_PORT,cancel_event=None):
         super().__init__(host,port,password,server_type,fruit_juice_port)
         self.name = name
         self.state = {}
+        self.cancel_event = cancel_event
 
     def get_data(self,data_path):
         _args = ['get','entity',f'@p[name={self.name}]',data_path]
@@ -69,6 +71,7 @@ class MCPlayer(MCClient):
     def here(self):
         return Vec3(*self.get_sword_hit_position())
 
+
     @property
     def compass_direction(self):
         return self._get_compass_direction(self.direction.to_tuple())
@@ -85,7 +88,12 @@ class MCPlayer(MCClient):
         '''
         print('Waiting for a sword strike...')
 
+        # TODO: this should be cancellable too
         while True:
+
+            if self.cancel_event and self.cancel_event.isSet():
+                raise PowerCancelledException
+
             _hits = self.pc.events.pollBlockHits()
             if _hits:
                 _hit = _hits[0]
