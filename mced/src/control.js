@@ -1,14 +1,16 @@
-// --- Import and initialize libraries for the control page ---
+// src/control.js
+
+// --- Library Initialization ---
 import Alpine from 'alpinejs';
 import 'htmx.org';
+import 'htmx-ext-json-enc'; // Good to include this for future use
 
-// --- NEW: Import and call the htmx listener initializer ---
-import { initializeHtmxListeners } from './lib/htmx_listeners.js';
-
+// Make Alpine globally available for the x-data attributes in the HTML
 window.Alpine = Alpine;
+
+// Start Alpine to initialize components on this page
 Alpine.start();
 
-// Call the initializer function to set up error handling for this page
-initializeHtmxListeners();
+console.log("MC-ED Control UI Initialized.");
 
-console.log("MC-ED Control UI Loaded with shared htmx listeners.");
+// This file will later contain logic for SortableJS, etc.

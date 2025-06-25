@@ -10,7 +10,7 @@ import { pythonGenerator } from 'blockly/python';
 import { defineMineCraftBlocks } from "./blocks/mc.mjs";
 import { defineMineCraftMaterialBlocks } from "./blocks/materials.mjs";
 import { defineMinecraftEntityBlocks } from "./blocks/entities.mjs";
-import { defineMineCraftConstants } from "./lib/constants.mjs";
+import {defineMineCraftConstants, MCED} from "./lib/constants.mjs";
 import { defineMineCraftBlocklyUtils } from "./lib/utils.mjs";
 import { installMCGenerator } from "./generators/python/mc.mjs"
 import { installMCMaterialsGenerator } from "./generators/python/materials.mjs";
@@ -279,17 +279,14 @@ async function init() {
      * Gathers data from the editor modal and the Blockly workspace,
      * then POSTs the complete "Power Object" to the server.
      */
+
+
     async function handleSavePower() {
         console.log("Handling save power...");
 
-        // 1. Get the form element itself
+        // Get metadata from the modal form
         const formElement = document.getElementById('savePowerForm');
-        if (!formElement) {
-            console.error("Save Power form not found!");
-            return;
-        }
-
-        // 2. Use the FormData API to easily get all form values into an object
+        if (!formElement) { return; }
         const formData = new FormData(formElement);
         const formDataObject = Object.fromEntries(formData.entries());
 
@@ -298,23 +295,53 @@ async function init() {
             return;
         }
 
-        // 3. Get the current state of the Blockly workspace
+        // Get the workspace state and generated code
         const blocklyJson = Blockly.serialization.workspaces.save(workspace);
         const pythonCode = pythonGenerator.workspaceToCode(workspace);
 
-        // 4. Assemble the complete "Power Object" by merging the form data and workspace data
+        // --- CORRECTED: Extract Parameters from the LIVE Function Block ---
+        let powerParameters = [];
+        // Get all top-level blocks from the live workspace
+        const topBlocks = workspace.getTopBlocks(false);
+
+        // Find the first function definition block among the top-level blocks
+        const funcDefBlock = topBlocks.find(b =>
+            b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn'
+        );
+
+        if (funcDefBlock) {
+            console.log("Found function definition block, extracting parameters...");
+            // getVars() is the correct method to get the argument names from the live block instance.
+            const argNames = funcDefBlock.getVars();
+
+            if (argNames.length > 0) {
+                powerParameters = argNames.map(argName => {
+                    console.log(`- Found parameter: ${argName}`);
+                    return {
+                        name: argName,
+                        type: 'Number', // Defaulting type for now
+                        default: 0      // Defaulting value for now
+                    };
+                });
+            }
+        } else {
+            console.log("No function definition block found in workspace. Saving as a simple power.");
+        }
+        // --- END OF CORRECTION ---
+
+        // Assemble the complete "Power Object"
         const powerDataObject = {
             name: formDataObject.name,
             description: formDataObject.description,
             category: formDataObject.category || "General",
+            power_id: formDataObject.power_id || null,
             blockly_json: blocklyJson,
             python_code: pythonCode,
-            parameters: [] // Placeholder for now
+            parameters: powerParameters // Add the correctly extracted parameters
         };
 
         console.log("Sending power data to server:", powerDataObject);
 
-        // 5. POST the complete object to the new Flask endpoint
         try {
             const response = await fetch('/api/powers', {
                 method: 'POST',
@@ -326,15 +353,10 @@ async function init() {
                 const result = await response.json();
                 console.log("Power saved successfully!", result);
                 alert(`Power "${formDataObject.name}" saved successfully!`);
-                // // Announce that the modal should close AND that #power-list should reload
-                // console.log("Save successful. Dispatching 'power-saved' event.");
-                // window.dispatchEvent(new CustomEvent('power-saved', { bubbles: true }));
 
-                // Dispatch the standardized 'power-saved' event.
-                // The #power-list div will hear this because of "from:document".
-                console.log("Save successful. Dispatching 'library-changed' event.");
-                // Dispatching on window or body is fine, as it will bubble up to the document.
+                // Dispatch the standardized 'library-changed' event
                 window.dispatchEvent(new CustomEvent('library-changed', { bubbles: true }));
+
             } else {
                 console.error('Error saving power:', response.status, await response.text());
                 alert('Failed to save power. See console for details.');
@@ -344,7 +366,6 @@ async function init() {
             alert('Network error. Could not save power.');
         }
     }
-
 
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
@@ -1246,37 +1267,141 @@ async function init() {
         loadButton.addEventListener('click', handleLoadPowerFromFile);
     }
 
+
+    /**
+     * The definitive payload builder for the "Execute (Debug)" button.
+     * It inspects the workspace to determine if it's a single "functional power"
+     * or a general "script power". It then extracts the correct code, parameter
+     * types (from the test harness), and debug values.
+     * * @param {Blockly.Workspace} workspace The Blockly workspace instance.
+     * @returns {object|null} An object containing the payload for the server, or null if the
+     * required blocks for a debug run aren't found.
+     */
+    function buildDebugPayload(workspace) {
+        // We MUST initialize the generator to clear the state from any previous run.
+        pythonGenerator.init(workspace);
+
+        const topBlocks = workspace.getTopBlocks(true);
+
+        // --- Check if the workspace represents a "Functional Power" ---
+        // A functional power has a function definition and a corresponding call block.
+        const funcDefBlock = topBlocks.find(b =>
+            b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn'
+        );
+
+        if (funcDefBlock) {
+            const functionName = funcDefBlock.getFieldValue('NAME');
+
+            // The "Debug-to-Define" pattern requires a corresponding call block to exist.
+            const funcCallBlock = topBlocks.find(b =>
+                (b.type === 'procedures_callnoreturn' || b.type === 'procedures_callreturn') &&
+                b.getFieldValue('NAME') === functionName
+            );
+
+            if (!funcCallBlock) {
+                alert(`Debug Error: To test the function '${functionName}', you must have a corresponding "call ${functionName}" block on the workspace with its arguments connected.`);
+                return null;
+            }
+
+            console.log(`Building debug payload for functional power: '${functionName}'`);
+
+            // --- Assemble the Payload for a Functional Power ---
+
+            // 1. Get the pure Python code for ONLY the function definition.
+            //    This part was failing before. We manually construct it now.
+            const funcNameForCode = pythonGenerator.nameDB_.getName(functionName, MCED.BlocklyNameTypes.PROCEDURE);
+            const argNames = funcDefBlock.getVars();
+            const argsForDef = argNames.map(name => pythonGenerator.nameDB_.getName(name, MCED.BlocklyNameTypes.VARIABLE));
+            let funcBody = pythonGenerator.statementToCode(funcDefBlock, 'STACK') || (pythonGenerator.INDENT + 'pass\n');
+            if (funcDefBlock.type === 'procedures_defreturn') {
+                const returnValue = pythonGenerator.valueToCode(funcDefBlock, 'RETURN', pythonGenerator.ORDER_NONE) || 'None';
+                funcBody += pythonGenerator.INDENT + 'return ' + returnValue + '\n';
+            }
+            const pureFunctionCode = `def ${funcNameForCode}(self, ${argsForDef.join(', ')}):\n${funcBody}`;
+
+            // 2. Extract parameter metadata (name AND type) from the call block's connections.
+            const parameters = argNames.map((argName, index) => {
+                let inferredType = 'String'; // Default type
+                const inputConnection = funcCallBlock.getInput('ARG' + index);
+                if (inputConnection?.connection?.targetBlock()) {
+                    const connectedBlock = inputConnection.connection.targetBlock();
+                    const outputConnection = connectedBlock.outputConnection;
+                    if (outputConnection?.getCheck()) {
+                        const checks = outputConnection.getCheck();
+                        if (checks?.length > 0) {
+                            inferredType = checks[0];
+                        }
+                    }
+                }
+                return { name: argName, type: inferredType };
+            });
+
+            // 3. Generate the full script FOR EXECUTION. workspaceToCode will now work
+            //    because our procedure call generator is fixed to use valueToCode.
+            const fullScriptForExecution = pythonGenerator.workspaceToCode(workspace);
+
+            return {
+                code: fullScriptForExecution, // The full script to run now
+                isFunctionalPower: true,
+                // The metadata to be saved if the user clicks "Save" later
+                metadata: {
+                    function_name: functionName,
+                    parameters: parameters,
+                    python_code: pureFunctionCode // The pure function definition for the library
+                }
+            };
+
+        } else {
+            // --- Case 2: This is a "Script Power" (no function definition) ---
+            console.log("Building debug payload for a simple script power.");
+
+            const fullScriptForExecution = pythonGenerator.workspaceToCode(workspace);
+
+            return {
+                code: fullScriptForExecution,
+                isFunctionalPower: false,
+                metadata: { // No specific function metadata for scripts
+                    function_name: null,
+                    parameters: [],
+                    python_code: fullScriptForExecution // For scripts, the whole thing is saved
+                }
+            };
+        }
+    }
     // --- Wire up the "Execute (Debug)" Button ---
+    // In src/index.js, inside init()
+
     const executeButton = document.getElementById('executePowerButton');
     if (executeButton) {
         executeButton.addEventListener('click', async () => {
             console.log("Execute (Debug) button clicked.");
 
-            // 1. Get the current Python code from the display
-            const codeToExecute = pythonGenerator.workspaceToCode(workspace);
-            if (!codeToExecute) {
-                alert("Workspace is empty. Nothing to execute.");
+            // 1. Build the complete payload using our new helper function
+            const payload = buildDebugPayload(workspace);
+
+            // If payload is null, it means the workspace wasn't set up correctly for debugging.
+            if (!payload) {
                 return;
             }
 
-            // For debugging, let's update the display immediately
+            // For display, show the full script that will be executed
             const codeDisplay = document.getElementById('pythonCodeDisplay');
             if (codeDisplay) {
-                codeDisplay.textContent = codeToExecute;
+                codeDisplay.textContent = payload.code;
                 if(window.Prism) Prism.highlightElement(codeDisplay);
             }
 
-            // 2. Define the magic command and pass the generated code as its arguments
-            const command = '%mc_create_script';
-            const output = await executeIPythonCommand(command, codeToExecute);
+            // 2. Define the new magic command and prepare the arguments
+            const command = '%mc_debug_and_define';
+
+            // The argument is the full payload object, stringified as JSON
+            const output = await executeIPythonCommand(command, JSON.stringify(payload));
 
             if (output) {
-                // Optionally, display the output from the shell
-                alert("Execution Output:\n\n" + output);
+                alert("Debug Output:\n\n" + output);
             }
         });
     }
-
 
     document.body.addEventListener('loadPower', function(event) {
         if (!event.detail || !event.detail.powerData) {
