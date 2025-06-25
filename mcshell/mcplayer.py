@@ -1,6 +1,7 @@
 from mcshell.mcclient import MCClient
 from mcshell.constants import *
 
+from functools import lru_cache
 
 # Define a tolerance for floating-point comparisons near zero
 DEFAULT_TOLERANCE = 1e-9
@@ -50,6 +51,7 @@ class MCPlayer(MCClient):
         return self
 
     @property
+    @lru_cache(maxsize=1)
     def pc(self):
         return self.py_client(self.name)
 
