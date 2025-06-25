@@ -41,6 +41,9 @@ class Vec3:
         """Reflected scalar multiplication: scalar * self"""
         return self.__mul__(scalar)
 
+    def __iter__(self):
+        return iter((self.x, self.y, self.z))
+
     def to_tuple(self):
         return self.x,self.y,self.z
 

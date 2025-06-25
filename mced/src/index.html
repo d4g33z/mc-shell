@@ -7,12 +7,31 @@
         <link rel="stylesheet" href="./editor.css">
 
     </head>
-    <body x-data>
-        <div class="editor-layout">
+<!--    <body x-data>-->
+    <body x-data="{
+        isLibraryCollapsed: false,
+        isCodeCollapsed: false
+    }">
+<!--        <div class="editor-layout">-->
+            <div class="editor-layout" :class="{ 'library-collapsed': isLibraryCollapsed }">
             <aside id="power-library-panel">
-                <h2>Power Library</h2>
+<!--                <h2>Power Library</h2>-->
+                <div class="panel-header">
+                    <h2 x-show="!isLibraryCollapsed">Power Library</h2>
+                        <button class="toggle-btn"
+                            @click="
+                                isLibraryCollapsed = !isLibraryCollapsed;
+                                triggerBlocklyResize();
+                            "
+                            title="Toggle Library Panel">
+                        <span x-text="isLibraryCollapsed ? '▶' : '◀'"></span>
+                    </button>
+<!--                    <button class="toggle-btn" @click="isLibraryCollapsed = !isLibraryCollapsed" title="Toggle Library Panel">-->
+<!--                        <span x-text="isLibraryCollapsed ? '▶' : '◀'"></span>-->
+<!--                    </button>-->
+                </div>
                 <div id="power-list"
-                     hx-get="/api/powers"
+                     hx-get="/api/powers?view=editor"
                      hx-trigger="load, library-changed from:window" hx-swap="innerHTML">
 
                     <p style="padding: 0 8px; color: #888;">Loading powers...</p>
@@ -30,8 +49,21 @@
                     <button id="clearWorkspaceButton">Clear Workspace</button>
                 </div>
 
-                <div id="editor-preview-pane">
+<!--                <div id="editor-preview-pane">-->
+                <div id="editor-preview-pane" :class="{ 'code-pane-collapsed': isCodeCollapsed }">
                     <div id="blocklyDiv"></div>
+                    <div class="panel-header code-header">
+                        <span>Python Code</span>
+                        <button class="toggle-btn"
+                                @click="
+                                    isCodeCollapsed = !isCodeCollapsed;
+                                    triggerBlocklyResize();
+                                "
+                                title="Toggle Code Preview">
+                            <span x-text="isCodeCollapsed ? '▲' : '▼'"></span>
+                        </button>
+                    </div>
+
                     <pre id="code-container" class="language-python" aria-live="polite"><code id="pythonCodeDisplay" class="language-python"># Python code will be generated here...</code></pre>
                 </div>
 
