@@ -19,6 +19,8 @@ import sys
 import uuid
 from typing import List,Optional,Dict,Any
 
+import numpy as np
+
 from rich import print
 from rich.pretty import pprint
 
