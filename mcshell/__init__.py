@@ -1,5 +1,6 @@
 import os
 import pathlib
+from io import StringIO
 
 import IPython
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
@@ -8,6 +9,7 @@ from IPython.core.completer import IPCompleter,Completer
 
 from rich.prompt import Prompt
 
+from mcshell.mcrepo import JsonFileRepository
 from mcshell.mcclient import MCClient
 from mcshell.constants import *
 from mcshell.mcplayer import MCPlayer
@@ -145,7 +147,7 @@ class MCShell(Magics):
 
         try:
             self.get_client().help()
-        except:
+        except Exception as e:
             print("[red bold]login failed[/]")
 
     @line_magic
@@ -387,6 +389,65 @@ class MCShell(Magics):
         except Exception as e:
             print(f"Error saving script: {e}")
 
+    @line_magic
+    def mc_debug_and_define(self,line):
+        """
+        Receives a JSON payload containing a full script to run for debugging,
+        and the extracted metadata (especially parameter types) to save.
+        """
+        try:
+            payload = json.loads(line)
+            code_to_execute = payload.get("code")
+            metadata = payload.get("metadata", {}) # Contains function_name, parameters, and pure function code
+
+            if not code_to_execute or not metadata:
+                return "Error: Incomplete payload from editor."
+
+            # --- Part 1: Execute for Debug ---
+            print(f"--- Debugging power '{metadata.get('function_name')}' ---")
+
+            # player_name = self.shell.user_ns.get('player_name', 'default_debug_player')
+            player_name = self._get_mc_name()
+            mc_player = MCPlayer(player_name, **self.server_data)
+            action_implementer = MCActions(mc_player)
+
+            execution_scope = {}
+            exec(code_to_execute, execution_scope)
+            BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
+            if not BlocklyProgramRunner:
+                raise RuntimeError("Could not find BlocklyProgramRunner in generated code.")
+
+            # We instantiate with an EMPTY runtime_params dict for the debug run,
+            # as the values are hardcoded in the run_program() method.
+            runner = BlocklyProgramRunner(action_implementer, {})
+            # --- EXECUTE DIRECTLY & HANDLE KEYBOARDINTERRUPT ---
+            try:
+                action_implementer.mcplayer.pc.postToChat(f"Executing {metadata.get('function_name')}.")
+                runner.run_program()
+                print("--- Debug execution finished. ---")
+            except KeyboardInterrupt:
+                action_implementer.mcplayer.pc.postToChat(f"Cancelling {metadata.get('function_name')}")
+                print("\n--- Execution interrupted by user (Ctrl+C). ---")
+
+            print("--- Debug execution finished. ---")
+
+            # --- Part 2: Define/Save the Power Metadata ---
+            power_repo = JsonFileRepository(player_name)
+            if power_repo:
+                print(f"--- Saving/Updating metadata for power '{metadata.get('function_name')}' ---")
+                # This is where you'd save the metadata to your JSON file.
+                # This logic assumes the user will click "Save Power As..." next to provide
+                # a name, description, and the blockly_json. The key is that we have
+                # now "stamped" the power with authoritative parameter types.
+                # For now, we will just print the metadata we successfully received.
+                print("Authoritative Parameter Metadata Received:")
+                print(json.dumps(metadata['parameters'], indent=2))
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return f"An unexpected error occurred in %mc_debug_and_define: {e}"
+
     # @line_magic
     # def mc_use_power(self,line):
     #     _line_parts = line.strip().split(' ')
@@ -419,16 +480,7 @@ class MCShell(Magics):
         """Stops the debug mcserver thread."""
         stop_debug_server()
 
-    # @line_magic
-    # def mc_start_app(self, line):
-    #     """Starts the app mcserver in a separate thread."""
-    #     start_app_server(self.server_data)
-    @line_magic
-    def mc_start_app(self, line):
-        """
-        Starts the mc-ed application server, getting the authorized Minecraft user
-        name from the central configuration file.
-        """
+    def _get_mc_name(self):
         # Define the central, system-wide configuration file path
         CENTRAL_CONFIG_FILE = pathlib.Path("/etc/mc-shell/user_map.json")
 
@@ -447,14 +499,27 @@ class MCShell(Magics):
             with open(CENTRAL_CONFIG_FILE, 'r') as f:
                 user_map = json.load(f)
         except (IOError, json.JSONDecodeError) as e:
-            return f"Fatal Error: Could not read or parse server configuration file: {e}"
+            raise f"Fatal Error: Could not read or parse server configuration file: {e}"
 
         # Get the authorized Minecraft name for the current Linux user
         minecraft_name = user_map.get(linux_user)
 
         if not minecraft_name:
-            return f"Error: Your Linux user '{linux_user}' is not registered to a Minecraft player. Please contact your administrator."
+            raise f"Error: Your Linux user '{linux_user}' is not registered to a Minecraft player. Please contact your administrator."
 
+        return minecraft_name
+
+    # @line_magic
+    # def mc_start_app(self, line):
+    #     """Starts the app mcserver in a separate thread."""
+    #     start_app_server(self.server_data)
+    @line_magic
+    def mc_start_app(self, line):
+        """
+        Starts the mc-ed application server, getting the authorized Minecraft user
+        name from the central configuration file.
+        """
+        minecraft_name = self._get_mc_name()
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
         start_app_server(self.server_data,minecraft_name,self.shell)
 
