@@ -1,6 +1,7 @@
 import os
 import pathlib
 from io import StringIO
+from threading import Thread,Event
 
 import IPython
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
@@ -16,6 +17,9 @@ from mcshell.mcplayer import MCPlayer
 from mcshell.mcdebugger import start_debug_server,stop_debug_server,debug_server_thread
 from mcshell.mcserver import start_app_server,stop_app_server,app_server_thread
 from mcshell.mcactions import *
+
+from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
+
 
 #pycraft.settings
 SHOW_DEBUG=False
@@ -389,96 +393,74 @@ class MCShell(Magics):
         except Exception as e:
             print(f"Error saving script: {e}")
 
+# ... inside your MCShell class ...
+
     @line_magic
-    def mc_debug_and_define(self,line):
+    def mc_debug_and_define(self, line):
         """
-        Receives a JSON payload containing a full script to run for debugging,
-        and the extracted metadata (especially parameter types) to save.
+        Receives code and metadata from the editor, and starts it in a
+        background thread for debugging.
         """
         try:
             payload = json.loads(line)
             code_to_execute = payload.get("code")
-            metadata = payload.get("metadata", {}) # Contains function_name, parameters, and pure function code
+            metadata = payload.get("metadata", {})
 
-            if not code_to_execute or not metadata:
-                return "Error: Incomplete payload from editor."
+            # ... (check if payload is valid) ...
 
-            # --- Part 1: Execute for Debug ---
-            print(f"--- Debugging power '{metadata.get('function_name')}' ---")
-
-            # player_name = self.shell.user_ns.get('player_name', 'default_debug_player')
             player_name = self._get_mc_name()
-            mc_player = MCPlayer(player_name, **self.server_data)
-            action_implementer = MCActions(mc_player)
+            server_data = self.server_data
 
-            execution_scope = {}
-            exec(code_to_execute, execution_scope)
-            BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
-            if not BlocklyProgramRunner:
-                raise RuntimeError("Could not find BlocklyProgramRunner in generated code.")
+            # --- Start the power in a background thread ---
+            execution_id = f"debug_{uuid.uuid4().hex[:6]}" # Special ID for debug runs
+            cancel_event = Event()
 
-            # We instantiate with an EMPTY runtime_params dict for the debug run,
-            # as the values are hardcoded in the run_program() method.
-            runner = BlocklyProgramRunner(action_implementer, {})
-            # --- EXECUTE DIRECTLY & HANDLE KEYBOARDINTERRUPT ---
-            try:
-                action_implementer.mcplayer.pc.postToChat(f"Executing {metadata.get('function_name')}.")
-                runner.run_program()
-                print("--- Debug execution finished. ---")
-            except KeyboardInterrupt:
-                action_implementer.mcplayer.pc.postToChat(f"Cancelling {metadata.get('function_name')}")
-                print("\n--- Execution interrupted by user (Ctrl+C). ---")
+            thread = Thread(target=execute_power_in_thread, args=(
+                execution_id, code_to_execute, player_name, server_data, {}, cancel_event
+            ))
+            thread.daemon = True
+            thread.start()
 
-            print("--- Debug execution finished. ---")
+            RUNNING_POWERS[execution_id] = {'thread': thread, 'cancel_event': cancel_event}
 
-            # --- Part 2: Define/Save the Power Metadata ---
+            # --- Save Metadata (This part remains synchronous) ---
+            # power_repo = app.config.get('POWER_REPO')
             power_repo = JsonFileRepository(player_name)
+
             if power_repo:
-                print(f"--- Saving/Updating metadata for power '{metadata.get('function_name')}' ---")
-                # This is where you'd save the metadata to your JSON file.
-                # This logic assumes the user will click "Save Power As..." next to provide
-                # a name, description, and the blockly_json. The key is that we have
-                # now "stamped" the power with authoritative parameter types.
-                # For now, we will just print the metadata we successfully received.
-                print("Authoritative Parameter Metadata Received:")
-                print(json.dumps(metadata['parameters'], indent=2))
+                # You would likely call power_repo.save_power(metadata) here
+                print(f"--- Power '{metadata.get('function_name')}' metadata defined/updated. ---")
+                print(f"--- Started debug execution with ID: {execution_id} ---")
+                print("--- To stop it, run: %mc_cancel_power " + execution_id + " ---")
 
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return f"An unexpected error occurred in %mc_debug_and_define: {e}"
-
-    # @line_magic
-    # def mc_use_power(self,line):
-    #     _line_parts = line.strip().split(' ')
-    #     _player_name = _line_parts[0]
-    #     _power_name = _line_parts[1]
-    #     _script_path = pathlib.Path('powers').joinpath(f'{_power_name}.py')
-    #     _run_line = f"{_script_path} {' '.join(_line_parts[2:])}"
-    #     print(_run_line)
-    #     _run_args = f"--address {self.server_data['host']} --name {_player_name}"
-    #     # if _script_path.exists():
-    #     self.ip.run_line_magic('run',f"{_script_path} {_run_args} {' '.join(_line_parts[2:])}")
-    #     # else:
-    #     #     print('error!')
-
-    # def _complete_mc_use_power(self,ipyshell,event):
-    #     ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
-    #
-    #     _powers = pathlib.Path('powers').glob('*.py')
-    #     text_to_complete = event.symbol
-    #     line = event.line
-    #     return [p.name.split('.')[0] for p in _powers if str(p.name).startswith(text_to_complete)]
+            print(f"An unexpected error occurred: {e}")
 
     @line_magic
-    def mc_start_debug(self, line):
-        """Starts the debug mcserver in a separate thread."""
-        start_debug_server()
+    def mc_cancel_power(self, line):
+        """Cancels a running power by its execution ID."""
+        execution_id = line.strip()
+        if not execution_id:
+            print("Usage: %mc_cancel_power <execution_id>")
+            print("Currently running powers:", list(RUNNING_POWERS.keys()))
+            return
 
-    @line_magic
-    def mc_stop_debug(self, line):
-        """Stops the debug mcserver thread."""
-        stop_debug_server()
+        power_to_cancel = RUNNING_POWERS.get(execution_id)
+        if power_to_cancel:
+            print(f"Sending cancellation signal to power: {execution_id}")
+            power_to_cancel['cancel_event'].set()
+        else:
+            print(f"Error: No running power found with ID: {execution_id}")
+
+        @line_magic
+        def mc_start_debug(self, line):
+            """Starts the debug mcserver in a separate thread."""
+            start_debug_server()
+
+        @line_magic
+        def mc_stop_debug(self, line):
+            """Stops the debug mcserver thread."""
+            stop_debug_server()
 
     def _get_mc_name(self):
         # Define the central, system-wide configuration file path

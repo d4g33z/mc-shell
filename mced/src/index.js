@@ -1144,6 +1144,22 @@ async function init() {
                 </shadow>
             </value>
         </block>
+        <block type="minecraft_action_get_block"></block>
+        <block type="minecraft_action_get_height"></block>
+        <block type="minecraft_action_post_to_chat">
+            <value name="MESSAGE">
+                <shadow type="text">
+                    <field name="TEXT">Hello from Blockly!</field>
+                </shadow>
+            </value>
+        </block>
+        <block type="minecraft_action_create_explosion">
+            <value name="POWER">
+                <shadow type="math_number">
+                    <field name="NUM">4</field>
+                </shadow>
+            </value>
+        </block>
       </category>
 </xml>    
 `;

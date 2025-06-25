@@ -142,6 +142,41 @@ export function defineMineCraftConstants(Blockly) {
             shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
         }
     };
+
+    MCED.Defaults.values['minecraft_action_get_block'] = {
+        POSITION: {
+            shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
+        }
+    };
+
+    MCED.Defaults.values['minecraft_action_get_height'] = {
+        POSITION: {
+            shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
+        }
+    };
+
+    MCED.Defaults.values['minecraft_action_post_to_chat'] = {
+            MESSAGE: {
+                // Use a standard text block as the shadow
+                shadow: '<shadow type="text"><field name="TEXT">Hello, Minecraft!</field></shadow>'
+            }
+        };
+
+    MCED.Defaults.values['minecraft_action_create_explosion'] = {
+            POSITION: {
+                shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
+            },
+            POWER: {
+                shadow: '<shadow type="math_number"><field name="NUM">4</field></shadow>'
+            }
+        };
+
+    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
+    // MCED.BlocklyUtils.configureShadow(this, "POWER");
+    // MCED.BlocklyUtils.configureShadow(this, "MESSAGE");
+    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
+    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
+
     // Apply the shadows
     // MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
     // MCED.BlocklyUtils.configureShadow(this, "POSITION");

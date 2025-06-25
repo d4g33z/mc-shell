@@ -293,3 +293,68 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
 
         # This is where you would call the actual pyncraft or Minecraft API method
         self.mcplayer.pc.setBlock(x, y, z, parsed_block_type_id)
+
+    def get_block(self, position_vec3):
+        """
+        Gets the block type at a specific location.
+        """
+        x, y, z = (int(position_vec3.x), int(position_vec3.y), int(position_vec3.z))
+
+        print(f"ACTION: Getting block at ({x},{y},{z})")
+
+        # pyncraft's getBlock() returns the numerical ID of the block.
+        block_type = self.mcplayer.pc.getBlock(x, y, z)
+
+        if block_type:
+            return block_type
+        else:
+            return 'AIR' # A safe default if the ID is unknown
+
+    def get_height(self, position_vec3):
+        """
+        Gets the Y coordinate of the highest block at the X,Z of the given position.
+        """
+        # We only need the x and z components for this API call.
+        x = int(position_vec3.x)
+        z = int(position_vec3.z)
+
+        print(f"ACTION: Getting height at (x={x}, z={z})")
+
+        # Call the pyncraft method using the corrected API path
+        height = self.mcplayer.pc.getHeight(x, z)
+
+        return height
+
+    def post_to_chat(self, message):
+        """
+        Posts a message to the in-game chat.
+        The message argument is already a string from the generator.
+        """
+        # The pyncraft API expects a string, which is what we have.
+        # No casting is needed unless you want to explicitly convert other types.
+        message_str = str(message)
+
+        print(f"ACTION: Posting to chat: \"{message_str}\"")
+
+        # Call the pyncraft method using the corrected API path
+        self.mcplayer.pc.postToChat(message_str)
+
+
+    def create_explosion(self, position_vec3, power):
+        """
+        Creates an explosion at a specific location.
+
+        Args:
+            position_vec3 (Vec3): The location for the center of the explosion.
+            power (int or float): The strength of the explosion (TNT is 4).
+        """
+        # Extract coordinates and cast types
+        x = float(position_vec3.x)
+        y = float(position_vec3.y)
+        z = float(position_vec3.z)
+        power_float = float(power)
+
+        print(f"ACTION: Creating explosion at ({x},{y},{z}) with power {power_float}")
+
+        # Call the pyncraft method using the corrected API path
+        self.mcplayer.pc.createExplosion(x, y, z, power_float)
