@@ -147,7 +147,7 @@ class MCShell(Magics):
 
         try:
             self.get_client().help()
-        except:
+        except Exception as e:
             print("[red bold]login failed[/]")
 
     @line_magic
@@ -414,29 +414,27 @@ class MCShell(Magics):
             execution_scope = {}
             exec(code_to_execute, execution_scope)
             BlocklyProgramRunner = execution_scope.get('BlocklyProgramRunner')
+            if not BlocklyProgramRunner:
+                raise RuntimeError("Could not find BlocklyProgramRunner in generated code.")
 
             # We instantiate with an EMPTY runtime_params dict for the debug run,
             # as the values are hardcoded in the run_program() method.
             runner = BlocklyProgramRunner(action_implementer, {})
-
-            # Capture stdout and run the program
-            old_stdout = sys.stdout
-            redirected_output = sys.stdout = StringIO()
+            # --- EXECUTE DIRECTLY & HANDLE KEYBOARDINTERRUPT ---
             try:
+                action_implementer.mcplayer.pc.postToChat(f"Executing {metadata.get('function_name')}.")
                 runner.run_program()
-                output = redirected_output.getvalue()
-            finally:
-                sys.stdout = old_stdout
+                print("--- Debug execution finished. ---")
+            except KeyboardInterrupt:
+                action_implementer.mcplayer.pc.postToChat(f"Cancelling {metadata.get('function_name')}")
+                print("\n--- Execution interrupted by user (Ctrl+C). ---")
 
             print("--- Debug execution finished. ---")
 
-
             # --- Part 2: Define/Save the Power Metadata ---
-            # power_repo = app.config.get('POWER_REPO')
             power_repo = JsonFileRepository(player_name)
             if power_repo:
                 print(f"--- Saving/Updating metadata for power '{metadata.get('function_name')}' ---")
-
                 # This is where you'd save the metadata to your JSON file.
                 # This logic assumes the user will click "Save Power As..." next to provide
                 # a name, description, and the blockly_json. The key is that we have
@@ -445,7 +443,6 @@ class MCShell(Magics):
                 print("Authoritative Parameter Metadata Received:")
                 print(json.dumps(metadata['parameters'], indent=2))
 
-            return output or "Debug run complete. Click 'Save Power As...' to save this power with its new types."
         except Exception as e:
             import traceback
             traceback.print_exc()
