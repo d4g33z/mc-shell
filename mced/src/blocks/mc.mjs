@@ -69,41 +69,79 @@ export function defineMineCraftBlocks(Blockly) {
         }
     };
 
+    // Blockly.Blocks['minecraft_vector_2d'] = {
+    //   init: function() {
+    //     this.appendDummyInput()
+    //         .appendField("w:") // Or "dim1:", "u:"
+    //         .appendField(new Blockly.FieldNumber(0), "W") // Using FieldNumber for direct number input
+    //         .appendField(" h:") // Or "dim2:", "v:"
+    //         .appendField(new Blockly.FieldNumber(0), "H");
+    //     this.setOutput(true, "2DVector"); // Output type
+    //     this.setColour(180); // A distinct color for 2D vectors
+    //     this.setTooltip("A 2D vector or dimension (width, height/length).");
+    //     this.setInputsInline(true); // Keep it compact
+    //   }
+    // };
+
     Blockly.Blocks['minecraft_vector_2d'] = {
       init: function() {
-        this.appendDummyInput()
-            .appendField("w:") // Or "dim1:", "u:"
-            .appendField(new Blockly.FieldNumber(0), "W") // Using FieldNumber for direct number input
-            .appendField(" h:") // Or "dim2:", "v:"
-            .appendField(new Blockly.FieldNumber(0), "H");
-        this.setOutput(true, "2DVector"); // Output type
-        this.setColour(180); // A distinct color for 2D vectors
-        this.setTooltip("A 2D vector or dimension (width, height/length).");
-        this.setInputsInline(true); // Keep it compact
+        this.appendValueInput("W")
+            .setCheck("Number")
+            .appendField("Vec2 w"); // Changed label slightly for clarity
+        this.appendValueInput("H")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT) // Align the 'h' label to the right
+            .appendField("h");
+        this.setOutput(true, "2DVector"); // Output type remains the same
+        this.setColour(180); // Vector Math color
+        this.setTooltip("Creates a 2D vector or dimension (width, height/length). Accepts numbers or variables.");
+        this.setInputsInline(true); // Keep it on one line
       }
     };
 
-    Blockly.Blocks['minecraft_vector_3d'] = {
-        init: function () {
-            if (this.isInFlyout) {
-                this.appendDummyInput()
-                    .appendField(Blockly.Msg.MINECRAFT_VECTOR);
-                this.setOutput(true, "3DVector");
-                this.setColour(160);
-            } else {
-                this.appendDummyInput()
-                    .appendField("x:")
-                    .appendField(new Blockly.FieldTextInput("0"), "X")
-                    .appendField("y:")
-                    .appendField(new Blockly.FieldTextInput("0"), "Y")
-                    .appendField("z:")
-                    .appendField(new Blockly.FieldTextInput("0"), "Z");
-                this.setOutput(true, "3DVector");
-                this.setColour(160);
-            }
-        }
-    };
+    // Blockly.Blocks['minecraft_vector_3d'] = {
+    //     init: function () {
+    //         if (this.isInFlyout) {
+    //             this.appendDummyInput()
+    //                 .appendField(Blockly.Msg.MINECRAFT_VECTOR);
+    //             this.setOutput(true, "3DVector");
+    //             this.setColour(160);
+    //         } else {
+    //             this.appendDummyInput()
+    //                 .appendField("x:")
+    //                 .appendField(new Blockly.FieldTextInput("0"), "X")
+    //                 .appendField("y:")
+    //                 .appendField(new Blockly.FieldTextInput("0"), "Y")
+    //                 .appendField("z:")
+    //                 .appendField(new Blockly.FieldTextInput("0"), "Z");
+    //             this.setOutput(true, "3DVector");
+    //             this.setColour(160);
+    //         }
+    //     }
+    // };
 
+    Blockly.Blocks['minecraft_vector_3d'] = {
+      init: function() {
+        // We no longer need the isInFlyout check, as this design works well everywhere.
+        this.appendValueInput("X")
+            .setCheck("Number") // This input will only accept blocks that output a Number
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Vec3 x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("y");
+        this.appendValueInput("Z")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("z");
+
+        this.setOutput(true, "3DVector"); // The output type remains the same
+        this.setColour(180); // Using the Vector Math color for consistency
+        this.setTooltip("Creates a 3D vector from x, y, and z components. Accepts numbers or variables.");
+        this.setInputsInline(true); // This keeps the x, y, z inputs on a single line
+      }
+    };
     Blockly.Blocks['minecraft_vector_delta'] = {
         init: function () {
             if (this.isInFlyout) {

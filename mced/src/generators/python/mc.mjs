@@ -280,21 +280,43 @@ ${indentedBlockCode}
         return [code, generator.ORDER_FUNCTION_CALL];
     };
 
+    // pythonGenerator.forBlock['minecraft_vector_2d'] = function(block, generator) {
+    //     const w = block.getFieldValue('W') || '0'; // Get directly from FieldNumber
+    //     const h = block.getFieldValue('H') || '0';
+    //     const code = `(${w}, ${h})`; // Generates a Python tuple string
+    //     return [code, generator.ORDER_ATOMIC];
+    // };
+
     pythonGenerator.forBlock['minecraft_vector_2d'] = function(block, generator) {
-        const w = block.getFieldValue('W') || '0'; // Get directly from FieldNumber
-        const h = block.getFieldValue('H') || '0';
-        const code = `(${w}, ${h})`; // Generates a Python tuple string
+        // Use valueToCode to get the code from the connected blocks, with a default of '0'.
+        const w = generator.valueToCode(block, 'W', generator.ORDER_ATOMIC) || '0';
+        const h = generator.valueToCode(block, 'H', generator.ORDER_ATOMIC) || '0';
+
+        // The code generates a Python tuple string.
+        const code = `(${w}, ${h})`;
+
         return [code, generator.ORDER_ATOMIC];
     };
+    // pythonGenerator.forBlock['minecraft_vector_3d'] = function (block,generator) {
+    //     const xValue = block.getFieldValue('X');
+    //     const yValue = block.getFieldValue('Y');
+    //     const zValue = block.getFieldValue('Z');
+    //
+    //    let code = `Vec3(${xValue},${yValue},${zValue})`
+    //    return [code,generator.ORDER_ATOMIC];
+    // }
 
-    pythonGenerator.forBlock['minecraft_vector_3d'] = function (block,generator) {
-        const xValue = block.getFieldValue('X');
-        const yValue = block.getFieldValue('Y');
-        const zValue = block.getFieldValue('Z');
+    pythonGenerator.forBlock['minecraft_vector_3d'] = function(block, generator) {
+        // Use valueToCode for each input, providing a default value of '0' if nothing is connected.
+        const x = generator.valueToCode(block, 'X', generator.ORDER_ATOMIC) || '0';
+        const y = generator.valueToCode(block, 'Y', generator.ORDER_ATOMIC) || '0';
+        const z = generator.valueToCode(block, 'Z', generator.ORDER_ATOMIC) || '0';
 
-       let code = `Vec3(${xValue},${yValue},${zValue})`
-       return [code,generator.ORDER_ATOMIC];
-    }
+        // The code instantiates the Vec3 class with the code from the inputs.
+        const code = `Vec3(${x}, ${y}, ${z})`;
+
+        return [code, generator.ORDER_FUNCTION_CALL];
+    };
 
     pythonGenerator.forBlock['minecraft_vector_delta'] = function (block,generator) {
         const xValue = block.getFieldValue('X');

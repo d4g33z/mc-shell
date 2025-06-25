@@ -788,7 +788,6 @@ async function init() {
 
     </category>
     <category name="Position" colour="#0099CC">
-
         <block type="minecraft_vector_3d">
             <value name="X">
                 <shadow type="math_number">
@@ -806,24 +805,37 @@ async function init() {
                 </shadow>
             </value>
         </block>
-        <block type="minecraft_vector_2d"></block>
-        <block type="minecraft_vector_delta">
-            <value name="X">
+       
+        <block type="minecraft_vector_2d">
+            <value name="W">
                 <shadow type="math_number">
-                    <field name="NUM">1</field>
+                    <field name="NUM">10</field>
                 </shadow>
             </value>
-            <value name="Y">
+            <value name="H">
                 <shadow type="math_number">
-                    <field name="NUM">0</field>
-                </shadow>
-            </value>
-            <value name="Z">
-                <shadow type="math_number">
-                    <field name="NUM">0</field>
+                    <field name="NUM">10</field>
                 </shadow>
             </value>
         </block>
+        
+<!--        <block type="minecraft_vector_delta">-->
+<!--            <value name="X">-->
+<!--                <shadow type="math_number">-->
+<!--                    <field name="NUM">1</field>-->
+<!--                </shadow>-->
+<!--            </value>-->
+<!--            <value name="Y">-->
+<!--                <shadow type="math_number">-->
+<!--                    <field name="NUM">0</field>-->
+<!--                </shadow>-->
+<!--            </value>-->
+<!--            <value name="Z">-->
+<!--                <shadow type="math_number">-->
+<!--                    <field name="NUM">0</field>-->
+<!--                </shadow>-->
+<!--            </value>-->
+<!--        </block>-->
         <block type="minecraft_position_player"></block>
         <!--          <block type="minecraft_position_entity">-->
         <!--               <value name="ENTITY">-->
