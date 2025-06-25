@@ -17,9 +17,24 @@ class MCClient:
         self.server_type = server_type
         self.fruit_juice_port  = fruit_juice_port
 
-    @lru_cache(maxsize=1)
-    def mc_client(self):
-        return Client(self.host, self.port, passwd=self.password)
+
+
+    def run(self, *args):
+        """
+        Note: the rcon connection is stateless; it cannot be persisted and must be
+        created anew with each request
+        """
+        if not self.password:
+            print('A password is required!')
+            return
+
+        if not args:
+            raise MCClientException("Arguments required!")
+
+        with Client(self.host,self.port,passwd=self.password) as client:
+            _response = client.run(*args)
+
+        return _response
 
     @lru_cache(maxsize=1)
     def py_client(self,player_name=None):
@@ -28,18 +43,6 @@ class MCClient:
             return None
         player_name = '' if player_name is None else player_name
         return Minecraft.create(address=self.host,port=self.fruit_juice_port,playerName=player_name)
-
-    def run(self, *args):
-        if not self.password:
-            print('A password is required!')
-            return
-
-        if not args:
-            raise MCClientException("Arguments required!")
-
-        with  self.mc_client() as client:
-            _response = client.run(*args)
-        return _response
 
     def help(self,*args):
         if not self.password:
