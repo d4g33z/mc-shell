@@ -384,4 +384,45 @@ ${indentedBlockCode}
 
         return code;
     };
+
+    pythonGenerator.forBlock['minecraft_action_get_block'] = function(block, generator) {
+        const position = generator.valueToCode(block, 'POSITION', generator.ORDER_ATOMIC) || "Vec3(0, 0, 0)";
+
+        // This generates a call to a method that returns a value
+        const code = `self.action_implementer.get_block(position_vec3=${position})`;
+
+        // Return the code and the order of operations for a function call
+        return [code, generator.ORDER_FUNCTION_CALL];
+    };
+    // In src/generators/python.mjs
+
+    pythonGenerator.forBlock['minecraft_action_get_height'] = function(block, generator) {
+        const position = generator.valueToCode(block, 'POSITION', generator.ORDER_ATOMIC) || "Vec3(0, 0, 0)";
+
+        // Generates a call to our new MCActions method
+        const code = `self.action_implementer.get_height(position_vec3=${position})`;
+
+        return [code, generator.ORDER_FUNCTION_CALL];
+    };
+
+    // In src/generators/python.mjs
+
+    pythonGenerator.forBlock['minecraft_action_post_to_chat'] = function(block, generator) {
+        const message = generator.valueToCode(block, 'MESSAGE', generator.ORDER_ATOMIC) || "''";
+
+        // Generates a call to our new MCActions method
+        const code = `self.action_implementer.post_to_chat(message=${message})\n`;
+
+        return code;
+    };
+
+    pythonGenerator.forBlock['minecraft_action_create_explosion'] = function(block, generator) {
+        const position = generator.valueToCode(block, 'POSITION', generator.ORDER_ATOMIC) || "Vec3(0, 0, 0)";
+        const power = generator.valueToCode(block, 'POWER', generator.ORDER_ATOMIC) || "4"; // Default power of TNT
+
+        // Construct the Python code string using keyword arguments
+        const code = `self.action_implementer.create_explosion(position_vec3=${position}, power=${power})\n`;
+
+        return code;
+    };
 }

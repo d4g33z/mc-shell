@@ -472,5 +472,68 @@ export function defineMineCraftBlocks(Blockly) {
       }
     };
 
+    Blockly.Blocks['minecraft_action_get_block'] = {
+      init: function() {
+        this.appendValueInput("POSITION")
+            .setCheck("3DVector")
+            .appendField("get block at");
+        this.setOutput(true, "Block"); // This block returns a value of type "Block"
+        this.setColour(210); // A different color for "getter" blocks
+        this.setTooltip("Gets the type of block at a specific location.");
+        this.setInputsInline(true);
+
+
+      }
+    };
+
+    Blockly.Blocks['minecraft_action_get_height'] = {
+      init: function() {
+        this.appendValueInput("POSITION")
+            .setCheck("3DVector") // Accepts a 3D vector, but we only use X and Z
+            .appendField("get height at (x,z) of");
+        this.setOutput(true, "Number"); // This block returns a Number
+        this.setColour(210); // "Getter" block color
+        this.setTooltip("Gets the Y coordinate of the highest solid block at a given X, Z location.");
+        this.setInputsInline(true);
+
+
+      }
+    };
+
+    Blockly.Blocks['minecraft_action_post_to_chat'] = {
+      init: function() {
+        this.appendValueInput("MESSAGE")
+            .setCheck("String") // Accepts any block that outputs a string
+            .appendField("post to chat");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(65); // The "action" color
+        this.setTooltip("Posts a message to the in-game chat.");
+        this.setInputsInline(true);
+
+
+      }
+    };
+
+    // In src/blocks/mc.mjs
+
+Blockly.Blocks['minecraft_action_create_explosion'] = {
+  init: function() {
+    this.appendValueInput("POSITION")
+        .setCheck("3DVector")
+        .appendField("create explosion at");
+    this.appendValueInput("POWER")
+        .setCheck("Number")
+        .setAlign(Blockly.ALIGN_RIGHT)
+        .appendField("with power");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(65); // The "action" color
+    this.setTooltip("Creates an explosion of a specified power at a location. TNT is power 4.");
+    this.setInputsInline(true);
+
+
+  }
+};
 }
 
