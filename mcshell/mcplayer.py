@@ -54,8 +54,13 @@ class MCPlayer(MCClient):
 
     @property
     def position(self):
-        self.build()
-        return Vec3(*self.state.get('Pos'))
+        return self.pc.player.getPos()
+        # self.build()
+        # return Vec3(*self.state.get('Pos'))
+
+    @property
+    def tile_position(self):
+        return self.pc.player.getTilePos()
 
     @property
     def cardinal_direction(self):
