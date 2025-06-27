@@ -45,3 +45,17 @@ main {
     font-size: 18px;
     margin-bottom: 15px;
 }
+
+/* Style for the "ghost" - the placeholder where the item could be dropped */
+.power-widget-ghost {
+    opacity: 0.4;
+    background: #555;
+    border: 2px dashed #888;
+}
+
+/* Style for the actual item being dragged */
+.power-widget-dragging {
+    opacity: 0.9;
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}

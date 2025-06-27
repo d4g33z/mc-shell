@@ -34,6 +34,17 @@ class PowerRepository(ABC):
         pass
 
     @abstractmethod
+    def list_full_powers(self) -> List[Dict[str, Any]]:
+        """
+        Lists all data for all saved powers for a player.
+
+        Args:
+        Returns:
+            A list of dictionaries, each the full power data.
+        """
+        pass
+
+    @abstractmethod
     def get_full_power(self, power_id: str) -> Optional[Dict[str, Any]]:
         """
         Loads the full data for a single power, including the code.
@@ -91,6 +102,15 @@ class JsonFileRepository(PowerRepository):
         all_powers[power_id] = power_data
         self._save_player_data(all_powers)
         return power_id
+
+    def list_full_powers(self) -> List[Dict[str, Any]]:
+        """
+        Lists ALL data for all saved powers for the configured player.
+        This is the comprehensive version for the control UI's JSON model.
+        """
+        all_powers_dict = self._get_player_data()
+        # Return a list of the complete power data objects
+        return list(all_powers_dict.values())
 
     def list_powers(self) -> List[Dict[str, Any]]:
         all_powers = self._get_player_data()

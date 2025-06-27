@@ -1,0 +1,10 @@
+{
+  "grid": {
+    "columns": 4
+  },
+  "widgets": [
+    { "power_id": "7e0bd50a-8c84-49d9-b569-c799ae41d886", "position": [0, 0] },
+    { "power_id": "1657880b-0b04-4ab0-af3b-56dd497f4a37", "position": [1, 0] },
+    { "power_id": "237071a9-d67f-4875-b57f-a3e0739e100b", "position": [0, 1] }
+  ]
+}

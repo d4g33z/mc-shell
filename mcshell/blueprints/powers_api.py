@@ -1,5 +1,8 @@
+import os
 import json
-from flask import Blueprint, request, jsonify, make_response, current_app, render_template_string, session
+from flask import Blueprint, request, jsonify, make_response, current_app, render_template_string, session, send_file
+
+from mcshell.constants import MC_CONTROL_LAYOUT_PATH
 
 # 1. Create a Blueprint instance.
 #    'powers_api' is the name of the blueprint.
@@ -36,9 +39,39 @@ def save_new_power():
         print(f"Error saving power for player {player_id}: {e}")
         return jsonify({"error": "An internal error occurred while saving the power."}), 500
 
+# # THIS ENDPOINT NOW RETURNS PURE JSON
+# @powers_bp.route('/powers', methods=['GET'])
+# def get_powers_as_json():
+#     player_id = current_app.config.get('MINECRAFT_PLAYER_NAME')
+#     power_repo = current_app.config.get('POWER_REPO')
+#     # ... error checking ...
+#
+#     # Fetch the full power data, as the control UI will need the parameters
+#     all_powers = power_repo.list_powers() # Assuming this returns the full list for now
+#
+#     # Re-key the list into a dictionary for easy lookup on the client
+#     powers_dict = {p['power_id']: p for p in all_powers}
+#
+#     # Return as JSON
+#     return jsonify(powers_dict)
+#
+
+# NEW ENDPOINT TO SERVE THE LAYOUT DEFINITION
+@powers_bp.route('/control/layout', methods=['GET'])
+def get_control_layout():
+    # In a real app, this would load the layout for the specific player
+    # For now, it reads a static file.
+    try:
+        # Assuming control_layout.json is in the project root
+        return send_file(MC_CONTROL_LAYOUT_PATH, mimetype='application/json')
+    except FileNotFoundError:
+        print(f"{MC_CONTROL_LAYOUT_PATH} not found!")
+        # Return a default empty layout if the file doesn't exist
+        return jsonify({"grid": {"columns": 4}, "widgets": []})
+
 
 @powers_bp.route('/powers', methods=['GET'])
-def get_powers_list_as_html():
+def get_powers_list():
     """
     Gets the list of saved powers and renders the appropriate HTML fragment
     based on the 'view' query parameter ('editor' or 'control').
@@ -63,24 +96,15 @@ def get_powers_list_as_html():
 
     # --- Select the correct template based on the view type ---
     if view_type == 'control':
-        # Use the simpler template for the control panel's library
-        template_string = """
-        <h4>Available Powers</h4>
-        <ul>
-        {% for power in powers_summary_list %}
-            <li class="control-library-item">
-                <span>{{ power.name }}</span>
-                <button class="btn-small"
-                        hx-get="/api/control/widget/{{ power.power_id }}"
-                        hx-target="#control-grid"
-                        hx-swap="beforeend">
-                    Add to Grid
-                </button>
-            </li>
-        {% endfor %}
-        </ul>
-        """
-        html_response_string = render_template_string(template_string, powers_summary_list=powers_summary_list)
+
+        # Call the new method to get all data needed for the control UI
+        all_powers_list = power_repo.list_full_powers()
+        # Convert the list into a dictionary keyed by power_id for easy lookup on the client
+        powers_dict = {p['power_id']: p for p in all_powers_list if 'power_id' in p}
+
+        print(f"Serving full power data dictionary for player '{player_id}' for control UI.")
+        return jsonify(powers_dict)
+
     else:  # Default to the 'editor' view
         # Use the detailed template for the editor sidebar
         template_string = """
@@ -113,12 +137,12 @@ def get_powers_list_as_html():
                               hx-swap="none"
                               title="Add this power's blocks to the current workspace">
                           Add to Workspace
-                      </button> 
+                      </button>
 
                       <button class="btn-small btn-danger"
-                              @click="$dispatch('open-delete-confirm', { 
-                                  powerId: '{{ power.power_id }}', 
-                                  powerName: '{{ power.name | replace("'", "\\'") }}' 
+                              @click="$dispatch('open-delete-confirm', {
+                                  powerId: '{{ power.power_id }}',
+                                  powerName: '{{ power.name | replace("'", "\\'") }}'
                               })">
                           Delete
                       </button>
