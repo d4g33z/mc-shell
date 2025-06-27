@@ -2,6 +2,31 @@
 import Alpine from 'alpinejs';
 import Sortable from 'sortablejs'; // For drag-and-drop later
 import 'htmx.org'; // Keep for executing powers
+// In src/control.js
+
+/**
+ * Creates the data object for a single power widget component.
+ * @param {object} initialPowerData The full data for one power.
+ */
+function powerWidget(initialPowerData) {
+    return {
+        power: initialPowerData, // Store the power's data
+
+        // You can add state specific to this widget, e.g., for its parameters
+        formValues: {},
+
+        init() {
+            // Initialize form values from parameter defaults
+            if (this.power && this.power.parameters) {
+                this.power.parameters.forEach(param => {
+                    this.formValues[param.name] = param.default;
+                });
+            }
+        }
+    };
+}
+// Make it globally available for the HTML to use
+window.powerWidget = powerWidget;
 
 // The data and methods for our main control panel component
 function controlPanel() {
@@ -9,8 +34,21 @@ function controlPanel() {
     powers: {}, // Will hold the data for all available powers
     layout: { grid: { columns: 4 }, widgets: [] }, // Will hold the layout data
     isEditing: false, // Toggles edit mode for drag-and-drop
+    sortableInstance: null, // To hold our SortableJS instance
 
     init() {
+
+      // --- THIS IS THE FIX for power widgets always movable---
+      // 1. Watch for changes on the 'isEditing' property
+      this.$watch('isEditing', (isNowEditing) => {
+        if (this.sortableInstance) {
+          console.log(`Setting drag-and-drop to ${isNowEditing ? 'ENABLED' : 'DISABLED'}.`);
+          // 2. Enable or disable SortableJS based on the new state
+          this.sortableInstance.option('disabled', !isNowEditing);
+        }
+      });
+      // --- END OF FIX ---
+
       // --- THIS IS THE FIX for BUG #1 : Modal stays open---
       // Use $watch to monitor the isEditing property for changes.
       this.$watch('isEditing', (isNowEditing) => {
@@ -36,10 +74,11 @@ function controlPanel() {
         this.$nextTick(() => {
           const grid = this.$refs.powerGrid;
           if (grid) {
-            new Sortable(grid, {
+            this.sortableInstance = new Sortable(grid, {
               animation: 150,
               // More options will be added here to save the new layout
             });
+            this.sortableInstance.option('disabled', true);
           }
         });
       });
