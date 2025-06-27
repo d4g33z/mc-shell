@@ -1,61 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-        <title>MC-ED Control</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MC-ED Control</title>
+    <link rel="stylesheet" href="./control.css">
+</head>
+<body x-data="controlPanel()" @add-widget-to-grid.window="addWidget($event.detail)">
 
-        <link rel="stylesheet" href="./control.css">
-    </head>
-    <body x-data>
+    <header>
+        <h1>MC-ED Control Panel</h1>
+            <button x-show="isEditing" @click="$dispatch('open-library-modal')">+ Add Widget</button>
+            <button @click="isEditing = !isEditing" x-text="isEditing ? 'Done' : 'Edit Layout'"></button>
+    </header>
 
-    <!--    <header>-->
-    <!--        <h1>MC-ED Control Panel</h1>-->
-    <!--        <button hx-get="/api/powers?view=control" hx-target="#control-library-list"-->
-    <!--                hx-swap="innerHTML">-->
-    <!--            Add Power to Grid-->
-    <!--        </button>-->
-    <!--    </header>-->
+<!--    <template x-teleport="body">-->
+<!--        <div x-data="{ isOpen: false }" @open-library-modal.window="isOpen = true" ...>-->
+<!--            <div x-show="isOpen" ...>-->
+<!--                <div id="control-library-list"-->
+<!--                     hx-get="/api/powers?view=control"-->
+<!--                     hx-trigger="open-library-modal">-->
+<!--                    Loading...-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </template>-->
 
-            <header>
-                <h1>MC-ED Control Panel</h1>
-                    `<button @click="$dispatch('open-library-modal')">Add Power to Grid</button>
-            </header>
+    <template x-teleport="body">
+        <div x-data="{ isOpen: false }"
+             @open-library-modal.window="isOpen = true"
+             @keydown.escape.window="isOpen = false"
+             class="modal-root">
 
-        <main>
-            <div id="control-grid"></div>
-        </main>
-    <!--    <div id="control-library-panel">-->
-    <!--        <h2>Available Powers</h2>-->
-    <!--        <div id="control-library-list">-->
-    <!--            </div>-->
-    <!--    </div>-->
+            <div x-show="isOpen" x-cloak class="modal-overlay" @click="isOpen = false"></div>
+            <div x-show="isOpen" x-cloak class="modal-content" x-transition>
+                <h2>Add Power to Grid</h2>
+                <div id="control-library-list"
+                     hx-get="/api/control/powers_library" hx-trigger="open-library-modal from:window"
+                     hx-swap="innerHTML">
+                    <p>Loading...</p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-secondary" @click="isOpen = false">Close</button>
+                </div>
+            </div>
+        </div>
+    </template>
 
-        <template x-teleport="body">
-                <div x-data="{ isOpen: false }"
-                     @open-library-modal.window="isOpen = true"
-                     @close-library-modal.window="isOpen = false"
-                     @keydown.escape.window="isOpen = false"
-                     class="modal-root">
+    <main>
+        <div id="power-grid" x-ref="powerGrid" :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`">
 
-                    <div x-show="isOpen" x-cloak class="modal-overlay" @click="isOpen = false"></div>
+            <template x-for="widget in layout.widgets" :key="widget.power_id">
 
-                    <div x-show="isOpen" x-cloak class="modal-content" x-transition>
-                        <h2>Add Power to Grid</h2>
-
-                        <div id="control-library-list"
-                             hx-get="/api/powers?view=control"
-                             hx-trigger="open-library-modal from:window"
-                             hx-swap="innerHTML">
-                            <p>Loading library...</p>
-                        </div>
-
-                        <div class="modal-actions">
-                            <button class="btn-secondary" @click="isOpen = false">Close</button>
-                        </div>
+                <div class="power-widget">
+                    <div class="power-header">
+                        <span class="power-name" x-text="getPowerData(widget).name"></span>
+                             <button class="remove-widget-btn"
+                                    x-show="isEditing"
+                                    @click="removeWidget(widget.power_id)">
+                                &times;
+                            </button>
                     </div>
+
+                    <form class="power-params" :id="`form-${widget.power_id}`">
+                        <template x-for="param in getPowerData(widget).parameters" :key="param.name">
+                            <div class="param-control">
+                                <label x-text="param.name + ':'"></label>
+
+                                <template x-if="param.type === 'Number'">
+                                    <div class="param-slider">
+                                        <input type="range" :name="param.name" :value="param.default" min="1" max="100" oninput="this.nextElementSibling.value = this.value">
+                                        <output x-text="param.default"></output>
+                                    </div>
+                                </template>
+
+                                <template x-if="param.type === 'Block'">
+                                    <select :name="param.name">
+                                        <option value="STONE">Stone</option>
+                                        <option value="OAK_PLANKS">Oak Planks</option>
+                                        <option value="GLASS">Glass</option>
+                                    </select>
+                                </template>
+
+                                <template x-if="param.type === 'String'">
+                                    <input type="text" :name="param.name" :value="param.default || ''">
+                                </template>
+                            </div>
+                        </template>
+                    </form>
+
+                    <div class="power-status">Status: Idle</div>
+
+                    <button class="execute-btn"
+                            :hx-post="'/api/execute_power'"
+                            :hx-include="`#form-${widget.power_id}`"
+                            :hx-vals="`js:{power_id: '${widget.power_id}'}`">
+                        Execute
+                    </button>
                 </div>
             </template>
-        <script type="module" src="./control.js"></script>
-    </body>
+        </div>
+    </main>
+
+    <script type="module" src="./control.js"></script>
+</body>
 </html>

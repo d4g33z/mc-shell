@@ -64,6 +64,8 @@ MC_APP_DIR = MC_DATA_DIR.joinpath('app')
 
 MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
 
+MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
+
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS
 #MC_ENTITY_URL = urlpath.URL('https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html')
