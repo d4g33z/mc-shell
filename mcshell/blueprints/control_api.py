@@ -1,4 +1,5 @@
-from flask import Blueprint, current_app, render_template_string
+import json
+from flask import Blueprint, current_app, render_template_string, make_response
 
 # 1. Create a Blueprint instance.
 #    'powers_api' is the name of the blueprint.
@@ -72,6 +73,13 @@ def get_control_widget(power_id):
     </div>
     """
 
-    return render_template_string(widget_template, power=power_data)
+    html_response_string = render_template_string(widget_template, power=power_data)
+     # --- THIS IS THE FIX ---
+    # After returning the widget, also send a trigger to close the library modal.
+    response = make_response(html_response_string)
+    trigger_data = {"close-library-modal": True}
+    response.headers['HX-Trigger'] = json.dumps(trigger_data)
+
+    return response
 
 

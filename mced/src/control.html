@@ -1,30 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>MC-ED Control</title>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <title>MC-ED Control</title>
 
-    <link rel="stylesheet" href="./control.css">
-</head>
-<body x-data>
+        <link rel="stylesheet" href="./control.css">
+    </head>
+    <body x-data>
 
-    <header>
-        <h1>MC-ED Control Panel</h1>
-        <button hx-get="/api/powers?view=control" hx-target="#control-library-list"
-                hx-swap="innerHTML">
-            Add Power to Grid
-        </button>
-    </header>
-    <main>
-        <div id="control-grid"></div>
-    </main>
-    <div id="control-library-panel">
-        <h2>Available Powers</h2>
-        <div id="control-library-list">
-            </div>
-    </div>
+    <!--    <header>-->
+    <!--        <h1>MC-ED Control Panel</h1>-->
+    <!--        <button hx-get="/api/powers?view=control" hx-target="#control-library-list"-->
+    <!--                hx-swap="innerHTML">-->
+    <!--            Add Power to Grid-->
+    <!--        </button>-->
+    <!--    </header>-->
 
-    <script type="module" src="./control.js"></script>
-</body>
+            <header>
+                <h1>MC-ED Control Panel</h1>
+                    `<button @click="$dispatch('open-library-modal')">Add Power to Grid</button>
+            </header>
+
+        <main>
+            <div id="control-grid"></div>
+        </main>
+    <!--    <div id="control-library-panel">-->
+    <!--        <h2>Available Powers</h2>-->
+    <!--        <div id="control-library-list">-->
+    <!--            </div>-->
+    <!--    </div>-->
+
+        <template x-teleport="body">
+                <div x-data="{ isOpen: false }"
+                     @open-library-modal.window="isOpen = true"
+                     @close-library-modal.window="isOpen = false"
+                     @keydown.escape.window="isOpen = false"
+                     class="modal-root">
+
+                    <div x-show="isOpen" x-cloak class="modal-overlay" @click="isOpen = false"></div>
+
+                    <div x-show="isOpen" x-cloak class="modal-content" x-transition>
+                        <h2>Add Power to Grid</h2>
+
+                        <div id="control-library-list"
+                             hx-get="/api/powers?view=control"
+                             hx-trigger="open-library-modal from:window"
+                             hx-swap="innerHTML">
+                            <p>Loading library...</p>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button class="btn-secondary" @click="isOpen = false">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        <script type="module" src="./control.js"></script>
+    </body>
 </html>
