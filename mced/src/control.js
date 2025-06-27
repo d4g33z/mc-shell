@@ -11,6 +11,17 @@ function controlPanel() {
     isEditing: false, // Toggles edit mode for drag-and-drop
 
     init() {
+      // --- THIS IS THE FIX for BUG #1 : Modal stays open---
+      // Use $watch to monitor the isEditing property for changes.
+      this.$watch('isEditing', (isNowEditing) => {
+        console.log(`Edit mode changed to: ${isNowEditing}`);
+        // If we are exiting edit mode, ensure the library modal is closed.
+        if (!isNowEditing) {
+          // Dispatch the event that the modal is listening for.
+          window.dispatchEvent(new CustomEvent('close-library-modal'));
+        }
+      });
+      // --- END OF FIX ---
       console.log('Initializing control panel...');
       // Fetch both layout and power data when the component loads
       Promise.all([
@@ -32,6 +43,17 @@ function controlPanel() {
           }
         });
       });
+    },
+
+   // NEW METHOD to fetch the latest power data
+    refreshPowersData() {
+      console.log("Refreshing full powers data from server...");
+      fetch('/api/powers?view=control')
+        .then(res => res.json())
+        .then(powersData => {
+          this.powers = powersData;
+          console.log('Powers data has been updated.');
+        });
     },
 
     // A helper to get the power data for a widget from the main powers dictionary

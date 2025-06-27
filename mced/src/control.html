@@ -10,7 +10,7 @@
 
     <header>
         <h1>MC-ED Control Panel</h1>
-            <button x-show="isEditing" @click="$dispatch('open-library-modal')">+ Add Widget</button>
+            <button x-show="isEditing" @click="refreshPowersData(); $dispatch('open-library-modal')">+ Add Widget</button>
             <button @click="isEditing = !isEditing" x-text="isEditing ? 'Done' : 'Edit Layout'"></button>
     </header>
 
@@ -29,6 +29,7 @@
     <template x-teleport="body">
         <div x-data="{ isOpen: false }"
              @open-library-modal.window="isOpen = true"
+             @close-library-modal.window="isOpen = false"
              @keydown.escape.window="isOpen = false"
              class="modal-root">
 
