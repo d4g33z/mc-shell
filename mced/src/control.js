@@ -1,19 +1,16 @@
-// src/control.js
 import Alpine from 'alpinejs';
 import Sortable from 'sortablejs'; // For drag-and-drop later
 import 'htmx.org'; // Keep for executing powers
-// In src/control.js
 
 /**
  * Creates the data object for a single power widget component.
- * @param {object} initialPowerData The full data for one power.
+ * It is now self-contained and listens for global state changes.
  */
 function powerWidget(initialPowerData) {
     return {
-        power: initialPowerData, // Store the power's data
-
-        // You can add state specific to this widget, e.g., for its parameters
+        power: initialPowerData,
         formValues: {},
+        showAdminControls: false, // Each widget tracks its own "delete button" visibility
 
         init() {
             // Initialize form values from parameter defaults
@@ -22,11 +19,16 @@ function powerWidget(initialPowerData) {
                     this.formValues[param.name] = param.default;
                 });
             }
+
+            // Listen for the global mode change event
+            window.addEventListener('control-mode-changed', (event) => {
+                this.showAdminControls = event.detail.editing;
+            });
         }
     };
 }
-// Make it globally available for the HTML to use
 window.powerWidget = powerWidget;
+
 
 // The data and methods for our main control panel component
 function controlPanel() {
@@ -38,29 +40,27 @@ function controlPanel() {
 
     init() {
 
-      // --- THIS IS THE FIX for power widgets always movable---
-      // 1. Watch for changes on the 'isEditing' property
-      this.$watch('isEditing', (isNowEditing) => {
-        if (this.sortableInstance) {
-          console.log(`Setting drag-and-drop to ${isNowEditing ? 'ENABLED' : 'DISABLED'}.`);
-          // 2. Enable or disable SortableJS based on the new state
-          this.sortableInstance.option('disabled', !isNowEditing);
-        }
-      });
-      // --- END OF FIX ---
+        console.log('Initializing control panel...');
 
-      // --- THIS IS THE FIX for BUG #1 : Modal stays open---
-      // Use $watch to monitor the isEditing property for changes.
+      // --- CONSOLIDATED $watch --
+      // This single watcher handles ALL logic related to the isEditing state change.
       this.$watch('isEditing', (isNowEditing) => {
         console.log(`Edit mode changed to: ${isNowEditing}`);
-        // If we are exiting edit mode, ensure the library modal is closed.
-        if (!isNowEditing) {
-          // Dispatch the event that the modal is listening for.
-          window.dispatchEvent(new CustomEvent('close-library-modal'));
+
+        // 1. Enable or disable SortableJS based on the new state.
+        if (this.sortableInstance) {
+          console.log(`Setting drag-and-drop to ${isNowEditing ? 'ENABLED' : 'DISABLED'}.`);
+          this.sortableInstance.option('disabled', !isNowEditing);
         }
+
+        // 2. Broadcast the global event for child components to hear.
+        console.log(`Broadcasting event: control-mode-changed, editing: ${isNowEditing}`);
+        window.dispatchEvent(new CustomEvent('control-mode-changed', {
+            detail: { editing: isNowEditing }
+        }));
       });
-      // --- END OF FIX ---
-      console.log('Initializing control panel...');
+      // --- END OF CONSOLIDATION ---
+
       // Fetch both layout and power data when the component loads
       Promise.all([
         fetch('/api/control/layout').then(res => res.json()),
@@ -76,7 +76,33 @@ function controlPanel() {
           if (grid) {
             this.sortableInstance = new Sortable(grid, {
               animation: 150,
-              // More options will be added here to save the new layout
+
+              // --- THIS IS THE DEFINITIVE FIX ---
+
+              // onStart is called when a drag begins.
+              onStart: (event) => {
+                // Add x-ignore to the grid. This tells Alpine to completely
+                // ignore this element and all its children. Alpine will not
+                // initialize any new elements added inside it.
+                grid.setAttribute('x-ignore', '');
+                console.log('Drag started: Applying x-ignore to grid.');
+              },
+
+              // onEnd is called when a drag operation finishes.
+              onEnd: (event) => {
+                // Remove x-ignore so Alpine can manage the elements again.
+                grid.removeAttribute('x-ignore');
+                console.log('Drag ended: Removing x-ignore from grid.');
+
+                // Your logic to update the layout array order will go here.
+                // For example:
+                // const widgetIds = Array.from(grid.children).map(child => child.__x.getUnobservedData().widget.power_id);
+                // this.layout.widgets = widgetIds.map(id => ({ power_id: id, position: [] }));
+              }
+              // --- END OF FIX ---
+
+
+
             });
             this.sortableInstance.option('disabled', true);
           }

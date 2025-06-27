@@ -6,7 +6,9 @@
     <title>MC-ED Control</title>
     <link rel="stylesheet" href="./control.css">
 </head>
-<body x-data="controlPanel()" @add-widget-to-grid.window="addWidget($event.detail)">
+<body x-data="controlPanel()"
+      @add-widget-to-grid.window="addWidget($event.detail)"
+      @remove-widget-from-grid.window="removeWidget($event.detail.powerId)"  >
 
     <header>
         <h1>MC-ED Control Panel</h1>
@@ -26,10 +28,11 @@
 <!--        </div>-->
 <!--    </template>-->
 
+<!--    @close-library-modal.window="isOpen = false"-->
     <template x-teleport="body">
         <div x-data="{ isOpen: false }"
              @open-library-modal.window="isOpen = true"
-             @close-library-modal.window="isOpen = false"
+             @control-mode-changed.window="isOpen = false"
              @keydown.escape.window="isOpen = false"
              class="modal-root">
 
@@ -57,6 +60,12 @@
 
                     <div class="power-header">
                         <span class="power-name" x-text="power.name"></span>
+                        <button class="remove-widget-btn"
+                            x-show="showAdminControls"
+                            @click.stop="$dispatch('remove-widget-from-grid', { powerId: power.power_id })"
+                            x-transition>
+                            &times;
+                        </button>
                     </div>
 
                     <form class="power-params" :id="`form-${power.power_id}`">
