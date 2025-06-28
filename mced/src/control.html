@@ -16,19 +16,6 @@
             <button @click="isEditing = !isEditing" x-text="isEditing ? 'Done' : 'Edit Layout'"></button>
     </header>
 
-<!--    <template x-teleport="body">-->
-<!--        <div x-data="{ isOpen: false }" @open-library-modal.window="isOpen = true" ...>-->
-<!--            <div x-show="isOpen" ...>-->
-<!--                <div id="control-library-list"-->
-<!--                     hx-get="/api/powers?view=control"-->
-<!--                     hx-trigger="open-library-modal">-->
-<!--                    Loading...-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </template>-->
-
-<!--    @close-library-modal.window="isOpen = false"-->
     <template x-teleport="body">
         <div x-data="{ isOpen: false }"
              @open-library-modal.window="isOpen = true"
@@ -51,8 +38,7 @@
         </div>
     </template>
     <main>
-        <div id="power-grid" x-ref="powerGrid"  :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`"
-              hx-on::after-swap="onHtmxAfterSwap(event)">
+        <div id="power-grid" x-ref="powerGrid"  :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`">
 
 
             <template x-for="widget in layout.widgets" :key="widget.power_id">
@@ -88,13 +74,8 @@
                         </template>
                     </form>
 
-<!--                    <div class="power-status" :id="`status-${power.power_id}`">Status: Idle</div>-->
                     <div class="power-status" x-text="status === 'error' ? `Error: ${errorMessage}` : `Status: ${status}`">Status: Idle</div>
 
-<!--                    <button class="execute-btn"-->
-<!--                            hx-post="/api/execute_power"-->
-<!--                            :hx-include="`#form-${power.power_id}`"-->
-<!--                            :hx-vals="`js:{power_id: '${power.power_id}'}`">-->
                    <button class="execute-btn"
                         :disabled="status === 'running'"
                         hx-post="/api/execute_power"
@@ -104,80 +85,10 @@
                         hx-swap="outerHTML">
                         Execute
                     </button>
-<!--                    <button class="execute-btn"-->
-<!--                        hx-post="/api/execute_power"-->
-<!--                        :hx-include="`#form-${power.power_id}`"-->
-<!--                        :hx-vals="`js:{power_id: '${power.power_id}'}`"-->
-<!--                        :hx-target="`#status-${power.power_id}`"-->
-<!--                        hx-swap="innerHTML">-->
-<!--                        Execute-->
-<!--                    </button>-->
                 </div>
             </template>
         </div>
     </main>
-<!--    <main>-->
-<!--        <div id="power-grid" x-ref="powerGrid" :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`">-->
-
-<!--            <template x-for="widget in layout.widgets" :key="widget.power_id">-->
-
-<!--                <div class="power-widget">-->
-<!--                    <div class="power-header">-->
-<!--                        <span class="power-name" x-text="getPowerData(widget).name"></span>-->
-<!--                             <button class="remove-widget-btn"-->
-<!--                                    x-show="isEditing"-->
-<!--                                    @click="removeWid
-                // 1. Tell Alpine.js to initialize any x-data components inside the new widget
-                window.Alpine.initTree(newWidget);
-
-                // 2. Tell htmx to scan the new widget for any hx-* attributes
-                window.htmx.process(newWidget);
-            }
-        }get(widget.power_id)">-->
-<!--                                &times;-->
-<!--                            </button>-->
-<!--                    </div>-->
-
-<!--                    <form class="power-params" :id="`form-${widget.power_id}`">-->
-<!--                        <template x-for="param in getPowerData(widget).parameters" :key="param.name">-->
-<!--                            <div class="param-control">-->
-<!--                                <label x-text="param.name + ':'"></label>-->
-
-<!--                                <template x-if="param.type === 'Number'">-->
-<!--                                    <div class="param-slider">-->
-<!--                                        <input type="range" :name="param.name" :value="param.default" min="1" max="100" oninput="this.nextElementSibling.value = this.value">-->
-<!--                                        <output x-text="param.default"></output>-->
-<!--                                    </div>-->
-<!--                                </template>-->
-
-<!--                                <template x-if="param.type === 'Block'">-->
-<!--                                    <select :name="param.name">-->
-<!--                                        <option value="STONE">Stone</option>-->
-<!--                                        <option value="OAK_PLANKS">Oak Planks</option>-->
-<!--                                        <option value="GLASS">Glass</option>-->
-<!--                                    </select>-->
-<!--                                </template>-->
-
-<!--                                <template x-if="param.type === 'String'">-->
-<!--                                    <input type="text" :name="param.name" :value="param.default || ''">-->
-<!--                                </template>-->
-<!--                            </div>-->
-<!--                        </template>-->
-<!--                    </form>-->
-
-<!--                    <div class="power-status">Status: Idle</div>-->
-
-<!--                    <button class="execute-btn"-->
-<!--                            :hx-post="'/api/execute_power'"-->
-<!--                            :hx-include="`#form-${widget.power_id}`"-->
-<!--                            :hx-vals="`js:{power_id: '${widget.power_id}'}`">-->
-<!--                        Execute-->
-<!--                    </button>-->
-<!--                </div>-->
-<!--            </template>-->
-<!--        </div>-->
-<!--    </main>-->
-
     <script type="module" src="./control.js"></script>
 </body>
 </html>
