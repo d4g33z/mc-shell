@@ -78,7 +78,18 @@ def execute_power():
 
     RUNNING_POWERS[execution_id] = {'thread': thread, 'cancel_event': cancel_event}
 
-    # ... (return the HTML with the cancel button containing the execution_id) ...
+    # Return the initial status update, including a "Cancel" button with the unique execution_id
+    cancel_button_html = f"""
+    <button class="btn-small btn-danger"
+            hx-post="/api/cancel_power"
+            hx-vals='{{"execution_id": "{execution_id}"}}'
+            hx-target="closest .power-widget .power-status"
+            hx-swap="innerHTML">
+        Cancel
+    </button>
+    """
+    return f'<span style="color: orange;">Executing...</span>{cancel_button_html}'
+
 def execute_power_in_thread(execution_id, python_code, player_name, server_data, runtime_params, cancel_event):
     """
     This is the new, shared worker function. It runs in a background thread.
@@ -102,7 +113,7 @@ def execute_power_in_thread(execution_id, python_code, player_name, server_data,
             if not BlocklyProgramRunner:
                 raise RuntimeError("BlocklyProgramRunner class not found in generated code.")
 
-            runner = BlocklyProgramRunner(action_implementer, cancel_event=cancel_event,**runtime_params)
+            runner = BlocklyProgramRunner(action_implementer, cancel_event=cancel_event,runtime_params=runtime_params)
 
             # --- Cancellation Check (if your MCActions methods support it) ---
             # You could pass the cancel_event to the runner if methods can check it.
