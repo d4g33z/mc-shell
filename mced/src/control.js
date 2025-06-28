@@ -1,7 +1,44 @@
 import Alpine from 'alpinejs';
 import Sortable from 'sortablejs'; // For drag-and-drop later
-import 'htmx.org'; // Keep for executing powers
 
+// import 'htmx.org'; // Keep for executing powers
+// 1. Import all exports from the htmx.org package into a namespace variable called `htmx`.
+import * as htmx from 'htmx.org';
+
+// 2. Manually attach the imported htmx object to the global window object.
+//    This makes it accessible to the hx-* attributes in your HTML.
+window.htmx = htmx;
+
+import 'htmx-ext-json-enc';
+import { io } from "socket.io-client"; // <-- Import the io function
+
+// --- 1. Establish the connection to your Flask-SocketIO server ---
+const socket = io("http://localhost:5001"); // Use the address of your Python server
+
+socket.on('connect', () => {
+    console.log('Control UI connected to backend server with Socket.IO:', socket.id);
+});
+
+socket.on('disconnect', () => {
+    console.log('Control UI disconnected from Socket.IO server.');
+});
+
+// --- 2. Set up a global listener for power status updates ---
+socket.on('power_status', (data) => {
+    console.log('Received power status update:', data);
+    // data should look like: {id: "power-id-abc", execution_id: "...", status: "finished"}
+
+    // Find the specific widget on the page that this update is for
+    const widgetElement = document.getElementById(`widget-${data.id}`);
+    if (widgetElement) {
+        // Dispatch a custom event specifically on this element
+        // The widget's Alpine component will be listening for this.
+        widgetElement.dispatchEvent(new CustomEvent('update-status', {
+            detail: { status: data.status, message: data.message || '' },
+            bubbles: false // The event doesn't need to bubble
+        }));
+    }
+});
 /**
  * Creates the data object for a single power widget component.
  * It is now self-contained and listens for global state changes.
@@ -11,6 +48,10 @@ function powerWidget(initialPowerData) {
         power: initialPowerData,
         formValues: {},
         showAdminControls: false, // Each widget tracks its own "delete button" visibility
+       // NEW: Add a state variable to track the widget's status
+        status: 'Idle',
+        // We can also store the execution_id when a power is running
+        currentExecutionId: null,
 
         init() {
             // Initialize form values from parameter defaults
@@ -24,11 +65,60 @@ function powerWidget(initialPowerData) {
             window.addEventListener('control-mode-changed', (event) => {
                 this.showAdminControls = event.detail.editing;
             });
+        },
+        // We can add a helper method to update the status
+        updateStatus(newStatus, executionId = null) {
+            this.status = newStatus;
+            this.currentExecutionId = executionId;
         }
     };
 }
 window.powerWidget = powerWidget;
 
+// --- GLOBAL HTMX EVENT HANDLER ---
+// This listener is set up once when the module loads. It will catch all htmx swaps.
+// document.body.addEventListener('htmx:afterSwap', function (event) {
+//     // The new content that was swapped into the page is in event.detail.elt
+//     const newContent = event.detail.elt;
+//     if (newContent && newContent.nodeType === Node.ELEMENT_NODE) {
+//         console.log('htmx:afterSwap detected. Processing new content to activate nested htmx/alpine attributes.');
+//         // Tell htmx to scan this new fragment for any hx-* attributes
+//         window.htmx.process(newContent);
+//         // If the new content has Alpine components, tell Alpine to initialize them
+//         if (window.Alpine) {
+//             window.Alpine.initTree(newContent);
+//         }
+//     }
+// });
+
+// --- GLOBAL HTMX EVENT HANDLER (Corrected) ---
+// This listener is set up once when the module loads.
+document.body.addEventListener('htmx:afterSwap', function (event) {
+    const newContent = event.detail.elt;
+
+    // Check if the swapped element is a valid DOM node
+    if (newContent && newContent.nodeType === Node.ELEMENT_NODE) {
+
+        // --- THIS IS THE FIX ---
+        // We need to initialize Alpine components first, then process htmx attributes.
+        // Alpine.nextTick() waits for the DOM to be updated by Alpine before running.
+        if (window.Alpine) {
+            // First, tell Alpine to scan and initialize any new components (like our widget).
+            window.Alpine.initTree(newContent);
+
+            // Then, wait for Alpine's reactive updates to complete.
+            window.Alpine.nextTick(() => {
+                console.log('Alpine has updated the DOM, now processing htmx attributes.');
+                // Now that attributes like :hx-include have been rendered,
+                // we can tell htmx to process the element.
+                window.htmx.process(newContent);
+            });
+        } else {
+            // Fallback if Alpine isn't present for some reason
+            window.htmx.process(newContent);
+        }
+    }
+});
 
 // The data and methods for our main control panel component
 function controlPanel() {
@@ -72,12 +162,16 @@ function controlPanel() {
 
         // Initialize drag-and-drop after the next DOM update
         this.$nextTick(() => {
-          const grid = this.$refs.powerGrid;
+          // Use the standard document.getElementById to get the grid element.
+          const grid = document.getElementById('power-grid');
+
           if (grid) {
+            console.log("Alpine has rendered the widgets. Now processing them with htmx...");
+            // 1. Tell htmx to scan the grid and activate all hx-* attributes inside it.
+            htmx.process(grid);
+
             this.sortableInstance = new Sortable(grid, {
               animation: 150,
-
-              // --- THIS IS THE DEFINITIVE FIX ---
 
               // onStart is called when a drag begins.
               onStart: (event) => {
@@ -99,15 +193,29 @@ function controlPanel() {
                 // const widgetIds = Array.from(grid.children).map(child => child.__x.getUnobservedData().widget.power_id);
                 // this.layout.widgets = widgetIds.map(id => ({ power_id: id, position: [] }));
               }
-              // --- END OF FIX ---
-
-
-
             });
             this.sortableInstance.option('disabled', true);
+          } else {
+              console.error("Could not find #power-grid to initialize SortableJS.");
           }
         });
       });
+
+      // --- NEW: Global Socket.IO listener ---
+      // This assumes you have a `socket` object initialized and connected
+      // as we discussed for the editor.
+      if (window.socket) {
+        socket.on('power_status', (data) => {
+            console.log('Received power status update:', data);
+
+            // Find the specific widget component on the page to update it
+            const widgetElement = document.getElementById(`widget-${data.id}`);
+            if (widgetElement && widgetElement.__x) {
+                // Call the widget's internal method to update its state
+                widgetElement.__x.data.updateStatus(data.status, data.execution_id);
+            }
+        });
+      }
     },
 
    // NEW METHOD to fetch the latest power data
