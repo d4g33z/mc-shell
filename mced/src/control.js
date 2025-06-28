@@ -1,15 +1,16 @@
 import Alpine from 'alpinejs';
 import Sortable from 'sortablejs'; // For drag-and-drop later
 
+import htmx from 'htmx.org'
 // import 'htmx.org'; // Keep for executing powers
 // 1. Import all exports from the htmx.org package into a namespace variable called `htmx`.
-import * as htmx from 'htmx.org';
+// import * as htmx from 'htmx.org';
+// import 'htmx-ext-json-enc';
 
 // 2. Manually attach the imported htmx object to the global window object.
 //    This makes it accessible to the hx-* attributes in your HTML.
-window.htmx = htmx;
+// window.htmx = htmx;
 
-import 'htmx-ext-json-enc';
 import { io } from "socket.io-client"; // <-- Import the io function
 
 // --- 1. Establish the connection to your Flask-SocketIO server ---
@@ -74,7 +75,29 @@ function powerWidget(initialPowerData) {
     };
 }
 window.powerWidget = powerWidget;
-
+// --- TEMPORARY DEBUGGING LISTENER ---
+// Add this anywhere inside the init() function.
+// document.body.addEventListener('add-widget-to-grid', (event) => {
+//     // If this message appears, the dispatch is working!
+//     console.log("Event 'add-widget-to-grid' was successfully dispatched!");
+//
+//     // This will show you the data that was sent with the event.
+//     // It should contain the powerId and powerName.
+//     console.log("Event Detail (data passed with dispatch):", event.detail);
+//
+//     const grid = document.getElementById('power-grid');
+//
+//   if (grid) {
+//       console.log("Alpine has rendered the widgets. Now processing them with htmx...");
+//       // 1. Tell Alpine.js to initialize any x-data components inside the new widget
+//       // window.Alpine.initTree(grid);
+//       // 1. Tell htmx to scan the grid and activate all hx-* attributes inside it.
+//       htmx.process(grid);
+//   }
+//     // You can use an alert for unmissable confirmation during testing.
+//     // alert(`Delete event dispatched for power name: ${event.detail.powerName}`);
+// });
+// --- END OF DEBUGGING LISTENER ---
 // --- GLOBAL HTMX EVENT HANDLER ---
 // This listener is set up once when the module loads. It will catch all htmx swaps.
 // document.body.addEventListener('htmx:afterSwap', function (event) {
@@ -93,35 +116,64 @@ window.powerWidget = powerWidget;
 
 // --- GLOBAL HTMX EVENT HANDLER (Corrected) ---
 // This listener is set up once when the module loads.
-document.body.addEventListener('htmx:afterSwap', function (event) {
-
-    console.log("heard htmx:aftSwap event!")
-
+// document.body.addEventListener('htmx:afterSwap', function (event) {
+//
+//     console.log("heard htmx:aftSwap event!")
+//
+//     const newContent = event.detail.elt;
+//
+//     // Check if the swapped element is a valid DOM node
+//     if (newContent && newContent.nodeType === Node.ELEMENT_NODE) {
+//
+//         // --- THIS IS THE FIX ---
+//         // We need to initialize Alpine components first, then process htmx attributes.
+//         // Alpine.nextTick() waits for the DOM to be updated by Alpine before running.
+//         if (window.Alpine) {
+//             // First, tell Alpine to scan and initialize any new components (like our widget).
+//             window.Alpine.initTree(newContent);
+//
+//             // Then, wait for Alpine's reactive updates to complete.
+//             window.Alpine.nextTick(() => {
+//                 console.log('Alpine has updated the DOM, now processing htmx attributes.');
+//                 // Now that attributes like :hx-include have been rendered,
+//                 // we can tell htmx to process the element.
+//                 window.htmx.process(newContent);
+//             });
+//         } else {
+//             // Fallback if Alpine isn't present for some reason
+//             window.htmx.process(newContent);
+//         }
+//     }
+// });
+// --- NEW: Global HTMX Event Handler Function ---
+/**
+ * This function is called by the hx-on:after-swap attribute in the HTML.
+ * It processes new content that htmx has swapped into the DOM.
+ * @param {CustomEvent} event The event dispatched by htmx.
+ */
+function onHtmxAfterSwap(event) {
+    console.log("heard htmx:after-swap!")
+    // The new content that was swapped into the page is in event.detail.elt
     const newContent = event.detail.elt;
 
     // Check if the swapped element is a valid DOM node
     if (newContent && newContent.nodeType === Node.ELEMENT_NODE) {
+        console.log('htmx:afterSwap detected. Initializing new content...');
 
-        // --- THIS IS THE FIX ---
-        // We need to initialize Alpine components first, then process htmx attributes.
-        // Alpine.nextTick() waits for the DOM to be updated by Alpine before running.
+        // 1. Tell Alpine.js to initialize any x-data components inside the new fragment
         if (window.Alpine) {
-            // First, tell Alpine to scan and initialize any new components (like our widget).
             window.Alpine.initTree(newContent);
-
-            // Then, wait for Alpine's reactive updates to complete.
-            window.Alpine.nextTick(() => {
-                console.log('Alpine has updated the DOM, now processing htmx attributes.');
-                // Now that attributes like :hx-include have been rendered,
-                // we can tell htmx to process the element.
-                window.htmx.process(newContent);
-            });
-        } else {
-            // Fallback if Alpine isn't present for some reason
-            window.htmx.process(newContent);
         }
+
+        // 2. Tell htmx to scan the new fragment for any hx-* attributes
+        //    (This step is often not necessary if the new content doesn't
+        //    itself contain htmx attributes that need to trigger things,
+        //    but it is good practice for complex cases).
+        // window.htmx.process(newContent);
     }
-});
+}
+// Attach the function to the window to make it accessible from HTML attributes
+window.onHtmxAfterSwap = onHtmxAfterSwap;
 
 // The data and methods for our main control panel component
 function controlPanel() {
@@ -170,6 +222,8 @@ function controlPanel() {
 
           if (grid) {
             console.log("Alpine has rendered the widgets. Now processing them with htmx...");
+             // 1. Tell Alpine.js to initialize any x-data components inside the new widget
+             window.Alpine.initTree(grid);
             // 1. Tell htmx to scan the grid and activate all hx-* attributes inside it.
             htmx.process(grid);
 
@@ -237,15 +291,47 @@ function controlPanel() {
       return this.powers[widget.power_id] || { name: 'Unknown Power', parameters: [] };
     },
 
+    // addWidget(powerId) {
+    //     // Check if the widget is already on the grid to prevent duplicates
+    //     if (this.layout.widgets.some(w => w.power_id === powerId)) {
+    //         alert('This power is already on your control grid.');
+    //         return;
+    //     }
+    //     // Add the new widget to the layout data array
+    //     this.layout.widgets.push({ power_id: powerId, position: [0,0] }); // Position will be handled by drag-and-drop
+    //     console.log(`Added widget for power: ${powerId}`);
+    // },
+
+    /**
+     * Adds a new widget to the client-side layout data, then uses $nextTick
+     * to initialize htmx on the new DOM element after Alpine has rendered it.
+     * @param {string} powerId The ID of the power widget to add.
+     */
     addWidget(powerId) {
-        // Check if the widget is already on the grid to prevent duplicates
-        if (this.layout.widgets.some(w => w.power_id === powerId)) {
-            alert('This power is already on your control grid.');
+        if (!powerId || this.layout.widgets.some(w => w.power_id === powerId)) {
+            if (this.layout.widgets.some(w => w.power_id === powerId)) {
+                alert('This power is already on your control grid.');
+            }
             return;
         }
-        // Add the new widget to the layout data array
-        this.layout.widgets.push({ power_id: powerId, position: [0,0] }); // Position will be handled by drag-and-drop
-        console.log(`Added widget for power: ${powerId}`);
+
+        // 1. Change the state: Add the new widget's data to the array.
+        //    Alpine will see this and schedule a DOM update.
+        console.log(`Adding widget for power ID: ${powerId} to layout data.`);
+        this.layout.widgets.push({ power_id: powerId, position: [] });
+
+        // 2. Use $nextTick to run code AFTER the DOM has been updated.
+        this.$nextTick(() => {
+            console.log('Alpine has updated the DOM. Now processing the new widget with htmx.');
+
+            // Find the grid and then find the very last widget element, which is the one we just added.
+            const grid = document.getElementById('power-grid');
+            if (grid && grid.lastElementChild) {
+                // 3. Call htmx.process() on ONLY the new element.
+                htmx.process(grid.lastElementChild);
+                console.log('New widget processed by htmx.');
+            }
+        });
     },
 
     removeWidget(powerId) {

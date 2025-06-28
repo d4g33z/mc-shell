@@ -51,7 +51,9 @@
         </div>
     </template>
     <main>
-        <div id="power-grid" x-ref="powerGrid"  :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`" >
+        <div id="power-grid" x-ref="powerGrid"  :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`"
+              hx-on::after-swap="onHtmxAfterSwap(event)">
+
 
             <template x-for="widget in layout.widgets" :key="widget.power_id">
 
@@ -124,7 +126,14 @@
 <!--                        <span class="power-name" x-text="getPowerData(widget).name"></span>-->
 <!--                             <button class="remove-widget-btn"-->
 <!--                                    x-show="isEditing"-->
-<!--                                    @click="removeWidget(widget.power_id)">-->
+<!--                                    @click="removeWid
+                // 1. Tell Alpine.js to initialize any x-data components inside the new widget
+                window.Alpine.initTree(newWidget);
+
+                // 2. Tell htmx to scan the new widget for any hx-* attributes
+                window.htmx.process(newWidget);
+            }
+        }get(widget.power_id)">-->
 <!--                                &times;-->
 <!--                            </button>-->
 <!--                    </div>-->
