@@ -56,7 +56,10 @@
             <template x-for="widget in layout.widgets" :key="widget.power_id">
 
                 <div class="power-widget"
-                     x-data="powerWidget(powers[widget.power_id])">
+                     x-data="powerWidget(powers[widget.power_id])"
+                     @update-status.stop="updateStatus($event.detail.status, $event.detail.message)"
+                     :class="{ 'is-running': status === 'running', 'has-error': status === 'error' }"
+                     :id="`widget-${power.power_id}`">
 
                     <div class="power-header">
                         <span class="power-name" x-text="power.name"></span>
@@ -83,14 +86,30 @@
                         </template>
                     </form>
 
-                    <div class="power-status" :id="`status-${power.power_id}`">Status: Idle</div>
+<!--                    <div class="power-status" :id="`status-${power.power_id}`">Status: Idle</div>-->
+                    <div class="power-status" x-text="status === 'error' ? `Error: ${errorMessage}` : `Status: ${status}`">Status: Idle</div>
 
-                    <button class="execute-btn"
-                            hx-post="/api/execute_power"
-                            :hx-include="`#form-${power.power_id}`"
-                            :hx-vals="`js:{power_id: '${power.power_id}'}`">
+<!--                    <button class="execute-btn"-->
+<!--                            hx-post="/api/execute_power"-->
+<!--                            :hx-include="`#form-${power.power_id}`"-->
+<!--                            :hx-vals="`js:{power_id: '${power.power_id}'}`">-->
+                   <button class="execute-btn"
+                        :disabled="status === 'running'"
+                        hx-post="/api/execute_power"
+                        :hx-include="`#form-${power.power_id}`"
+                        :hx-vals="`js:{power_id: '${power.power_id}'}`"
+                        hx-target="this"
+                        hx-swap="outerHTML">
                         Execute
                     </button>
+<!--                    <button class="execute-btn"-->
+<!--                        hx-post="/api/execute_power"-->
+<!--                        :hx-include="`#form-${power.power_id}`"-->
+<!--                        :hx-vals="`js:{power_id: '${power.power_id}'}`"-->
+<!--                        :hx-target="`#status-${power.power_id}`"-->
+<!--                        hx-swap="innerHTML">-->
+<!--                        Execute-->
+<!--                    </button>-->
                 </div>
             </template>
         </div>
