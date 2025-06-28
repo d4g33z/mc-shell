@@ -94,6 +94,9 @@ window.powerWidget = powerWidget;
 // --- GLOBAL HTMX EVENT HANDLER (Corrected) ---
 // This listener is set up once when the module loads.
 document.body.addEventListener('htmx:afterSwap', function (event) {
+
+    console.log("heard htmx:aftSwap event!")
+
     const newContent = event.detail.elt;
 
     // Check if the swapped element is a valid DOM node
