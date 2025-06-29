@@ -75,20 +75,41 @@ def execute_power():
     ))
     thread.daemon = True
     thread.start()
-
-    RUNNING_POWERS[execution_id] = {'thread': thread, 'cancel_event': cancel_event}
+    RUNNING_POWERS[execution_id] = {
+        'thread': thread,
+        'cancel_event': cancel_event,
+        'power_id': power_id  # <-- STORE THE POWER ID
+    }
+    # RUNNING_POWERS[execution_id] = {'thread': thread, 'cancel_event': cancel_event}
 
     # Return the initial status update, including a "Cancel" button with the unique execution_id
-    cancel_button_html = f"""
-    <button class="btn-small btn-danger"
-            hx-post="/api/cancel_power"
-            hx-vals='{{"execution_id": "{execution_id}"}}'
-            hx-target="closest .power-widget .power-status"
-            hx-swap="innerHTML">
-        Cancel
-    </button>
+    # cancel_button_html = f"""
+    # <button class="btn-small btn-danger"
+    #         hx-post="/api/cancel_power"
+    #         hx-vals='{{"execution_id": "{execution_id}"}}'
+    #         hx-target="closest .power-widget .power-status"
+    #         hx-swap="innerHTML">
+    #     Cancel
+    # </button>
+    # """
+    # return f'<span style="color: orange;">Executing...</span>{cancel_button_html}'
+    # --- THIS IS THE FIX ---
+    # We now return a complete HTML block that will replace the 'Execute' button.
+    # It contains the status and a new, functional 'Cancel' button.
+    running_state_html = f"""
+    <div class="widget-main-actions" hx-swap-oob="true" id="actions-{power_id}">
+        <div class="power-status">Status: <span class="running">Running...</span></div>
+        <button class="btn-small btn-danger cancel-btn"
+                hx-post="/api/cancel_power"
+                hx-ext="json-enc"
+                hx-vals='{{"execution_id": "{execution_id}"}}'
+                hx-target="#actions-{power_id}"
+                hx-swap="outerHTML">
+            Cancel
+        </button>
+    </div>
     """
-    return f'<span style="color: orange;">Executing...</span>{cancel_button_html}'
+    return running_state_html
 
 def execute_power_in_thread(execution_id, python_code, player_name, server_data, runtime_params, cancel_event):
     """
@@ -271,17 +292,55 @@ def execute_power_in_thread(execution_id, python_code, player_name, server_data,
 #         if execution_id in RUNNING_POWERS:
 #             del RUNNING_POWERS[execution_id]
 
+# @app.route('/api/cancel_power', methods=['POST'])
+# def cancel_power():
+#     data = request.get_json()
+#     power_id = data.get('power_id')
+#
+#     if power_id and power_id in RUNNING_POWERS:
+#         print(f"Received cancellation request for power {power_id}.")
+#         RUNNING_POWERS[power_id]['cancel_event'].set() # Set the event flag
+#         return jsonify({"status": "cancellation_requested"})
+#     else:
+#         return jsonify({"error": "Invalid or unknown power_id"}), 404
+
 @app.route('/api/cancel_power', methods=['POST'])
 def cancel_power():
-    data = request.get_json()
-    power_id = data.get('power_id')
+    """
+    Cancels a running power and returns an HTML fragment representing the 'Idle'
+    state, which includes the original 'Execute' button.
+    """
+    data = request.get_json() if request.is_json else request.form.to_dict()
+    execution_id = data.get('execution_id')
 
-    if power_id and power_id in RUNNING_POWERS:
-        print(f"Received cancellation request for power {power_id}.")
-        RUNNING_POWERS[power_id]['cancel_event'].set() # Set the event flag
-        return jsonify({"status": "cancellation_requested"})
-    else:
-        return jsonify({"error": "Invalid or unknown power_id"}), 404
+    # --- THIS IS THE FIX ---
+    # We need to find the original power_id to rebuild the 'Execute' button.
+    # This requires a small change to how we store running powers.
+    power_id = None
+    if execution_id and execution_id in RUNNING_POWERS:
+        power_to_cancel = RUNNING_POWERS[execution_id]
+        power_id = power_to_cancel.get('power_id')
+        power_to_cancel['cancel_event'].set()
+        print(f"Cancellation signal sent for execution ID: {execution_id}")
+
+    if not power_id:
+        return "<div class='power-status has-error'>Error: Could not find power to cancel.</div>"
+
+    # Rebuild the original "Execute" button state as an HTML fragment.
+    idle_state_html = f"""
+    <div class="widget-main-actions" id="actions-{power_id}">
+        <div class="power-status">Status: Cancelled</div>
+        <button class="execute-btn"
+                hx-post="/api/execute_power"
+                hx-include="#form-{power_id}"
+                hx-vals='{{"power_id": "{power_id}"}}'
+                hx-target="#actions-{power_id}"
+                hx-swap="outerHTML">
+            Execute
+        </button>
+    </div>
+    """
+    return idle_state_html
 
 # --- Static File Serving ---
 

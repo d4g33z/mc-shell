@@ -24,53 +24,130 @@ socket.on('disconnect', () => {
     console.log('Control UI disconnected from Socket.IO server.');
 });
 
-// --- 2. Set up a global listener for power status updates ---
+// In src/control.js, at the top level
+
 socket.on('power_status', (data) => {
     console.log('Received power status update:', data);
     // data should look like: {id: "power-id-abc", execution_id: "...", status: "finished"}
 
-    // Find the specific widget on the page that this update is for
+    // Find the specific widget element on the page
     const widgetElement = document.getElementById(`widget-${data.id}`);
-    if (widgetElement) {
-        // Dispatch a custom event specifically on this element
-        // The widget's Alpine component will be listening for this.
-        widgetElement.dispatchEvent(new CustomEvent('update-status', {
-            detail: { status: data.status, message: data.message || '' },
-            bubbles: false // The event doesn't need to bubble
-        }));
+
+    // Check if the element and its Alpine component are ready
+    if (widgetElement && widgetElement.__x) {
+        // Call the widget's internal updateStatus method with all the data
+        widgetElement.__x.data.updateStatus(data.status, data.execution_id, data.message || '');
     }
 });
+
+// --- 2. Set up a global listener for power status updates ---
+// socket.on('power_status', (data) => {
+//     console.log('Received power status update:', data);
+//     // data should look like: {id: "power-id-abc", execution_id: "...", status: "finished"}
+//
+//     // Find the specific widget on the page that this update is for
+//     const widgetElement = document.getElementById(`widget-${data.id}`);
+//     if (widgetElement) {
+//         // Dispatch a custom event specifically on this element
+//         // The widget's Alpine component will be listening for this.
+//         widgetElement.dispatchEvent(new CustomEvent('update-status', {
+//             detail: { status: data.status, message: data.message || '' },
+//             bubbles: false // The event doesn't need to bubble
+//         }));
+//     }
+// });
 /**
  * Creates the data object for a single power widget component.
  * It is now self-contained and listens for global state changes.
  */
+// function powerWidget(initialPowerData) {
+//     return {
+//         power: initialPowerData,
+//         formValues: {},
+//         showAdminControls: false, // Each widget tracks its own "delete button" visibility
+//        // NEW: Add a state variable to track the widget's status
+//         status: 'Idle',
+//         // We can also store the execution_id when a power is running
+//         currentExecutionId: null,
+//
+//         init() {
+//             // Initialize form values from parameter defaults
+//             if (this.power && this.power.parameters) {
+//                 this.power.parameters.forEach(param => {
+//                     this.formValues[param.name] = param.default;
+//                 });
+//             }
+//
+//             // Listen for the global mode change event
+//             window.addEventListener('control-mode-changed', (event) => {
+//                 this.showAdminControls = event.detail.editing;
+//             });
+//         },
+//         // We can add a helper method to update the status
+//         updateStatus(newStatus, executionId = null) {
+//             this.status = newStatus;
+//             this.currentExecutionId = executionId;
+//         }
+//     };
+// }
+
 function powerWidget(initialPowerData) {
     return {
+        // --- EXISTING PROPERTIES ---
         power: initialPowerData,
         formValues: {},
-        showAdminControls: false, // Each widget tracks its own "delete button" visibility
-       // NEW: Add a state variable to track the widget's status
+        showAdminControls: false,
+
+        // --- NEW PROPERTIES FOR STATUS ---
         status: 'Idle',
-        // We can also store the execution_id when a power is running
+        errorMessage: '',
         currentExecutionId: null,
 
         init() {
-            // Initialize form values from parameter defaults
+            // Your existing init logic to set up formValues
             if (this.power && this.power.parameters) {
                 this.power.parameters.forEach(param => {
                     this.formValues[param.name] = param.default;
                 });
             }
-
-            // Listen for the global mode change event
+            // Your existing event listener for edit mode
             window.addEventListener('control-mode-changed', (event) => {
                 this.showAdminControls = event.detail.editing;
             });
         },
-        // We can add a helper method to update the status
-        updateStatus(newStatus, executionId = null) {
+        updateStatus(newStatus, message = '') {
             this.status = newStatus;
-            this.currentExecutionId = executionId;
+            this.errorMessage = message;
+
+            // --- THIS IS THE FIX ---
+            // If the power is finished or errored, we need to restore the
+            // original "Execute" button. We can do this by triggering
+            // an htmx request to get a fresh copy of the widget's action area.
+            // This is a more advanced pattern.
+            // A simpler pattern is to have the server's response to Cancel
+            // also trigger a full widget refresh.
+
+            // Let's stick to the simplest model: The server's response to
+            // Execute and Cancel handles the button swapping. The WebSocket
+            // only updates the text status.
+        },
+        // --- NEW METHOD TO UPDATE THE WIDGET'S STATE ---
+        // updateStatus(newStatus, executionId, message = '') {
+        //     this.status = newStatus;
+        //     this.errorMessage = message;
+        //
+        //     // Store the unique ID for this specific run
+        //     if (newStatus === 'running') {
+        //         this.currentExecutionId = executionId;
+        //     }
+        //     // Clear the ID when the run is over
+        //     if (['finished', 'cancelled', 'error'].includes(newStatus)) {
+        //         this.currentExecutionId = null;
+        //     }
+        // },
+
+        removeWidget() {
+            this.$dispatch('remove-widget-from-grid', { powerId: this.power.power_id });
         }
     };
 }
@@ -85,7 +162,11 @@ function controlPanel() {
     isEditing: false, // Toggles edit mode for drag-and-drop
     sortableInstance: null, // To hold our SortableJS instance
 
-    init() {
+    // NEW: A dictionary to hold the live status of each power widget
+    // e.g., { "power-id-123": { status: 'running', message: '' }, ... }
+    powerStatuses: {},
+
+      init() {
 
         console.log('Initializing control panel...');
 
@@ -175,6 +256,11 @@ function controlPanel() {
             }
         });
       }
+    },
+
+    // NEW: Helper for widgets to get their current status
+    getStatusForWidget(powerId) {
+        return this.powerStatuses[powerId] || { status: 'Idle', message: '' };
     },
 
    // NEW METHOD to fetch the latest power data
