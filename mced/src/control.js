@@ -1,30 +1,162 @@
 import Alpine from 'alpinejs';
 import Sortable from 'sortablejs'; // For drag-and-drop later
-import 'htmx.org'; // Keep for executing powers
 
-/**
- * Creates the data object for a single power widget component.
- * It is now self-contained and listens for global state changes.
- */
+import htmx from 'htmx.org'
+// import 'htmx.org'; // Keep for executing powers
+// 1. Import all exports from the htmx.org package into a namespace variable called `htmx`.
+// import * as htmx from 'htmx.org';
+// import 'htmx-ext-json-enc';
+
+// 2. Manually attach the imported htmx object to the global window object.
+//    This makes it accessible to the hx-* attributes in your HTML.
+// window.htmx = htmx;
+
+import { io } from "socket.io-client"; // <-- Import the io function
+
+// --- 1. Establish the connection to your Flask-SocketIO server ---
+const socket = io("http://localhost:5001"); // Use the address of your Python server
+
+socket.on('connect', () => {
+    console.log('Control UI connected to backend server with Socket.IO:', socket.id);
+});
+
+socket.on('disconnect', () => {
+    console.log('Control UI disconnected from Socket.IO server.');
+});
+
+// // --- Set up a global listener for power status updates ---
+// socket.on('power_status', (data) => {
+//     console.log('Received power status update:', data);
+//
+//     // Look up the specific widget instance in our registry
+//     const widgetInstance = WIDGET_REGISTRY[data.id];
+//    // Find the specific widget element on the page
+//     //const widgetElement = document.getElementById(`widget-${data.id}`);
+//
+//     if (widgetInstance) {
+//         // If we found it, call its updateStatus method directly.
+//         // This is guaranteed to work and avoids any DOM race conditions.
+//         widgetInstance.updateStatus(data.status, data.execution_id, data.message || '');
+//     } else {
+//         console.warn(`Could not find a registered widget for power ID: ${data.id}`);
+//     }
+// });
+
+// socket.on('power_status', (data) => {
+//     console.log('Received power status update:', data);
+//     // data should look like: {id: "power-id-abc", execution_id: "...", status: "finished", message: ""}
+//
+//     // Find the specific widget element on the page
+//     const widgetElement = document.getElementById(`widget-${data.id}`);
+//
+//     // Check if the element and its Alpine component are ready
+//     if (widgetElement && widgetElement.__x) {
+//         // Call the widget's internal updateStatus method with all the data
+//         widgetElement.__x.data.updateStatus(data.status, data.execution_id, data.message || '');
+//     }
+// });
+const WIDGET_REGISTRY = {};
+
 function powerWidget(initialPowerData) {
     return {
+        // --- EXISTING PROPERTIES ---
+        // Remember: this the data from the power library !!!
+        // i.e {name,description,category, power_id,blockly_json,python_code,parameters}
         power: initialPowerData,
         formValues: {},
-        showAdminControls: false, // Each widget tracks its own "delete button" visibility
+        showAdminControls: false,
+        currentExecutionId: null,
 
         init() {
-            // Initialize form values from parameter defaults
+            console.log(initialPowerData);
+            // Your existing init logic to set up formValues
             if (this.power && this.power.parameters) {
                 this.power.parameters.forEach(param => {
                     this.formValues[param.name] = param.default;
                 });
             }
 
-            // Listen for the global mode change event
+            // Your existing event listener for edit mode
             window.addEventListener('control-mode-changed', (event) => {
                 this.showAdminControls = event.detail.editing;
             });
+
+            WIDGET_REGISTRY[this.power.power_id] = this;
+            console.log(WIDGET_REGISTRY);
+        },
+
+       removeWidget() {
+            this.$dispatch('remove-widget-from-grid', { powerId: this.power.power_id });
+            WIDGET_REGISTRY[this.power.power_id] = null;
+        },
+
+        // --- THIS IS THE FIX ---
+        // This method now robustly manages the entire execution state.
+        updateStatus(newStatus, executionId, message = '') {
+            console.log(`updateStatus called with: status=${newStatus}, executionId=${executionId}`);
+            this.status = newStatus;
+            this.errorMessage = message;
+
+            // The executionId should ONLY have a value when the power is running.
+            // When it's finished, cancelled, or errored, it must be cleared.
+            if (newStatus === 'running') {
+                this.currentExecutionId = executionId;
+            } else {
+                this.currentExecutionId = null;
+            }
+        },
+
+        // --- NEW METHOD to execute the power ---
+        executePower() {
+            // Use this.$refs to get the form element reliably
+            const formElement = this.$refs.paramsForm;
+            if (!formElement) {
+                console.error("Could not find the parameters form for this widget!");
+                return;
+            }
+
+            const formData = new FormData(formElement);
+            const params = Object.fromEntries(formData.entries());
+            params.power_id = this.power.power_id;
+
+            // Update status immediately for a responsive UI
+            this.status = 'running';
+
+            fetch('/api/execute_power', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(params)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.execution_id) {
+                    // The server confirms the start and gives us the real ID
+                    this.currentExecutionId = data.execution_id;
+                    console.log(`Power execution started with ID: ${this.currentExecutionId}`);
+                } else {
+                    this.updateStatus('error', null, data.error || 'Failed to start execution.');
+                }
+            })
+            .catch(err => {
+                console.error('Fetch error during execution:', err);
+                this.updateStatus('error', null, 'Network error.');
+            });
+        },
+
+        // --- NEW METHOD to cancel the power ---
+        cancelPower() {
+            if (!this.currentExecutionId) return;
+
+            console.log(`Sending cancellation for execution ID: ${this.currentExecutionId}`);
+            fetch('/api/cancel_power', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ execution_id: this.currentExecutionId })
+            });
+            // The UI will update automatically when the 'cancelled' status
+            // is received via the WebSocket.
         }
+
     };
 }
 window.powerWidget = powerWidget;
@@ -38,9 +170,57 @@ function controlPanel() {
     isEditing: false, // Toggles edit mode for drag-and-drop
     sortableInstance: null, // To hold our SortableJS instance
 
-    init() {
+    // NEW: A dictionary to hold the live status of each power widget
+    // e.g., { "power-id-123": { status: 'running', message: '' }, ... }
+    powerStatuses: {},
 
-        console.log('Initializing control panel...');
+      init() {
+
+      console.log('Initializing control panel...');
+      // The socket listener now lives inside the init method and updates our state.
+          // // --- Set up a global listener for power status updates ---
+          if (window.socket) {
+              socket.on('power_status', (data) => {
+                  console.log('Received power status update:', data);
+                  this.powerStatuses[data.id] = {
+                      status: data.status,
+                      message: data.message || '',
+                      execution_id: data.execution_id || null
+                  };
+                  if (data.status === 'dispatched') {
+                      return
+                  }
+                  else  {
+                      // const widgetInstance= document.getElementById(`widget-${data.id}`);
+                      const widgetInstance = WIDGET_REGISTRY[data.id]
+                      console.log(widgetInstance);
+                      if (widgetInstance) {
+                          // If we found it, call its updateStatus method directly.
+                          // This is guaranteed to work and avoids any DOM race conditions.
+                          widgetInstance.updateStatus(data.status, data.execution_id, data.message || '');
+                      } else {
+                          console.warn(`Could not find a registered widget for power ID: ${data.id}`);
+                      }
+                  }
+              });
+          }
+
+//       if (window.socket) {
+//           socket.on('power_status', (data) => {
+//               console.log('Received power status update:', data);
+//              // Ensure the data has the required 'id' to identify the widget.
+//                 if (!data || !data.id) {
+//                 console.error('Received power status update with no power ID.', data);
+//                 return;
+//                 }
+//               // Update the status for the specific power ID in our central state object.
+//               this.powerStatuses[data.id] = {
+//                   status: data.status,
+//                   message: data.message || '',
+//                   execution_id: data.execution_id || null
+//               };
+//           });
+//       }
 
       // --- CONSOLIDATED $watch --
       // This single watcher handles ALL logic related to the isEditing state change.
@@ -72,12 +252,18 @@ function controlPanel() {
 
         // Initialize drag-and-drop after the next DOM update
         this.$nextTick(() => {
-          const grid = this.$refs.powerGrid;
+          // Use the standard document.getElementById to get the grid element.
+          const grid = document.getElementById('power-grid');
+
           if (grid) {
+            console.log("Alpine has rendered the widgets. Now processing them with htmx...");
+             // 1. Tell Alpine.js to initialize any x-data components inside the new widget
+             window.Alpine.initTree(grid);
+            // 1. Tell htmx to scan the grid and activate all hx-* attributes inside it.
+            htmx.process(grid);
+
             this.sortableInstance = new Sortable(grid, {
               animation: 150,
-
-              // --- THIS IS THE DEFINITIVE FIX ---
 
               // onStart is called when a drag begins.
               onStart: (event) => {
@@ -99,15 +285,20 @@ function controlPanel() {
                 // const widgetIds = Array.from(grid.children).map(child => child.__x.getUnobservedData().widget.power_id);
                 // this.layout.widgets = widgetIds.map(id => ({ power_id: id, position: [] }));
               }
-              // --- END OF FIX ---
-
-
-
             });
             this.sortableInstance.option('disabled', true);
+          } else {
+              console.error("Could not find #power-grid to initialize SortableJS.");
           }
         });
       });
+
+
+    },
+
+    // NEW: Helper for widgets to get their current status
+    getStatusForWidget(powerId) {
+        return this.powerStatuses[powerId] || { status: 'Idle', message: '' , execution_id: null};
     },
 
    // NEW METHOD to fetch the latest power data
@@ -126,15 +317,47 @@ function controlPanel() {
       return this.powers[widget.power_id] || { name: 'Unknown Power', parameters: [] };
     },
 
+    // addWidget(powerId) {
+    //     // Check if the widget is already on the grid to prevent duplicates
+    //     if (this.layout.widgets.some(w => w.power_id === powerId)) {
+    //         alert('This power is already on your control grid.');
+    //         return;
+    //     }
+    //     // Add the new widget to the layout data array
+    //     this.layout.widgets.push({ power_id: powerId, position: [0,0] }); // Position will be handled by drag-and-drop
+    //     console.log(`Added widget for power: ${powerId}`);
+    // },
+
+    /**
+     * Adds a new widget to the client-side layout data, then uses $nextTick
+     * to initialize htmx on the new DOM element after Alpine has rendered it.
+     * @param {string} powerId The ID of the power widget to add.
+     */
     addWidget(powerId) {
-        // Check if the widget is already on the grid to prevent duplicates
-        if (this.layout.widgets.some(w => w.power_id === powerId)) {
-            alert('This power is already on your control grid.');
+        if (!powerId || this.layout.widgets.some(w => w.power_id === powerId)) {
+            if (this.layout.widgets.some(w => w.power_id === powerId)) {
+                alert('This power is already on your control grid.');
+            }
             return;
         }
-        // Add the new widget to the layout data array
-        this.layout.widgets.push({ power_id: powerId, position: [0,0] }); // Position will be handled by drag-and-drop
-        console.log(`Added widget for power: ${powerId}`);
+
+        // 1. Change the state: Add the new widget's data to the array.
+        //    Alpine will see this and schedule a DOM update.
+        console.log(`Adding widget for power ID: ${powerId} to layout data.`);
+        this.layout.widgets.push({ power_id: powerId, position: [] });
+
+        // 2. Use $nextTick to run code AFTER the DOM has been updated.
+        this.$nextTick(() => {
+            console.log('Alpine has updated the DOM. Now processing the new widget with htmx.');
+
+            // Find the grid and then find the very last widget element, which is the one we just added.
+            const grid = document.getElementById('power-grid');
+            if (grid && grid.lastElementChild) {
+                // 3. Call htmx.process() on ONLY the new element.
+                htmx.process(grid.lastElementChild);
+                console.log('New widget processed by htmx.');
+            }
+        });
     },
 
     removeWidget(powerId) {
@@ -146,6 +369,7 @@ function controlPanel() {
   }
 }
 
+window.socket = socket
 window.controlPanel = controlPanel;
 window.Alpine = Alpine;
 Alpine.start();

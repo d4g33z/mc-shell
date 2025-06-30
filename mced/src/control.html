@@ -16,19 +16,6 @@
             <button @click="isEditing = !isEditing" x-text="isEditing ? 'Done' : 'Edit Layout'"></button>
     </header>
 
-<!--    <template x-teleport="body">-->
-<!--        <div x-data="{ isOpen: false }" @open-library-modal.window="isOpen = true" ...>-->
-<!--            <div x-show="isOpen" ...>-->
-<!--                <div id="control-library-list"-->
-<!--                     hx-get="/api/powers?view=control"-->
-<!--                     hx-trigger="open-library-modal">-->
-<!--                    Loading...-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </template>-->
-
-<!--    @close-library-modal.window="isOpen = false"-->
     <template x-teleport="body">
         <div x-data="{ isOpen: false }"
              @open-library-modal.window="isOpen = true"
@@ -51,24 +38,27 @@
         </div>
     </template>
     <main>
-        <div id="power-grid" x-ref="powerGrid"  :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`" >
-
-            <template x-for="widget in layout.widgets" :key="widget.power_id">
+        <div id="power-grid" x-ref="powerGrid"  :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`">
+           <template x-for="widget in layout.widgets" :key="widget.power_id">
 
                 <div class="power-widget"
-                     x-data="powerWidget(powers[widget.power_id])">
+                     :id="`widget-${widget.power_id}`"
+                     x-data="powerWidget(powers[widget.power_id])"
+                     :class="{
+                         'is-running': getStatusForWidget(widget.power_id).status === 'running',
+                         'has-error': getStatusForWidget(widget.power_id).status === 'error'
+                     }">
 
                     <div class="power-header">
                         <span class="power-name" x-text="power.name"></span>
                         <button class="remove-widget-btn"
-                            x-show="showAdminControls"
-                            @click.stop="$dispatch('remove-widget-from-grid', { powerId: power.power_id })"
-                            x-transition>
+                                x-show="isEditing"
+                                @click.stop="removeWidget()">
                             &times;
                         </button>
                     </div>
 
-                    <form class="power-params" :id="`form-${power.power_id}`">
+                    <form class="power-params" :id="`form-${power.power_id}`" x-ref="paramsForm">
                         <template x-for="param in power.parameters" :key="param.name">
                             <div class="param-control">
                                 <label x-text="param.name + ':'"></label>
@@ -79,77 +69,136 @@
                                         <output x-text="formValues[param.name]"></output>
                                     </div>
                                 </template>
-                                </div>
+
+                                <template x-if="param.type === 'Block'">
+                                    <select :name="param.name" x-model="formValues[param.name]">
+                                        <option value="STONE">Stone</option>
+                                        <option value="OAK_PLANKS">Oak Planks</option>
+                                        <option value="GLASS">Glass</option>
+                                        <option value="DIAMOND_BLOCK">Diamond Block</option>
+                                    </select>
+                                </template>
+                            </div>
                         </template>
                     </form>
 
-                    <div class="power-status" :id="`status-${power.power_id}`">Status: Idle</div>
+                    <div class="power-status"
+                         x-text="getStatusForWidget(widget.power_id).status === 'error' ?
+                                 `Error: ${getStatusForWidget(widget.power_id).message}` :
+                                 `Status: ${getStatusForWidget(widget.power_id).status}`">
+                        Status: Idle
+                    </div>
+<!--                    <div class="widget-main-actions">-->
+<!--                        <button class="execute-btn"-->
+<!--                                :disabled="status === 'running'"-->
+<!--                                @click="executePower()">-->
+<!--                            Execute-->
+<!--                        </button>-->
 
-                    <button class="execute-btn"
-                            hx-post="/api/execute_power"
-                            :hx-include="`#form-${power.power_id}`"
-                            :hx-vals="`js:{power_id: '${power.power_id}'}`">
-                        Execute
-                    </button>
+<!--                        <template x-if="status === 'running' && currentExecutionId">-->
+<!--                            <button class="btn-small btn-danger cancel-btn"-->
+<!--                                    @click="cancelPower()">-->
+<!--                                Cancel-->
+<!--                            </button>-->
+<!--                        </template>-->
+<!--                    </div>-->
+                       <div class="widget-main-actions">
+                                <template x-if="status !== 'running'">
+                                    <button class="execute-btn" @click="executePower()">
+                                        Execute
+                                    </button>
+                                </template>
+
+                                <template x-if="status === 'running' && currentExecutionId">
+                                    <button class="btn-small btn-danger cancel-btn" @click="cancelPower()">
+                                        Cancel
+                                    </button>
+                                </template>
+                        </div>
+<!--                    <div class="widget-main-actions">-->
+<!--                        <button class="execute-btn"-->
+<!--                                :disabled="getStatusForWidget(widget.power_id).status === 'running'"-->
+<!--                                hx-post="/api/execute_power"-->
+<!--                                :hx-include="`#form-${widget.power_id}`"-->
+<!--                                :hx-vals="`js:{power_id: '${widget.power_id}'}`">-->
+<!--                            Execute-->
+<!--                        </button>-->
+
+<!--                        <template x-if="getStatusForWidget(widget.power_id).status === 'running'">-->
+<!--                            <button class="btn-small btn-danger cancel-btn"-->
+<!--                                    hx-post="/api/cancel_power"-->
+<!--                                    hx-ext="json-enc"-->
+<!--                                    :hx-vals="`{ 'execution_id': '${getStatusForWidget(widget.power_id).execution_id}' }`">-->
+<!--                                Cancel-->
+<!--                            </button>-->
+<!--                        </template>-->
+<!--                    </div>-->
                 </div>
             </template>
-        </div>
-    </main>
-<!--    <main>-->
-<!--        <div id="power-grid" x-ref="powerGrid" :style="`grid-template-columns: repeat(${layout.grid.columns}, 1fr)`">-->
 
 <!--            <template x-for="widget in layout.widgets" :key="widget.power_id">-->
 
-<!--                <div class="power-widget">-->
+<!--                <div class="power-widget"-->
+<!--                     :id="`widget-${power.power_id}`"-->
+<!--                     x-data="powerWidget(powers[widget.power_id])"-->
+<!--                     @update-status.stop="updateStatus($event.detail.status, $event.detail.executionId, $event.detail.message)"-->
+<!--                     :class="{ 'is-running': status === 'running', 'has-error': status === 'error' }">-->
+
 <!--                    <div class="power-header">-->
-<!--                        <span class="power-name" x-text="getPowerData(widget).name"></span>-->
-<!--                             <button class="remove-widget-btn"-->
-<!--                                    x-show="isEditing"-->
-<!--                                    @click="removeWidget(widget.power_id)">-->
-<!--                                &times;-->
-<!--                            </button>-->
+<!--                        <span class="power-name" x-text="power.name"></span>-->
+<!--                        <button class="remove-widget-btn"-->
+<!--                                x-show="isEditing"-->
+<!--                                @click.stop="removeWidget()">-->
+<!--                            &times;-->
+<!--                        </button>-->
 <!--                    </div>-->
 
-<!--                    <form class="power-params" :id="`form-${widget.power_id}`">-->
-<!--                        <template x-for="param in getPowerData(widget).parameters" :key="param.name">-->
+<!--                    <form class="power-params" :id="`form-${power.power_id}`" x-ref="paramsForm">-->
+<!--                        <template x-for="param in power.parameters" :key="param.name">-->
 <!--                            <div class="param-control">-->
 <!--                                <label x-text="param.name + ':'"></label>-->
 
 <!--                                <template x-if="param.type === 'Number'">-->
 <!--                                    <div class="param-slider">-->
-<!--                                        <input type="range" :name="param.name" :value="param.default" min="1" max="100" oninput="this.nextElementSibling.value = this.value">-->
-<!--                                        <output x-text="param.default"></output>-->
+<!--                                        <input type="range" :name="param.name" x-model="formValues[param.name]" min="1" max="100">-->
+<!--                                        <output x-text="formValues[param.name]"></output>-->
 <!--                                    </div>-->
 <!--                                </template>-->
 
 <!--                                <template x-if="param.type === 'Block'">-->
-<!--                                    <select :name="param.name">-->
+<!--                                    <select :name="param.name" x-model="formValues[param.name]">-->
 <!--                                        <option value="STONE">Stone</option>-->
 <!--                                        <option value="OAK_PLANKS">Oak Planks</option>-->
 <!--                                        <option value="GLASS">Glass</option>-->
+<!--                                        <option value="DIAMOND_BLOCK">Diamond Block</option>-->
 <!--                                    </select>-->
 <!--                                </template>-->
-
-<!--                                <template x-if="param.type === 'String'">-->
-<!--                                    <input type="text" :name="param.name" :value="param.default || ''">-->
-<!--                                </template>-->
-<!--                            </div>-->
+<!--                                </div>-->
 <!--                        </template>-->
 <!--                    </form>-->
 
-<!--                    <div class="power-status">Status: Idle</div>-->
+<!--                    <div class="power-status"-->
+<!--                         x-text="status === 'error' ? `Error: ${errorMessage}` : `Status: ${status}`">Status: Idle</div>-->
 
-<!--                    <button class="execute-btn"-->
-<!--                            :hx-post="'/api/execute_power'"-->
-<!--                            :hx-include="`#form-${widget.power_id}`"-->
-<!--                            :hx-vals="`js:{power_id: '${widget.power_id}'}`">-->
-<!--                        Execute-->
-<!--                    </button>-->
+<!--                    <div class="widget-main-actions">-->
+<!--                        <template x-if="status !== 'running'">-->
+<!--                            <button class="execute-btn" @click="executePower()">-->
+<!--                                Execute-->
+<!--                            </button>-->
+<!--                        </template>-->
+
+<!--                        <template x-if="status === 'running'">-->
+<!--                            <button class="btn-small btn-danger cancel-btn" @click="cancelPower()">-->
+<!--                                Cancel-->
+<!--                            </button>-->
+<!--                        </template>-->
+<!--                    </div>-->
+
 <!--                </div>-->
 <!--            </template>-->
-<!--        </div>-->
-<!--    </main>-->
 
+        </div>
+    </main>
     <script type="module" src="./control.js"></script>
 </body>
 </html>
