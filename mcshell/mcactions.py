@@ -44,7 +44,7 @@ class MCActionBase:
         # we use Bukkit IDs which are output in mc-ed
         minecraft_block_id = block_type_from_blockly
 
-        print(f"Attempting to place {len(coords_list)} blocks of type '{minecraft_block_id}'")
+        # print(f"Attempting to place {len(coords_list)} blocks of type '{minecraft_block_id}'")
 
         offset_x, offset_y, offset_z = (0,0,0)
         if placement_offset_vec3: # If a Vec3 object is given for overall placement
@@ -61,7 +61,7 @@ class MCActionBase:
             if self.delay_between_blocks > 0:
                 time.sleep(self.delay_between_blocks)
 
-        print(f"Placed {len(coords_list)} blocks.")
+        # print(f"Placed {len(coords_list)} blocks.")
 
 
     def _initialize_entity_id_map(self):
@@ -96,7 +96,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         block_type: string (Blockly ID like 'STONE' or dict for colored glass)
         inner_radius: float (for hollow ball)
         """
-        print(f"MCActions: create_digital_ball request at {center_vec3} with radius {radius}, inner {inner_radius}")
+        # print(f"MCActions: create_digital_ball request at {center_vec3} with radius {radius}, inner {inner_radius}")
         coords = generate_digital_ball_coordinates(
             center=center_vec3.to_tuple(),
             radius=float(radius),
@@ -112,7 +112,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         block_type: string (Blockly ID)
         inner_thickness: float (for hollow tube)
         """
-        print(f"MCActions: create_digital_tube request from {point1_vec3} to {point2_vec3}, thickness {outer_thickness}, inner {inner_thickness}")
+        # print(f"MCActions: create_digital_tube request from {point1_vec3} to {point2_vec3}, thickness {outer_thickness}, inner {inner_thickness}")
         coords = generate_digital_tube_coordinates(
             p1=point1_vec3.to_tuple(),
             p2=point2_vec3.to_tuple(),
@@ -128,7 +128,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         point1_vec3, point2_vec3: Vec3 instances.
         block_type: string (Blockly ID like 'STONE')
         """
-        print(f"MCActions: create_digital_line request from {point1_vec3} to {point2_vec3}")
+        # print(f"MCActions: create_digital_line request from {point1_vec3} to {point2_vec3}")
 
         # Convert Vec3 inputs to integer tuples for the geometry function
         p1_tuple = (int(round(point1_vec3.x)), int(round(point1_vec3.y)), int(round(point1_vec3.z)))
@@ -152,7 +152,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         block_type: string (Blockly ID)
         inner_offset_factor: float (0 for solid, >0 for hollow shell thickness relative to centroid distances)
         """
-        print(f"MCActions: create_digital_cube request at {center_vec3}, side {side_length}, factor {inner_offset_factor}")
+        # print(f"MCActions: create_digital_cube request at {center_vec3}, side {side_length}, factor {inner_offset_factor}")
         coords = generate_digital_cube_coordinates(
             center=center_vec3.to_tuple(), # Your func expects tuple
             side_length=float(side_length),
@@ -175,7 +175,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         # Convert list of Vec3 objects to list of tuples for your geometry function
         vertex_tuples = [v.to_tuple() for v in vertices_list_of_vec3]
 
-        print(f"MCActions: create_digital_tetrahedron request with {len(vertex_tuples)} vertices, factor {inner_offset_factor}")
+        # print(f"MCActions: create_digital_tetrahedron request with {len(vertex_tuples)} vertices, factor {inner_offset_factor}")
         coords = generate_digital_tetrahedron_coordinates(
             vertices=vertex_tuples,
             inner_offset_factor=float(inner_offset_factor)
@@ -186,7 +186,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
                                plane_thickness=1.0,
                                inner_rect_dims_tuple=None,
                                rect_center_offset_vec3=None): # Default to Vec3(0,0,0) if None in generator
-        print(f"MCActions: create_digital_plane request with normal {normal_vec3}, point {point_on_plane_vec3}")
+        # print(f"MCActions: create_digital_plane request with normal {normal_vec3}, point {point_on_plane_vec3}")
 
         normal_tuple = (normal_vec3.x, normal_vec3.y, normal_vec3.z)
         point_on_plane_tuple = (point_on_plane_vec3.x, point_on_plane_vec3.y, point_on_plane_vec3.z)
@@ -237,7 +237,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
 
     def create_digital_disc(self, normal_vec3, center_point_vec3, outer_radius,
                               block_type, disc_thickness=1.0, inner_radius=0.0):
-        print(f"MCActions: create_digital_disc request with normal {normal_vec3}, center {center_point_vec3}")
+        # print(f"MCActions: create_digital_disc request with normal {normal_vec3}, center {center_point_vec3}")
 
         normal_tuple = (normal_vec3.x, normal_vec3.y, normal_vec3.z)
         center_point_tuple = (center_point_vec3.x, center_point_vec3.y, center_point_vec3.z)
@@ -267,7 +267,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
             print(f"Warning: Could not find a numerical ID for entity type '{entity_type}'. Cannot spawn.")
             return
 
-        print(f"ACTION: Spawning entity '{entity_type}' (ID: {entity_id_int}) at position {position_vec3}")
+        # print(f"ACTION: Spawning entity '{entity_type}' (ID: {entity_id_int}) at position {position_vec3}")
 
         # Now call pyncraft with the correct integer ID 1 unit above the requested position for safety
         self.mcplayer.pc.spawnEntity(position_vec3.x, position_vec3.y + 1, position_vec3.z, entity_id_int)
@@ -288,8 +288,8 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         # Access coordinates directly from the Vec3 object
         x, y, z = (int(position_vec3.x), int(position_vec3.y), int(position_vec3.z))
 
-        print(f"ACTION: Setting block at ({x},{y},{z}) to {parsed_block_type_id} "
-              f"for player {getattr(self.mcplayer, 'name', 'N/A')}")
+        # print(f"ACTION: Setting block at ({x},{y},{z}) to {parsed_block_type_id} "
+        #       f"for player {getattr(self.mcplayer, 'name', 'N/A')}")
 
         # This is where you would call the actual pyncraft or Minecraft API method
         self.mcplayer.pc.setBlock(x, y, z, parsed_block_type_id)
@@ -300,7 +300,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         """
         x, y, z = (int(position_vec3.x), int(position_vec3.y), int(position_vec3.z))
 
-        print(f"ACTION: Getting block at ({x},{y},{z})")
+        # print(f"ACTION: Getting block at ({x},{y},{z})")
 
         # pyncraft's getBlock() returns the numerical ID of the block.
         block_type = self.mcplayer.pc.getBlock(x, y, z)
@@ -318,7 +318,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         x = int(position_vec3.x)
         z = int(position_vec3.z)
 
-        print(f"ACTION: Getting height at (x={x}, z={z})")
+        # print(f"ACTION: Getting height at (x={x}, z={z})")
 
         # Call the pyncraft method using the corrected API path
         height = self.mcplayer.pc.getHeight(x, z)
@@ -334,7 +334,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         # No casting is needed unless you want to explicitly convert other types.
         message_str = str(message)
 
-        print(f"ACTION: Posting to chat: \"{message_str}\"")
+        # print(f"ACTION: Posting to chat: \"{message_str}\"")
 
         # Call the pyncraft method using the corrected API path
         self.mcplayer.pc.postToChat(message_str)
@@ -354,7 +354,7 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
         z = float(position_vec3.z)
         power_float = float(power)
 
-        print(f"ACTION: Creating explosion at ({x},{y},{z}) with power {power_float}")
+        # print(f"ACTION: Creating explosion at ({x},{y},{z}) with power {power_float}")
 
         # Call the pyncraft method using the corrected API path
         self.mcplayer.pc.createExplosion(x, y, z, power_float)
