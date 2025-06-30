@@ -416,7 +416,7 @@ class MCShell(Magics):
             cancel_event = Event()
 
             thread = Thread(target=execute_power_in_thread, args=(
-                execution_id, code_to_execute, player_name, server_data, {}, cancel_event
+                f"user-power-{execution_id}",execution_id, code_to_execute, player_name, server_data, {}, cancel_event
             ))
             thread.daemon = True
             thread.start()
