@@ -185,7 +185,7 @@ export function defineMineCraftBlocks(Blockly) {
         init: function () {
             this.appendDummyInput()
                 .appendField("player direction");
-            this.setOutput(true, "3DUnitVector");
+            this.setOutput(true, "3DVector");
             this.setColour(160);
         }
     };
