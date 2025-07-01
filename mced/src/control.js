@@ -28,7 +28,6 @@ function powerWidget(initialPowerData) {
         currentExecutionId: null,
 
         init() {
-            console.log(initialPowerData);
             // Your existing init logic to set up formValues
             if (this.power && this.power.parameters) {
                 this.power.parameters.forEach(param => {
@@ -42,7 +41,6 @@ function powerWidget(initialPowerData) {
             });
 
             WIDGET_REGISTRY[this.power.power_id] = this;
-            console.log(WIDGET_REGISTRY);
         },
 
        removeWidget() {
@@ -149,7 +147,6 @@ function controlPanel() {
                   else  {
                       // const widgetInstance= document.getElementById(`widget-${data.id}`);
                       const widgetInstance = WIDGET_REGISTRY[data.id]
-                      console.log(widgetInstance);
                       if (widgetInstance) {
                           // If we found it, call its updateStatus method directly.
                           // This is guaranteed to work and avoids any DOM race conditions.
@@ -188,7 +185,8 @@ function controlPanel() {
       ]).then(([layoutData, powersData]) => {
         this.layout = layoutData;
         this.powers = powersData;
-        console.log('Layout and powers loaded.');
+        this.materialGroups = materialData; // <-- STORE THE DATA
+        console.log('Layout, powers, and material data loaded.');
 
         // Initialize drag-and-drop after the next DOM update
         this.$nextTick(() => {
@@ -256,17 +254,6 @@ function controlPanel() {
     getPowerData(widget) {
       return this.powers[widget.power_id] || { name: 'Unknown Power', parameters: [] };
     },
-
-    // addWidget(powerId) {
-    //     // Check if the widget is already on the grid to prevent duplicates
-    //     if (this.layout.widgets.some(w => w.power_id === powerId)) {
-    //         alert('This power is already on your control grid.');
-    //         return;
-    //     }
-    //     // Add the new widget to the layout data array
-    //     this.layout.widgets.push({ power_id: powerId, position: [0,0] }); // Position will be handled by drag-and-drop
-    //     console.log(`Added widget for power: ${powerId}`);
-    // },
 
     /**
      * Adds a new widget to the client-side layout data, then uses $nextTick

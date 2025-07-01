@@ -35,46 +35,6 @@ const AUTOSAVE_KEY = 'mcEdWorkspaceAutosave';
 // A module-scoped variable to hold the main workspace instance
 let workspace;
 
-/**
- * Sends a DELETE request to the server to remove a power.
- * On success, it removes the power's element from the DOM.
- * @param {string} powerId The UUID of the power to delete.
- */
-// async function handleDeletePower(powerId) {
-//     if (!powerId) {
-//         console.error("handleDeletePower called without a powerId.");
-//         return;
-//     }
-//
-//     console.log(`Sending request to delete power: ${powerId}`);
-//     try {
-//         const response = await fetch(`/api/power/${powerId}`, {
-//             method: 'DELETE',
-//         });
-//
-//         if (response.ok) {
-//             const result = await response.json();
-//             console.log("Power deleted successfully on server:", result);
-//
-//             // Find the corresponding <li> element and remove it for instant UI feedback.
-//             const elementToDelete = document.getElementById(`power-item-${powerId}`);
-//             if (elementToDelete) {
-//                 // Animate fade-out before removing
-//                 elementToDelete.style.transition = 'opacity 0.3s ease';
-//                 elementToDelete.style.opacity = '0';
-//                 setTimeout(() => elementToDelete.remove(), 300);
-//             }
-//         } else {
-//             const errorText = await response.text();
-//             console.error('Error deleting power:', response.status, errorText);
-//             alert(`Failed to delete power: ${errorText}`);
-//         }
-//     } catch (error) {
-//         console.error('Network error while deleting power:', error);
-//         alert('Network error. Could not delete power.');
-//     }
-// }
-
 async function handleDeletePower(powerId) {
     if (!powerId) return;
 
@@ -278,15 +238,18 @@ async function init() {
     /**
      * Gathers data from the editor modal and the Blockly workspace,
      * then POSTs the complete "Power Object" to the server.
+     *
+     * The definitive save function. It enforces the "Debug-to-Define" pattern.
+     * When saving a functional power, it requires a corresponding call block with
+     * all arguments connected to exist on the workspace. It uses these connections
+     * to authoritatively determine the parameter types.
      */
-
-
     async function handleSavePower() {
-        console.log("Handling save power...");
+        console.log("Handling save power with strict type introspection...");
 
-        // Get metadata from the modal form
+        // 1. Get metadata from the modal form
         const formElement = document.getElementById('savePowerForm');
-        if (!formElement) { return; }
+        if (!formElement) return;
         const formData = new FormData(formElement);
         const formDataObject = Object.fromEntries(formData.entries());
 

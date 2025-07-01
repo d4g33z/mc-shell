@@ -7,15 +7,13 @@
         <link rel="stylesheet" href="./editor.css">
 
     </head>
-<!--    <body x-data>-->
     <body x-data="{
         isLibraryCollapsed: false,
         isCodeCollapsed: false
     }">
-<!--        <div class="editor-layout">-->
             <div class="editor-layout" :class="{ 'library-collapsed': isLibraryCollapsed }">
             <aside id="power-library-panel">
-<!--                <h2>Power Library</h2>-->
+
                 <div class="panel-header">
                     <h2 x-show="!isLibraryCollapsed">Power Library</h2>
                         <button class="toggle-btn"
@@ -26,9 +24,6 @@
                             title="Toggle Library Panel">
                         <span x-text="isLibraryCollapsed ? '▶' : '◀'"></span>
                     </button>
-<!--                    <button class="toggle-btn" @click="isLibraryCollapsed = !isLibraryCollapsed" title="Toggle Library Panel">-->
-<!--                        <span x-text="isLibraryCollapsed ? '▶' : '◀'"></span>-->
-<!--                    </button>-->
                 </div>
                 <div id="power-list"
                      hx-get="/api/powers?view=editor"
@@ -49,7 +44,6 @@
                     <button id="clearWorkspaceButton">Clear Workspace</button>
                 </div>
 
-<!--                <div id="editor-preview-pane">-->
                 <div id="editor-preview-pane" :class="{ 'code-pane-collapsed': isCodeCollapsed }">
                     <div id="blocklyDiv"></div>
                     <div class="panel-header code-header">
