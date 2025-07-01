@@ -1,15 +1,7 @@
 import Alpine from 'alpinejs';
-import Sortable from 'sortablejs'; // For drag-and-drop later
+import Sortable from 'sortablejs';
 
 import htmx from 'htmx.org'
-// import 'htmx.org'; // Keep for executing powers
-// 1. Import all exports from the htmx.org package into a namespace variable called `htmx`.
-// import * as htmx from 'htmx.org';
-// import 'htmx-ext-json-enc';
-
-// 2. Manually attach the imported htmx object to the global window object.
-//    This makes it accessible to the hx-* attributes in your HTML.
-// window.htmx = htmx;
 
 import { io } from "socket.io-client"; // <-- Import the io function
 
@@ -24,42 +16,10 @@ socket.on('disconnect', () => {
     console.log('Control UI disconnected from Socket.IO server.');
 });
 
-// // --- Set up a global listener for power status updates ---
-// socket.on('power_status', (data) => {
-//     console.log('Received power status update:', data);
-//
-//     // Look up the specific widget instance in our registry
-//     const widgetInstance = WIDGET_REGISTRY[data.id];
-//    // Find the specific widget element on the page
-//     //const widgetElement = document.getElementById(`widget-${data.id}`);
-//
-//     if (widgetInstance) {
-//         // If we found it, call its updateStatus method directly.
-//         // This is guaranteed to work and avoids any DOM race conditions.
-//         widgetInstance.updateStatus(data.status, data.execution_id, data.message || '');
-//     } else {
-//         console.warn(`Could not find a registered widget for power ID: ${data.id}`);
-//     }
-// });
-
-// socket.on('power_status', (data) => {
-//     console.log('Received power status update:', data);
-//     // data should look like: {id: "power-id-abc", execution_id: "...", status: "finished", message: ""}
-//
-//     // Find the specific widget element on the page
-//     const widgetElement = document.getElementById(`widget-${data.id}`);
-//
-//     // Check if the element and its Alpine component are ready
-//     if (widgetElement && widgetElement.__x) {
-//         // Call the widget's internal updateStatus method with all the data
-//         widgetElement.__x.data.updateStatus(data.status, data.execution_id, data.message || '');
-//     }
-// });
 const WIDGET_REGISTRY = {};
 
 function powerWidget(initialPowerData) {
     return {
-        // --- EXISTING PROPERTIES ---
         // Remember: this the data from the power library !!!
         // i.e {name,description,category, power_id,blockly_json,python_code,parameters}
         power: initialPowerData,
@@ -90,8 +50,6 @@ function powerWidget(initialPowerData) {
             WIDGET_REGISTRY[this.power.power_id] = null;
         },
 
-        // --- THIS IS THE FIX ---
-        // This method now robustly manages the entire execution state.
         updateStatus(newStatus, executionId, message = '') {
             console.log(`updateStatus called with: status=${newStatus}, executionId=${executionId}`);
             this.status = newStatus;
@@ -106,7 +64,6 @@ function powerWidget(initialPowerData) {
             }
         },
 
-        // --- NEW METHOD to execute the power ---
         executePower() {
             // Use this.$refs to get the form element reliably
             const formElement = this.$refs.paramsForm;
@@ -143,7 +100,6 @@ function powerWidget(initialPowerData) {
             });
         },
 
-        // --- NEW METHOD to cancel the power ---
         cancelPower() {
             if (!this.currentExecutionId) return;
 
@@ -205,22 +161,6 @@ function controlPanel() {
               });
           }
 
-//       if (window.socket) {
-//           socket.on('power_status', (data) => {
-//               console.log('Received power status update:', data);
-//              // Ensure the data has the required 'id' to identify the widget.
-//                 if (!data || !data.id) {
-//                 console.error('Received power status update with no power ID.', data);
-//                 return;
-//                 }
-//               // Update the status for the specific power ID in our central state object.
-//               this.powerStatuses[data.id] = {
-//                   status: data.status,
-//                   message: data.message || '',
-//                   execution_id: data.execution_id || null
-//               };
-//           });
-//       }
 
       // --- CONSOLIDATED $watch --
       // This single watcher handles ALL logic related to the isEditing state change.
