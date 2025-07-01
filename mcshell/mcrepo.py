@@ -68,6 +68,11 @@ class PowerRepository(ABC):
         """
         pass
 
+    @abstractmethod
+    def find_power_by_function_name(self, function_name: str) -> Optional[Dict[str, Any]]:
+        """Finds a power's data using its function_name metadata."""
+        pass
+
 class JsonFileRepository(PowerRepository):
     def __init__(self, player_name: str):
         # self.storage_path = pathlib.Path(storage_path)
@@ -136,3 +141,9 @@ class JsonFileRepository(PowerRepository):
             self._save_player_data(all_powers)
             return True
         return False
+
+    def find_power_by_function_name(self, function_name: str) -> Optional[Dict[str, Any]]:
+        all_powers = self._get_player_data()
+        for power_id, power_data in all_powers.items():
+            if power_data.get('function_name') == function_name:
+                return power_data

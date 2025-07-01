@@ -1,4 +1,5 @@
 import ast
+import textwrap
 import threading
 from threading import Thread, Event
 from io import StringIO
@@ -46,6 +47,39 @@ flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WAR
 # Value: {'thread': ThreadObject, 'cancel_event': EventObject}
 RUNNING_POWERS = {}
 
+def get_code_with_dependencies(power_repo, power_id_or_name, processed_names=None) -> dict:
+    """
+    Recursively loads a power and all of its dependencies by function name.
+    Returns a dictionary of all unique method definitions required for execution.
+    """
+    if processed_names is None:
+        processed_names = set()
+
+    # The repository needs a way to find a power by its function name.
+    # Let's assume you've added a find_power_by_function_name() method.
+    power_data = power_repo.find_power_by_function_name(power_id_or_name)
+
+    if not power_data:
+        return {} # Base case for recursion
+
+    func_name = power_data.get("function_name")
+    if not func_name or func_name in processed_names:
+        return {} # Already processed, break recursion
+
+    processed_names.add(func_name)
+
+    # Start with this power's own code
+    all_method_definitions = {
+        func_name: power_data.get("python_code")
+    }
+
+    # Recursively fetch code for all dependencies
+    for dep_name in power_data.get("dependencies", []):
+        dep_methods = get_code_with_dependencies(power_repo, dep_name, processed_names)
+        all_method_definitions.update(dep_methods)
+
+    return all_method_definitions
+
 @app.route('/api/execute_power', methods=['POST'])
 def execute_power():
     """Executes a saved power with runtime parameters from the control UI."""
@@ -59,12 +93,42 @@ def execute_power():
 
     if not all([power_id, player_name, server_data, power_repo]):
         return "Error: Server or player not configured", 500
+    # 1. Load the main power to get its function name
+    main_power_data = power_repo.get_full_power(power_id)
+    if not main_power_data:
+        return jsonify({"error": "Power not found."}), 404
 
-    power_data = power_repo.get_full_power(power_id)
-    if not power_data or not power_data.get("python_code"):
-        return jsonify({"error": "Power or its code not found."}), 404
+    main_function_name = main_power_data.get("function_name")
 
-    python_code = power_data["python_code"]
+    # 2. Recursively get all required method definitions
+    all_methods_dict = get_code_with_dependencies(power_repo, main_function_name)
+    all_methods_code = "\n\n".join(all_methods_dict.values())
+
+    # 3. Dynamically build the run_program method body
+    # This creates the call with keyword arguments from the UI, e.g., height=25, material='STONE'
+    run_program_args = ", ".join([f"{key}={repr(value)}" for key, value in runtime_params.items()])
+    run_program_body = f"self.{main_function_name}({run_program_args})"
+
+    # 4. Assemble the final, complete script string
+    python_code = f"""
+import numpy as np
+import math
+from mcshell.constants import *
+
+class BlocklyProgramRunner:
+    def __init__(self, action_implementer_instance,cancel_event=None,runtime_params={{}}):
+        self.action_implementer = action_implementer_instance
+        self.cancel_event = cancel_event
+        self.runtime_params = runtime_params
+
+    # --- Injected Method Definitions ---
+{textwrap.indent(all_methods_code, '    ')}
+
+    # --- Dynamically Generated Main Execution ---
+    def run_program(self):
+        if self.cancel_event and self.cancel_event.is_set(): return
+{textwrap.indent(run_program_body, '        ')}
+"""
 
     # --- Create a unique ID for this execution instance ---
     execution_id = str(uuid.uuid4())
@@ -90,6 +154,7 @@ def execute_power():
         })
 
     return jsonify({"status": "dispatched", "execution_id": execution_id})
+
     # return "Execute"
     # #TODO: how can I avoid returning html???
     # running_state_html = f"""
