@@ -842,6 +842,7 @@ async function init() {
         <!--                   <shadow type="minecraft_entity_entity"></shadow> </value>-->
         <!--          </block>-->
         <block type="minecraft_position_get_direction"></block>
+        <block type="minecraft_position_get_compass_direction"></block> 
         <!--          <block type="minecraft_position_look_at">-->
         <!--               <value name="TARGET">-->
         <!--                   <shadow type="minecraft_vector_3d">-->

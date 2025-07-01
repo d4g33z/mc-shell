@@ -342,6 +342,14 @@ ${indentedBlockCode}
         return [code,generator.ORDER_ATOMIC];
     }
 
+    pythonGenerator.forBlock['minecraft_position_get_compass_direction'] = function(block, generator) {
+        // This generates a call to a method that returns the direction string.
+        const code = 'self.action_implementer.mcplayer.compass_direction';
+
+        // Return the code and the order of operations for a function call.
+        return [code, generator.ORDER_FUNCTION_CALL];
+    };
+
     pythonGenerator.forBlock['minecraft_vector_arithmetic'] = function(block, generator) {
         const operator = block.getFieldValue('OP');
         let order, code;
