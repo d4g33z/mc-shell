@@ -258,52 +258,126 @@ async function init() {
             return;
         }
 
-        // Get the workspace state and generated code
+        // 2. Initialize data objects
         const blocklyJson = Blockly.serialization.workspaces.save(workspace);
-        const pythonCode = pythonGenerator.workspaceToCode(workspace);
-
-        // --- CORRECTED: Extract Parameters from the LIVE Function Block ---
         let powerParameters = [];
-        // Get all top-level blocks from the live workspace
-        const topBlocks = workspace.getTopBlocks(false);
+        let powerFunctionName = null;
+        let codeToSave = null;
 
-        // Find the first function definition block among the top-level blocks
+        // 3. Find the function definition block
+        const topBlocks = workspace.getTopBlocks(true);
         const funcDefBlock = topBlocks.find(b =>
             b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn'
         );
 
         if (funcDefBlock) {
-            console.log("Found function definition block, extracting parameters...");
-            // getVars() is the correct method to get the argument names from the live block instance.
+            // --- This is a "Functional Power" ---
+            powerFunctionName = funcDefBlock.getFieldValue('NAME');
+            console.log(`Found functional power definition: '${powerFunctionName}'.`);
+
+            // --- THIS IS THE FIX ---
+            // Manually construct the Python code for the function definition.
+            const funcNameForCode = pythonGenerator.nameDB_.getName(powerFunctionName, MCED.BlocklyNameTypes.PROCEDURE);
             const argNames = funcDefBlock.getVars();
+            const argsForDef = argNames.map(name => pythonGenerator.nameDB_.getName(name, MCED.BlocklyNameTypes.VARIABLE));
 
-            if (argNames.length > 0) {
-                powerParameters = argNames.map(argName => {
-                    console.log(`- Found parameter: ${argName}`);
-                    return {
-                        name: argName,
-                        type: 'Number', // Defaulting type for now
-                        default: 0      // Defaulting value for now
-                    };
-                });
+            let funcBody = pythonGenerator.statementToCode(funcDefBlock, 'STACK') || (pythonGenerator.INDENT + 'pass\n');
+
+            if (funcDefBlock.type === 'procedures_defreturn') {
+                const returnValue = pythonGenerator.valueToCode(funcDefBlock, 'RETURN', pythonGenerator.ORDER_NONE) || 'None';
+                funcBody += pythonGenerator.INDENT + 'return ' + returnValue + '\n';
             }
-        } else {
-            console.log("No function definition block found in workspace. Saving as a simple power.");
-        }
-        // --- END OF CORRECTION ---
 
-        // Assemble the complete "Power Object"
+            codeToSave = `def ${funcNameForCode}(self, ${argsForDef.join(', ')}):\n${funcBody}`;
+            // --- END OF FIX ---
+
+            // 4. Find the corresponding call block. It is now mandatory.
+            const funcCallBlock = topBlocks.find(b =>
+                (b.type === 'procedures_callnoreturn' || b.type === 'procedures_callreturn') &&
+                b.getFieldValue('NAME') === powerFunctionName
+            );
+
+            if (!funcCallBlock) {
+                alert(`Save Error: To save the function '${powerFunctionName}', you must place a "call ${powerFunctionName}" block on the workspace to define its parameter types.`);
+                return;
+            }
+
+            // 5. Extract parameter names and types from the call block's inputs.
+            // const argNames = funcDefBlock.getVars();
+            if (argNames.length > 0) {
+                for (let i = 0; i < argNames.length; i++) {
+                    const argName = argNames[i];
+                    let extractedType = null; // Start with null
+
+                    const input = funcCallBlock.getInput('ARG' + i);
+                    if (!input || !input.connection || !input.connection.targetBlock()) {
+                        // This input is empty. Abort the save.
+                        alert(`Save Error for function '${powerFunctionName}': The parameter '${argName}' must have a block connected to it to define its type.`);
+                        return; // Stop the entire save process
+                    }
+
+                    // A block is connected, so we can get its type.
+                    const connectedBlock = input.connection.targetBlock();
+                    const outputConnection = connectedBlock.outputConnection;
+
+                    if (outputConnection && outputConnection.getCheck()) {
+                        const checks = outputConnection.getCheck();
+                        if (checks && checks.length > 0) {
+                            extractedType = checks[0]; // e.g., "Number", "Block", "3DVector"
+                        }
+                    }
+
+                    if (!extractedType) {
+                         alert(`Save Error for function '${powerFunctionName}': Could not determine the type for parameter '${argName}'. Please ensure the connected block has an output type.`);
+                         return;
+                    }
+
+                    console.log(`- Found parameter: '${argName}' of type '${extractedType}'`);
+                    powerParameters.push({
+                        name: argName,
+                        type: extractedType,
+                        default: 0 // Default value can be refined later
+                    });
+                }
+            }
+
+        } else {
+            // --- This is a "Script Power" ---
+            console.log("No function definition found. Saving as a 'Script Power'.");
+            codeToSave = pythonGenerator.workspaceToCode(workspace);
+        }
+
+        // --- NEW: Dependency Analysis ---
+        const dependencies = [];
+        // getDescendants() returns the function block and all blocks inside it
+        const allChildBlocks = funcDefBlock.getDescendants(false);
+
+        for (const childBlock of allChildBlocks) {
+            // We are looking for blocks that call another function
+            if (childBlock.type === 'procedures_callnoreturn' || childBlock.type === 'procedures_callreturn') {
+                const calledFunctionName = childBlock.getFieldValue('NAME');
+                if (calledFunctionName && !dependencies.includes(calledFunctionName)) {
+                    dependencies.push(calledFunctionName);
+                }
+            }
+        }
+        console.log(`Found dependencies: ${dependencies.join(', ')}`);
+        // --- END OF NEW LOGIC ---
+
+        // 6. Assemble and POST the final Power Object
         const powerDataObject = {
             name: formDataObject.name,
             description: formDataObject.description,
             category: formDataObject.category || "General",
             power_id: formDataObject.power_id || null,
+            function_name: powerFunctionName,
+            parameters: powerParameters,
             blockly_json: blocklyJson,
-            python_code: pythonCode,
-            parameters: powerParameters // Add the correctly extracted parameters
+            python_code: codeToSave,
+            dependencies: dependencies // <-- Save the new dependency list
         };
 
-        console.log("Sending power data to server:", powerDataObject);
+        console.log("Sending final power data to server:", powerDataObject);
 
         try {
             const response = await fetch('/api/powers', {
@@ -313,23 +387,16 @@ async function init() {
             });
 
             if (response.ok) {
-                const result = await response.json();
-                console.log("Power saved successfully!", result);
                 alert(`Power "${formDataObject.name}" saved successfully!`);
-
-                // Dispatch the standardized 'library-changed' event
-                window.dispatchEvent(new CustomEvent('library-changed', { bubbles: true }));
-
+                window.dispatchEvent(new CustomEvent('library-changed'));
             } else {
-                console.error('Error saving power:', response.status, await response.text());
-                alert('Failed to save power. See console for details.');
+                alert(`Failed to save power: ${await response.text()}`);
             }
         } catch (error) {
             console.error('Network error while saving power:', error);
             alert('Network error. Could not save power.');
         }
     }
-
     // --- 1. Define all custom elements in the correct order ---
     // Utilities and custom fields must be defined first.
     defineMineCraftBlocklyUtils(Blockly);
