@@ -1,3 +1,6 @@
+import xml.etree.ElementTree as ET
+import os
+
 from mcshell.constants import *
 
 def make_picker_group(materials,reg_exp):
@@ -196,3 +199,91 @@ def process_entities(filepath="entity-list.txt"):
         # print("Successfully generated pickers.json")
     except Exception as e:
         print(f"An error occurred: {e}")
+
+
+def build_final_toolbox(final_toolbox_path):
+    """
+    Loads a toolbox template, injects generated XML category fragments,
+    and writes the final toolbox.xml file.
+    """
+
+    # Define paths to the input and output files
+    template_path = MC_DATA_DIR.joinpath('toolbox_template.xml')
+    materials_toolbox_path = MC_DATA_DIR.joinpath('materials/toolbox.xml')
+    entities_toolbox_path = MC_DATA_DIR.joinpath('entities/toolbox.xml')
+
+    print("--- Starting Toolbox Build ---")
+
+    # --- Step 1: Parse the main template and fragment files ---
+    try:
+        # Registering the namespace prevents the parser from adding "ns0:" prefixes
+        ET.register_namespace('', "https://developers.google.com/blockly/xml")
+
+        # Parse the main template
+        tree = ET.parse(template_path)
+        root = tree.getroot()
+
+        # Parse the material and entity category fragments
+        materials_category = ET.parse(materials_toolbox_path).getroot()
+        entities_category = ET.parse(entities_toolbox_path).getroot()
+
+    except FileNotFoundError as e:
+        print(f"Error: Could not find a required XML file. Make sure it exists: {e.filename}")
+        return
+    except ET.ParseError as e:
+        print(f"Error: Could not parse an XML file. Check for syntax errors. Details: {e}")
+        return
+
+    # --- Step 2: Find the placeholder comments and replace them ---
+
+    # We need to iterate through a copy of the list because we are modifying it
+    for i, child in enumerate(list(root)):
+        # ElementTree parses comments as a function-like object.
+        # We check if the tag is a function and its text is our placeholder.
+        if child.attrib.get('name',None) == 'Materials':
+            print("Found materials placeholder. Injecting category...")
+            # Insert the new category at the placeholder's position
+            root.insert(i, materials_category)
+            # Remove the old placeholder comment
+            root.remove(child)
+
+        elif child.attrib.get('name',None) == 'Entities':
+            print("Found entities placeholder. Injecting category...")
+            root.insert(i, entities_category)
+            root.remove(child)
+
+    # --- Step 3: Write the new, complete toolbox.xml file ---
+    try:
+        # ET.indent() is available in Python 3.9+ and makes the output pretty
+        if hasattr(ET, 'indent'):
+            ET.indent(tree, space="  ")
+
+        tree.write(final_toolbox_path, encoding='utf-8', xml_declaration=True)
+        print(f"Successfully built final toolbox at: {final_toolbox_path}")
+
+    except Exception as e:
+        print(f"Error writing final toolbox file: {e}")
+
+
+def update_app():
+    process_materials()
+    _out = os.system(f"node {MC_DATA_DIR.joinpath('materials/generate_material_blocks.mjs')}")
+
+    process_entities()
+    os.system(f"node {MC_DATA_DIR.joinpath('entities/generate_entity_blocks.mjs')}")
+    build_final_toolbox(MC_APP_STATIC_DIR.joinpath('toolbox.xml'))
+
+
+    os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_STATIC_DIR.joinpath('blocks')}")
+    os.system(f"cp {MC_DATA_DIR.joinpath('materials/python/materials.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
+
+    os.system(f"cp {MC_DATA_DIR.joinpath('entities/blocks/entities.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
+    os.system(f"cp {MC_DATA_DIR.joinpath('entities/python/entities.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
+
+def build_app():
+    os.system(f"cd {MC_APP_SRC_DIR}; npm run build")
+
+if __name__ == '__main__':
+    update_app()
+
+
