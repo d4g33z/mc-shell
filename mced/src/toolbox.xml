@@ -1,0 +1,903 @@
+<?xml version='1.0' encoding='utf-8'?>
+<xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
+  <category name="Logic" colour="%{BKY_LOGIC_HUE}">
+    <block type="logic_boolean">
+      <field name="BOOL">TRUE</field>
+    </block>
+    <block type="controls_if" />
+    <block type="controls_if">
+      <mutation else="1" />
+    </block>
+    <block type="controls_if">
+      <mutation elseif="1" else="1" />
+    </block>
+    <block type="logic_compare">
+      <field name="OP">EQ</field>
+    </block>
+    <block type="logic_operation">
+      <field name="OP">AND</field>
+    </block>
+    <block type="logic_negate" />
+    <block type="logic_null" />
+    <block type="logic_ternary" />
+  </category>
+  <category name="Loops" colour="%{BKY_LOOPS_HUE}">
+    <block type="controls_repeat_ext">
+      <value name="TIMES">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="controls_whileUntil">
+      <field name="MODE">WHILE</field>
+    </block>
+    <block type="controls_for">
+      <field name="VAR" id="!gX(y%~iMy{cR:F;7#m)">i</field>
+      <value name="FROM">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+      <value name="TO">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
+      <value name="BY">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="controls_forEach">
+      <field name="VAR" id="O=g^GX@oH{1m$R@nN{8}">j</field>
+    </block>
+    <block type="controls_flow_statements">
+      <field name="FLOW">BREAK</field>
+    </block>
+  </category>
+  <category name="Math" colour="%{BKY_MATH_HUE}">
+    <block type="math_number">
+      <field name="NUM">0</field>
+    </block>
+    <block type="math_arithmetic">
+      <field name="OP">ADD</field>
+      <value name="A">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+      <value name="B">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_single">
+      <field name="OP">ROOT</field>
+      <value name="NUM">
+        <shadow type="math_number">
+          <field name="NUM">9</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_trig">
+      <field name="OP">SIN</field>
+      <value name="NUM">
+        <shadow type="math_number">
+          <field name="NUM">45</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_constant">
+      <field name="CONSTANT">PI</field>
+    </block>
+    <block type="math_number_property">
+      <mutation divisor_input="false" />
+      <field name="PROPERTY">EVEN</field>
+      <value name="NUMBER_TO_CHECK">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_round">
+      <field name="OP">ROUND</field>
+      <value name="NUM">
+        <shadow type="math_number">
+          <field name="NUM">3.1</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_on_list">
+      <mutation op="SUM" />
+      <field name="OP">SUM</field>
+    </block>
+    <block type="math_modulo">
+      <value name="DIVIDEND">
+        <shadow type="math_number">
+          <field name="NUM">64</field>
+        </shadow>
+      </value>
+      <value name="DIVISOR">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_constrain">
+      <value name="VALUE">
+        <shadow type="math_number">
+          <field name="NUM">50</field>
+        </shadow>
+      </value>
+      <value name="LOW">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+      <value name="HIGH">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_random_int">
+      <value name="FROM">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+      <value name="TO">
+        <shadow type="math_number">
+          <field name="NUM">100</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="math_random_float" />
+    <block type="math_atan2">
+      <value name="X">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+      <value name="Y">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+    </block>
+  </category>
+  <category name="Text" colour="%{BKY_TEXTS_HUE}">
+    <block type="text">
+      <field name="TEXT" />
+    </block>
+    <block type="text_join">
+      <mutation items="2" />
+    </block>
+    <block type="text_append">
+      <field name="VAR" id="r#_uLPNR*v4Fk950:Xl$">item</field>
+      <value name="TEXT">
+        <shadow type="text">
+          <field name="TEXT" />
+        </shadow>
+      </value>
+    </block>
+    <block type="text_length">
+      <value name="VALUE">
+        <shadow type="text">
+          <field name="TEXT">abc</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="text_isEmpty">
+      <value name="VALUE">
+        <shadow type="text">
+          <field name="TEXT" />
+        </shadow>
+      </value>
+    </block>
+    <block type="text_indexOf">
+      <field name="END">FIRST</field>
+      <value name="VALUE">
+        <block type="variables_get">
+          <field name="VAR" id="aH[(Lg?9x}hJ@5c6)pT}">text</field>
+        </block>
+      </value>
+      <value name="FIND">
+        <shadow type="text">
+          <field name="TEXT">abc</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="text_charAt">
+      <mutation at="true" />
+      <field name="WHERE">FROM_START</field>
+      <value name="VALUE">
+        <block type="variables_get">
+          <field name="VAR" id="aH[(Lg?9x}hJ@5c6)pT}">text</field>
+        </block>
+      </value>
+    </block>
+    <block type="text_getSubstring">
+      <mutation at1="true" at2="true" />
+      <field name="WHERE1">FROM_START</field>
+      <field name="WHERE2">FROM_START</field>
+      <value name="STRING">
+        <block type="variables_get">
+          <field name="VAR" id="aH[(Lg?9x}hJ@5c6)pT}">text</field>
+        </block>
+      </value>
+    </block>
+    <block type="text_changeCase">
+      <field name="CASE">UPPERCASE</field>
+      <value name="TEXT">
+        <shadow type="text">
+          <field name="TEXT">abc</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="text_trim">
+      <field name="MODE">BOTH</field>
+      <value name="TEXT">
+        <shadow type="text">
+          <field name="TEXT">abc</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="text_print">
+      <value name="TEXT">
+        <shadow type="text">
+          <field name="TEXT">abc</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="text_prompt_ext">
+      <mutation type="TEXT" />
+      <field name="TYPE">TEXT</field>
+      <value name="TEXT">
+        <shadow type="text">
+          <field name="TEXT">abc</field>
+        </shadow>
+      </value>
+    </block>
+  </category>
+  <category name="Lists" colour="%{BKY_LISTS_HUE}">
+    <block type="lists_create_with">
+      <mutation items="0" />
+    </block>
+    <block type="lists_create_with">
+      <mutation items="3" />
+    </block>
+    <block type="lists_repeat">
+      <value name="NUM">
+        <shadow type="math_number">
+          <field name="NUM">5</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="lists_length" />
+    <block type="lists_isEmpty" />
+    <block type="lists_indexOf">
+      <field name="END">FIRST</field>
+      <value name="VALUE">
+        <block type="variables_get">
+          <field name="VAR" id="!g9E0785E:sOYJAbCH{^">list</field>
+        </block>
+      </value>
+    </block>
+    <block type="lists_getIndex">
+      <mutation statement="false" at="true" />
+      <field name="MODE">GET</field>
+      <field name="WHERE">FROM_START</field>
+      <value name="VALUE">
+        <block type="variables_get">
+          <field name="VAR" id="!g9E0785E:sOYJAbCH{^">list</field>
+        </block>
+      </value>
+    </block>
+    <block type="lists_setIndex">
+      <mutation at="true" />
+      <field name="MODE">SET</field>
+      <field name="WHERE">FROM_START</field>
+      <value name="LIST">
+        <block type="variables_get">
+          <field name="VAR" id="!g9E0785E:sOYJAbCH{^">list</field>
+        </block>
+      </value>
+    </block>
+    <block type="lists_getSublist">
+      <mutation at1="true" at2="true" />
+      <field name="WHERE1">FROM_START</field>
+      <field name="WHERE2">FROM_START</field>
+      <value name="LIST">
+        <block type="variables_get">
+          <field name="VAR" id="!g9E0785E:sOYJAbCH{^">list</field>
+        </block>
+      </value>
+    </block>
+    <block type="lists_split">
+      <mutation mode="SPLIT" />
+      <field name="MODE">SPLIT</field>
+      <value name="DELIM">
+        <shadow type="text">
+          <field name="TEXT">,</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="lists_sort">
+      <field name="TYPE">NUMERIC</field>
+      <field name="DIRECTION">1</field>
+    </block>
+    <block type="lists_reverse" />
+  </category>
+  <category name="Variables" colour="%{BKY_VARIABLES_HUE}" custom="VARIABLE" />
+  <category name="Functions" colour="%{BKY_PROCEDURES_HUE}" custom="PROCEDURE" />
+  <category name="Colour" colour="%{BKY_COLOUR_HUE}">
+    <block type="minecraft_coloured_block_picker" />
+  </category>
+  <sep />
+  <category name="Vector Math" colour="#5b80a5">
+    <block type="minecraft_matrix_3d_euler">
+      <value name="YAW">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="PITCH">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="ROLL">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_vector_arithmetic">
+      <field name="OP">ADD</field>
+      <value name="A">
+        <shadow type="minecraft_vector_3d">
+            </shadow>
+      </value>
+      <value name="B">
+        <shadow type="minecraft_vector_3d">
+                </shadow>
+      </value>
+    </block>
+    <block type="minecraft_vector_arithmetic">
+      <field name="OP">MATRIX_MULTIPLY</field>
+      <value name="A">
+        <shadow type="minecraft_matrix_3d_euler">
+          <value name="YAW">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="PITCH">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="ROLL">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="B">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">1</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+    </block>
+  </category>
+  <category name="Position" colour="#0099CC">
+    <block type="minecraft_vector_3d">
+      <value name="X">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="Y">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+      <value name="Z">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_vector_2d">
+      <value name="W">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
+      <value name="H">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_position_player" />
+    <block type="minecraft_position_get_direction" />
+    <block type="minecraft_position_here" />
+  </category>
+  <category name="Digital Geometry" colour="#4a90e2">
+    <block type="minecraft_action_create_digital_line">
+      <value name="POINT1">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="POINT2">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">10</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">10</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">10</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="BLOCK_TYPE">
+        <shadow type="minecraft_picker_miscellaneous">
+          <field name="MATERIAL_ID">STONE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_create_digital_tube">
+      <value name="POINT1">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="POINT2">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">10</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="OUTER_THICKNESS">
+        <shadow type="math_number">
+          <field name="NUM">3</field>
+        </shadow>
+      </value>
+      <value name="BLOCK_TYPE">
+        <shadow type="minecraft_picker_miscellaneous">
+          <field name="TYPE">STONE</field>
+        </shadow>
+      </value>
+      <value name="INNER_THICKNESS">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_create_digital_ball">
+      <value name="CENTER">
+        <shadow type="minecraft_vector_3d">
+          <field name="X">0</field>
+          <field name="Y">0</field>
+          <field name="Z">0</field>
+        </shadow>
+      </value>
+      <value name="RADIUS">
+        <shadow type="math_number">
+          <field name="NUM">5</field>
+        </shadow>
+      </value>
+      <value name="BLOCK_TYPE">
+        <shadow type="minecraft_picker_miscellaneous">
+          <field name="TYPE">STONE</field>
+        </shadow>
+      </value>
+      <value name="INNER_RADIUS">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_create_digital_cube">
+      <value name="CENTER">
+        <shadow type="minecraft_vector_3d">
+          <field name="X">0</field>
+          <field name="Y">0</field>
+          <field name="Z">0</field>
+        </shadow>
+      </value>
+      <value name="SIDE_LENGTH">
+        <shadow type="math_number">
+          <field name="NUM">5</field>
+        </shadow>
+      </value>
+      <value name="ROTATION_MATRIX">
+        <shadow type="minecraft_matrix_3d_euler">
+          <value name="YAW">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="PITCH">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="ROLL">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="BLOCK_TYPE">
+        <shadow type="minecraft_picker_miscellaneous">
+          <field name="TYPE">STONE</field>
+        </shadow>
+      </value>
+      <value name="INNER_OFFSET_FACTOR">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_create_digital_plane">
+      <value name="NORMAL">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">1</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="POINT_ON_PLANE">
+        <shadow type="minecraft_vector_3d">
+          <field name="X">0</field>
+          <field name="Y">0</field>
+          <field name="Z">0</field>
+        </shadow>
+      </value>
+      <value name="BLOCK_TYPE">
+        <shadow type="minecraft_picker_miscellaneous">
+          <field name="TYPE">STONE</field>
+        </shadow>
+      </value>
+      <value name="OUTER_RECT_DIMS">
+        <shadow type="minecraft_vector_2d">
+          <field name="W">10</field>
+          <field name="H">10</field>
+        </shadow>
+      </value>
+      <value name="PLANE_THICKNESS">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+      <value name="INNER_RECT_DIMS">
+        <shadow type="minecraft_vector_2d">
+          <field name="W">0</field>
+          <field name="H">0</field>
+        </shadow>
+      </value>
+      <value name="RECT_CENTER_OFFSET">
+        <shadow type="minecraft_vector_3d">
+          <field name="X">0</field>
+          <field name="Y">0</field>
+          <field name="Z">0</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_create_digital_disc">
+      <value name="NORMAL">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">1</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+      <value name="CENTER_POINT">
+        <shadow type="minecraft_vector_3d">
+          <field name="X">0</field>
+          <field name="Y">0</field>
+          <field name="Z">0</field>
+        </shadow>
+      </value>
+      <value name="OUTER_RADIUS">
+        <shadow type="math_number">
+          <field name="NUM">10</field>
+        </shadow>
+      </value>
+      <value name="BLOCK_TYPE">
+        <shadow type="minecraft_picker_miscellaneous">
+          <field name="TYPE">STONE</field>
+        </shadow>
+      </value>
+      <value name="DISC_THICKNESS">
+        <shadow type="math_number">
+          <field name="NUM">1</field>
+        </shadow>
+      </value>
+      <value name="INNER_RADIUS">
+        <shadow type="math_number">
+          <field name="NUM">0</field>
+        </shadow>
+      </value>
+    </block>
+  </category>
+  <sep />
+  <category name="Materials" colour="#777777">
+    <block type="minecraft_material_banner">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_bed">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_candle">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_carpet">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_concrete">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_concrete_powder">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_glazed_terracotta">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_shulker_box">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_stained_glass">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_stained_glass_pane">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_terracotta">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_material_wool">
+      <value name="COLOUR">
+        <shadow type="minecraft_coloured_block_picker">
+          <field name="MINECRAFT_COLOUR_ID">WHITE</field>
+        </shadow>
+      </value>
+    </block>
+    <sep />
+    <block type="minecraft_picker_doors" />
+    <block type="minecraft_picker_fences" />
+    <block type="minecraft_picker_gates" />
+    <block type="minecraft_picker_glass" />
+    <block type="minecraft_picker_ores" />
+    <block type="minecraft_picker_redstone_components" />
+    <block type="minecraft_picker_slabs" />
+    <block type="minecraft_picker_stairs" />
+    <block type="minecraft_picker_stone_bricks" />
+    <block type="minecraft_picker_trapdoors" />
+    <block type="minecraft_picker_walls" />
+    <block type="minecraft_picker_wood_full" />
+    <block type="minecraft_picker_wood_logs" />
+    <block type="minecraft_picker_wood_planks" />
+    <block type="minecraft_picker_world" />
+    <sep />
+    <block type="minecraft_picker_miscellaneous" />
+  </category>
+  <category name="Entities" colour="#5b5ba5">
+    <block type="minecraft_picker_entity_hostile_mobs" />
+    <block type="minecraft_picker_entity_minecarts" />
+    <block type="minecraft_picker_entity_miscellaneous_entities" />
+    <block type="minecraft_picker_entity_passive_mobs" />
+    <block type="minecraft_picker_entity_projectiles" />
+    <block type="minecraft_picker_entity_utility_and_special" />
+  </category>
+  <category name="World Actions" colour="#4C97FF">
+    <block type="minecraft_action_set_block">
+      <value name="BLOCK_TYPE">
+        <shadow type="minecraft_picker_miscellaneous">
+          <field name="MATERIAL_ID">STONE</field>
+        </shadow>
+      </value>
+      <value name="POSITION">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">5</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_spawn_entity">
+      <value name="ENTITY_TYPE">
+        <shadow type="minecraft_picker_entity_passive_mobs">
+          <field name="ENTITY_ID">SHEEP</field>
+        </shadow>
+      </value>
+      <value name="POSITION">
+        <shadow type="minecraft_vector_3d">
+          <value name="X">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+          <value name="Y">
+            <shadow type="math_number">
+              <field name="NUM">5</field>
+            </shadow>
+          </value>
+          <value name="Z">
+            <shadow type="math_number">
+              <field name="NUM">0</field>
+            </shadow>
+          </value>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_get_block" />
+    <block type="minecraft_action_get_height" />
+    <block type="minecraft_action_post_to_chat">
+      <value name="MESSAGE">
+        <shadow type="text">
+          <field name="TEXT">Hello from Blockly!</field>
+        </shadow>
+      </value>
+    </block>
+    <block type="minecraft_action_create_explosion">
+      <value name="POWER">
+        <shadow type="math_number">
+          <field name="NUM">4</field>
+        </shadow>
+      </value>
+    </block>
+  </category>
+</xml>

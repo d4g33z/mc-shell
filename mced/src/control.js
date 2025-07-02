@@ -123,7 +123,7 @@ function controlPanel() {
     layout: { grid: { columns: 4 }, widgets: [] }, // Will hold the layout data
     isEditing: false, // Toggles edit mode for drag-and-drop
     sortableInstance: null, // To hold our SortableJS instance
-
+    materialGroups: {}, // To hold materials for control UI
     // NEW: A dictionary to hold the live status of each power widget
     // e.g., { "power-id-123": { status: 'running', message: '' }, ... }
     powerStatuses: {},
@@ -181,8 +181,9 @@ function controlPanel() {
       // Fetch both layout and power data when the component loads
       Promise.all([
         fetch('/api/control/layout').then(res => res.json()),
-        fetch('/api/powers?view=control').then(res => res.json())
-      ]).then(([layoutData, powersData]) => {
+        fetch('/api/powers?view=control').then(res => res.json()),
+        fetch('/api/block_materials').then(res => res.json()) // <-- NEW FETCH
+      ]).then(([layoutData, powersData, materialData]) => {
         this.layout = layoutData;
         this.powers = powersData;
         this.materialGroups = materialData; // <-- STORE THE DATA
