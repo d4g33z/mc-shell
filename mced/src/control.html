@@ -71,12 +71,40 @@
                                 </template>
 
                                 <template x-if="param.type === 'Block'">
-                                    <select :name="param.name" x-model="formValues[param.name]">
-                                        <option value="STONE">Stone</option>
-                                        <option value="OAK_PLANKS">Oak Planks</option>
-                                        <option value="GLASS">Glass</option>
-                                        <option value="DIAMOND_BLOCK">Diamond Block</option>
-                                    </select>
+                                    <div class="custom-picker" x-data="{
+                                        isOpen: false,
+                                        selected: '{{ param.default or 'STONE' }}',
+                                        materialGroups: $root.__x.data.materialGroups,
+                                        filter: ''
+                                        }" @click.outside="isOpen = false">
+
+                                        <input type="hidden" :name="param.name" x-model="selected">
+
+                                        <button type="button" class="picker-trigger" @click="isOpen = !isOpen">
+                                            <span x-text="selected"></span>
+                                            <span>▼</span>
+                                        </button>
+
+                                        <div class="picker-dropdown" x-show="isOpen" x-transition>
+                                            <input type="text" x-model="filter" placeholder="Filter blocks..." class="picker-filter">
+
+                                            <div class="picker-options">
+                                                <template x-for="category in Object.keys(materialGroups)">
+                                                    <div class="picker-category">
+                                                        <strong x-text="category.replace(/_/g, ' ')"></strong>
+                                                        <ul>
+                                                            <template x-for="block in materialGroups[category]">
+                                                                <li x-show="!filter || block.toLowerCase().includes(filter.toLowerCase())">
+                                                                    <button type="button" @click="selected = block; isOpen = false;" x-text="block"></button>
+                                                                </li>
+                                                            </template>
+                                                        </ul>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                 </template>
                             </div>
                         </template>
