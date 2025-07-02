@@ -4,7 +4,7 @@
   "description": "Minecraft Blockly Editor",
   "source": "src/index.html",
   "scripts": {
-    "start": "parcel src/index.html",
+    "start": "parcel",
     "start:control": "parcel src/control.html",
     "build": "parcel build src/index.html src/control.html"
   },
