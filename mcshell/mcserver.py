@@ -303,6 +303,19 @@ def cancel_power():
     # """
     # return idle_state_html
 
+@app.route('/api/block_materials')
+def get_block_materials():
+    """
+    Serves the categorized dictionary of all block materials.
+    """
+    try:
+        with open(MC_PICKER_MATERIALS_DATA_PATH, 'r') as f:
+            material_data = json.load(f)
+        return jsonify(material_data)
+    except FileNotFoundError:
+        return jsonify({"error": "Material data file not found."}), 404
+    except Exception as e:
+        return jsonify({"error": f"Could not load material data: {e}"}), 500
 # --- Static File Serving ---
 
 @app.route('/')
