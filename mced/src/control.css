@@ -1,0 +1,61 @@
+/* src/control.css */
+
+/* Basic styles for a dark-themed, touch-friendly UI */
+html, body {
+    height: 100vh;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #1c1c1e; /* Dark background */
+    color: #f2f2f7;
+    overflow-x: hidden;
+}
+
+header {
+    padding: 10px 20px;
+    background-color: #2c2c2e;
+    border-bottom: 1px solid #38383a;
+}
+
+main {
+    padding: 20px;
+}
+
+/* The Grid for Power Widgets */
+#power-grid {
+    display: grid;
+    /* Create responsive columns that are at least 180px wide */
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px; /* Space between widgets */
+}
+
+/* Initial styling for a Power Widget card */
+.power-widget {
+    background-color: #3a3a3c;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.power-widget .power-name {
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+/* Style for the "ghost" - the placeholder where the item could be dropped */
+.power-widget-ghost {
+    opacity: 0.4;
+    background: #555;
+    border: 2px dashed #888;
+}
+
+/* Style for the actual item being dragged */
+.power-widget-dragging {
+    opacity: 0.9;
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+}

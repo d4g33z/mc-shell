@@ -4,15 +4,25 @@
   "description": "Minecraft Blockly Editor",
   "source": "src/index.html",
   "scripts": {
-    "start": "parcel",
-    "build": "parcel build"
+    "start": "parcel src/index.html",
+    "start:control": "parcel src/control.html",
+    "build": "parcel build src/index.html src/control.html"
   },
   "dependencies": {
+    "alpinejs": "^3.14.9",
     "blockly": "^12.0.0",
-    "socket.io-client": "^4.8.1"
+    "htmx-ext-json-enc": "^2.0.2",
+    "htmx.org": "^2.0.6",
+    "prismjs": "^1.30.0",
+    "socket.io-client": "^4.8.1",
+    "sortablejs": "^1.15.6"
   },
   "devDependencies": {
-    "parcel": "^2.12.0"
+    "@parcel/packager-xml": "^2.15.2",
+    "@parcel/transformer-xml": "^2.15.2",
+    "parcel": "^2.12.0",
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10"
   },
   "targets": {
     "default": {

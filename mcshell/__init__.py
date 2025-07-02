@@ -1,5 +1,7 @@
 import os
 import pathlib
+from io import StringIO
+from threading import Thread,Event
 
 import IPython
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
@@ -8,12 +10,16 @@ from IPython.core.completer import IPCompleter,Completer
 
 from rich.prompt import Prompt
 
+from mcshell.mcrepo import JsonFileRepository
 from mcshell.mcclient import MCClient
 from mcshell.constants import *
 from mcshell.mcplayer import MCPlayer
 from mcshell.mcdebugger import start_debug_server,stop_debug_server,debug_server_thread
 from mcshell.mcserver import start_app_server,stop_app_server,app_server_thread
 from mcshell.mcactions import *
+
+from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
+
 
 #pycraft.settings
 SHOW_DEBUG=False
@@ -145,7 +151,7 @@ class MCShell(Magics):
 
         try:
             self.get_client().help()
-        except:
+        except Exception as e:
             print("[red bold]login failed[/]")
 
     @line_magic
@@ -342,63 +348,140 @@ class MCShell(Magics):
         print(f"requested player will be available as the variable {_player_name} locally")
         local_ns[_player_name] = MCPlayer(_player_name,**self.server_data).build()
 
-    @needs_local_scope
-    @line_magic
-    def mc_create_script(self,line,local_ns):
-        _uuid = str(uuid.uuid1())[:4]
-        _var_name = f"power_{_uuid}"
-        _script_dir = pathlib.Path('.').absolute().joinpath('powers')
-        print(_script_dir)
-        if not _script_dir.exists():
-            print(f"Creating a directory {_script_dir} to hold powers for debugging")
-            _script_dir.mkdir(exist_ok=True)
-        _script_path = pathlib.Path('./powers').joinpath(f'{_var_name}.py')
-        print(f"Saving your new power as {_script_path}")
-        _script_path.write_text(line)
-        # local_ns.update({_var_name: line})
-
+    # @needs_local_scope
     # @line_magic
-    # def mc_use_power(self,line):
-    #     _line_parts = line.strip().split(' ')
-    #     _player_name = _line_parts[0]
-    #     _power_name = _line_parts[1]
-    #     _script_path = pathlib.Path('powers').joinpath(f'{_power_name}.py')
-    #     _run_line = f"{_script_path} {' '.join(_line_parts[2:])}"
-    #     print(_run_line)
-    #     _run_args = f"--address {self.server_data['host']} --name {_player_name}"
-    #     # if _script_path.exists():
-    #     self.ip.run_line_magic('run',f"{_script_path} {_run_args} {' '.join(_line_parts[2:])}")
-    #     # else:
-    #     #     print('error!')
-
-    # def _complete_mc_use_power(self,ipyshell,event):
-    #     ipyshell.user_ns.update(dict(rcon_event=event, rcon_symbol=event.symbol, rcon_line=event.line, rcon_cursor_pos=event.text_until_cursor)) # Capture ALL event data IMMEDIATELY
-    #
-    #     _powers = pathlib.Path('powers').glob('*.py')
-    #     text_to_complete = event.symbol
-    #     line = event.line
-    #     return [p.name.split('.')[0] for p in _powers if str(p.name).startswith(text_to_complete)]
+    # def mc_create_script(self,line,local_ns):
+    #     _uuid = str(uuid.uuid1())[:4]
+    #     _var_name = f"power_{_uuid}"
+    #     _script_dir = pathlib.Path('.').absolute().joinpath('powers')
+    #     print(_script_dir)
+    #     if not _script_dir.exists():
+    #         print(f"Creating a directory {_script_dir} to hold powers for debugging")
+    #         _script_dir.mkdir(exist_ok=True)
+    #     _script_path = pathlib.Path('./powers').joinpath(f'{_var_name}.py')
+    #     print(f"Saving your new power as {_script_path}")
+    #     _script_path.write_text(line)
+    #     # local_ns.update({_var_name: line})
 
     @line_magic
-    def mc_start_debug(self, line):
-        """Starts the debug mcserver in a separate thread."""
-        start_debug_server()
-
-    @line_magic
-    def mc_stop_debug(self, line):
-        """Stops the debug mcserver thread."""
-        stop_debug_server()
-
-    # @line_magic
-    # def mc_start_app(self, line):
-    #     """Starts the app mcserver in a separate thread."""
-    #     start_app_server(self.server_data)
-    @line_magic
-    def mc_start_app(self, line):
+    def mc_create_script(self, line):
         """
-        Starts the mc-ed application server, getting the authorized Minecraft user
-        name from the central configuration file.
+        Receives a block of Python code from the mc-ed editor,
+        saves it to a uniquely named file in powers/blockcode.
         """
+        code_to_save = line
+        if not code_to_save:
+            print("Received empty code block. No script created.")
+            return
+
+        try:
+            # Create a unique filename for the power
+            power_dir = pathlib.Path("./powers/blockcode")
+            power_dir.mkdir(parents=True, exist_ok=True)
+
+            # Generate a unique suffix for the filename
+            file_hash = uuid.uuid4().hex[:6]
+            filename = f"power_{file_hash}.py"
+            filepath = power_dir / filename
+
+            with open(filepath, 'w') as f:
+                f.write(code_to_save)
+
+            print(f"Successfully saved power to: {filepath}")
+            print(f"To use it, you can now run:\nfrom powers.blockcode.{filename.replace('.py','')} import *")
+
+        except Exception as e:
+            print(f"Error saving script: {e}")
+
+# ... inside your MCShell class ...
+
+    @line_magic
+    def mc_debug_and_define(self, line):
+        """
+        Receives code and metadata from the editor, and starts it in a
+        background thread for debugging.
+        """
+        try:
+            payload = json.loads(line)
+            code_to_execute = payload.get("code")
+            metadata = payload.get("metadata", {})
+
+            try:
+                # Create a unique filename for the power
+                power_dir = pathlib.Path("./powers/blockcode")
+                power_dir.mkdir(parents=True, exist_ok=True)
+
+                # Generate a unique suffix for the filename
+                file_hash = uuid.uuid4().hex[:6]
+                filename = f"power_{file_hash}.py"
+                filepath = power_dir / filename
+
+                with open(filepath, 'w') as f:
+                    f.write(code_to_execute)
+
+                print(f"Successfully saved power to: {filepath}")
+                print(f"To use it, you can now run:\nfrom powers.blockcode.{filename.replace('.py','')} import *")
+
+            except Exception as e:
+                print(f"Error saving script: {e}")
+
+            # ... (check if payload is valid) ...
+
+            player_name = self._get_mc_name()
+            server_data = self.server_data
+
+            # --- Start the power in a background thread ---
+            execution_id = f"debug_{uuid.uuid4().hex[:6]}" # Special ID for debug runs
+            cancel_event = Event()
+
+            thread = Thread(target=execute_power_in_thread, args=(
+                f"user-power-{execution_id}",execution_id, code_to_execute, player_name, server_data, {}, cancel_event
+            ))
+            thread.daemon = True
+            thread.start()
+
+            RUNNING_POWERS[execution_id] = {'thread': thread, 'cancel_event': cancel_event}
+
+            # --- Save Metadata (This part remains synchronous) ---
+            # power_repo = app.config.get('POWER_REPO')
+            power_repo = JsonFileRepository(player_name)
+
+            if power_repo:
+                # You would likely call power_repo.save_power(metadata) here
+                print(f"--- Power '{metadata.get('function_name')}' metadata defined/updated. ---")
+                print(f"--- Started debug execution with ID: {execution_id} ---")
+                print("--- To stop it, run: %mc_cancel_power " + execution_id + " ---")
+
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+
+    @line_magic
+    def mc_cancel_power(self, line):
+        """Cancels a running power by its execution ID."""
+        execution_id = line.strip()
+        if not execution_id:
+            print("Usage: %mc_cancel_power <execution_id>")
+            print("Currently running powers:", list(RUNNING_POWERS.keys()))
+            return
+
+        power_to_cancel = RUNNING_POWERS.get(execution_id)
+        if power_to_cancel:
+            print(f"Sending cancellation signal to power: {execution_id}")
+            power_to_cancel['cancel_event'].set()
+        else:
+            print(f"Error: No running power found with ID: {execution_id}")
+
+        @line_magic
+        def mc_start_debug(self, line):
+            """Starts the debug mcserver in a separate thread."""
+            start_debug_server()
+
+        @line_magic
+        def mc_stop_debug(self, line):
+            """Stops the debug mcserver thread."""
+            stop_debug_server()
+
+    def _get_mc_name(self):
         # Define the central, system-wide configuration file path
         CENTRAL_CONFIG_FILE = pathlib.Path("/etc/mc-shell/user_map.json")
 
@@ -417,16 +500,30 @@ class MCShell(Magics):
             with open(CENTRAL_CONFIG_FILE, 'r') as f:
                 user_map = json.load(f)
         except (IOError, json.JSONDecodeError) as e:
-            return f"Fatal Error: Could not read or parse server configuration file: {e}"
+            raise f"Fatal Error: Could not read or parse server configuration file: {e}"
 
         # Get the authorized Minecraft name for the current Linux user
         minecraft_name = user_map.get(linux_user)
 
         if not minecraft_name:
-            return f"Error: Your Linux user '{linux_user}' is not registered to a Minecraft player. Please contact your administrator."
+            raise f"Error: Your Linux user '{linux_user}' is not registered to a Minecraft player. Please contact your administrator."
 
+        return minecraft_name
+
+    # @line_magic
+    # def mc_start_app(self, line):
+    #     """Starts the app mcserver in a separate thread."""
+    #     start_app_server(self.server_data)
+    @line_magic
+    def mc_start_app(self, line):
+        """
+        Starts the mc-ed application server, getting the authorized Minecraft user
+        name from the central configuration file.
+        """
+        minecraft_name = self._get_mc_name()
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
-        start_app_server(self.server_data,minecraft_name)
+        start_app_server(self.server_data,minecraft_name,self.shell)
+
         return f"mc-ed application server started for player '{minecraft_name}'."
 
     @line_magic

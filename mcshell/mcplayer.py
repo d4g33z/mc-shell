@@ -1,15 +1,16 @@
 from mcshell.mcclient import MCClient
 from mcshell.constants import *
 
-
 # Define a tolerance for floating-point comparisons near zero
 DEFAULT_TOLERANCE = 1e-9
 
+
 class MCPlayer(MCClient):
-    def __init__(self,name,host=MC_SERVER_HOST,port=MC_SERVER_PORT,password=None,server_type=MC_SERVER_TYPE,fruit_juice_port=FJ_SERVER_PORT):
+    def __init__(self,name,host=MC_SERVER_HOST,port=MC_SERVER_PORT,password=None,server_type=MC_SERVER_TYPE,fruit_juice_port=FJ_SERVER_PORT,cancel_event=None):
         super().__init__(host,port,password,server_type,fruit_juice_port)
         self.name = name
         self.state = {}
+        self.cancel_event = cancel_event
 
     def get_data(self,data_path):
         _args = ['get','entity',f'@p[name={self.name}]',data_path]
@@ -55,12 +56,11 @@ class MCPlayer(MCClient):
 
     @property
     def position(self):
-        self.build()
-        return Vec3(*self.state.get('Pos'))
+        return Vec3(*self.pc.player.getPos())
 
     @property
-    def cardinal_direction(self):
-        return self.get_cardial_direction(*self.pc.player.getDirection())
+    def tile_position(self):
+        return Vec3(*self.pc.player.getTilePos())
 
     @property
     def direction(self):
@@ -72,18 +72,28 @@ class MCPlayer(MCClient):
         return Vec3(*self.get_sword_hit_position())
 
 
+    @property
+    def compass_direction(self):
+        return self._get_compass_direction(self.direction.to_tuple())
+
+
     def get_sword_hit_position(self):
         '''
             The following sword hits will all be detected:
-        	DIAMOND_SWORD,
-			GOLDEN_SWORD,
-			IRON_SWORD,
-			STONE_SWORD,
-			WOODEN_SWORD
+            DIAMOND_SWORD,
+            GOLDEN_SWORD,
+            IRON_SWORD,
+            STONE_SWORD,
+            WOODEN_SWORD
         '''
         print('Waiting for a sword strike...')
 
+        # TODO: this should be cancellable too
         while True:
+
+            if self.cancel_event and self.cancel_event.isSet():
+                raise PowerCancelledException
+
             _hits = self.pc.events.pollBlockHits()
             if _hits:
                 _hit = _hits[0]
@@ -100,83 +110,65 @@ class MCPlayer(MCClient):
                 return _hit.pos.clone()
 
 
-    @staticmethod
-    def _get_sign(value, tolerance=DEFAULT_TOLERANCE):
-      """Determines the sign of a value (-1, 0, or 1) using a tolerance."""
-      if value > tolerance:
-        return 1
-      elif value < -tolerance:
-        return -1
-      else:
-        return 0
 
-    def _get_vector_region(self,vector, tolerance=DEFAULT_TOLERANCE):
-      """
-      Assigns a 3D vector to one of the 26 tessellation regions surrounding the origin.
+    def _get_compass_direction(self,direction_vector: tuple[float, float, float]) -> str:
+        """
+        Determines the closest 8-point compass direction from a 3D direction vector.
 
-      The region is identified by the integer coordinates (I, J, K) of the
-      cube in a 3x3x3 grid (relative to the center at (0,0,0)) that the
-      vector points towards. I, J, K will be in {-1, 0, 1}.
+        This function ignores the Y (up/down) component and normalizes the X and Z
+        components to find the closest cardinal or intercardinal direction.
 
-      Args:
-        vector: A list or tuple of 3 floats representing the direction vector (x, y, z).
-                It should ideally be a unit vector, but normalization isn't strictly required
-                as only the signs matter. Must not be the zero vector.
-        tolerance: The tolerance for considering a component to be zero.
+        Args:
+            direction_vector: A tuple, list, or Vec3-like object with x, y, and z components
+                              representing the direction the player is facing.
 
-      Returns:
-        A tuple (I, J, K) representing the region indices. Returns None if the
-        input vector is numerically indistinguishable from the zero vector.
+        Returns:
+            A string representing the compass direction (e.g., 'N', 'NE', 'E', etc.).
+            Returns 'N' if the input vector is a zero vector in the XZ plane.
+        """
+        # Define the 8 compass directions as normalized 2D vectors (x, z)
+        # Note: In Minecraft, negative Z is North and positive X is East.
+        compass_vectors = {
+            'N':  np.array([0, -1]),
+            'NE': np.array([0.7071, -0.7071]), # sqrt(2)/2
+            'E':  np.array([1, 0]),
+            'SE': np.array([0.7071, 0.7071]),
+            'S':  np.array([0, 1]),
+            'SW': np.array([-0.7071, 0.7071]),
+            'W':  np.array([-1, 0]),
+            'NW': np.array([-0.7071, -0.7071]),
+        }
 
-      Raises:
-        ValueError: If the input is not a 3-component vector.
-      """
-      if len(vector) != 3:
-        raise ValueError("Input must be a 3-component vector.")
+        # Extract x and z from the input vector
+        try:
+            x, _, z = direction_vector
+        except (ValueError, TypeError):
+            # Handle Vec3-like objects
+            if hasattr(direction_vector, 'x') and hasattr(direction_vector, 'z'):
+                x, z = direction_vector.x, direction_vector.z
+            else:
+                raise TypeError("Input must be a 3-component vector or have .x and .z attributes.")
 
-      x, y, z = vector
+        # Create a 2D vector for the horizontal direction
+        player_xz_vector = np.array([x, z])
 
-      i = self._get_sign(x, tolerance)
-      j = self._get_sign(y, tolerance)
-      k = self._get_sign(z, tolerance)
+        # Normalize the player's direction vector to make it a unit vector
+        norm = np.linalg.norm(player_xz_vector)
+        if norm < 1e-9: # Handle case where player is looking straight up or down
+            return 'N'  # Default to North if there's no horizontal component
 
-      # Check if the vector was effectively zero
-      if i == 0 and j == 0 and k == 0:
-        # This should not happen for a unit vector input, but check defensively.
-        print("Warning: Input vector is close to zero.")
-        return None
+        normalized_player_vector = player_xz_vector / norm
 
-      # The tuple (i, j, k) directly represents the target region
-      return i, j, k
+        # Find the compass direction with the highest dot product
+        # The dot product of two unit vectors is the cosine of the angle between them.
+        # The highest dot product (closest to 1.0) means the smallest angle.
+        max_dot_product = -1
+        closest_direction = 'N'
 
-    def get_cardial_direction(self,i,j,k):
-        I, J, K = self._get_vector_region([i, j, k])
+        for direction, compass_vec in compass_vectors.items():
+            dot_product = np.dot(normalized_player_vector, compass_vec)
+            if dot_product > max_dot_product:
+                max_dot_product = dot_product
+                closest_direction = direction
 
-        _xdir = ''
-        _zdir = ''
-
-        if I > 0:
-            _xdir = 'EAST'
-        elif I < 0:
-            _xdir = 'WEST'
-
-        if K > 0:
-            _zdir = 'SOUTH'
-        elif K < 0:
-            _zdir = 'NORTH'
-
-        if abs(i) > abs(k):
-            _direction = i
-            _cardinal_direction = _xdir
-        else:
-            _direction = k
-            _cardinal_direction = _zdir
-
-        if J > 0 and  abs(_direction) > math.sqrt(1 / 2):
-            _face = 'CEILING'
-        elif J < 0 and abs(_direction) < math.sqrt(1 / 2):
-            _face = 'FLOOR'
-        else:
-            _face = 'WALL'
-
-        return _cardinal_direction, _face
+        return closest_direction

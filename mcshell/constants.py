@@ -9,6 +9,7 @@ import re
 import json
 import copy
 import math
+import random
 import asyncio
 import pathlib
 import urlpath
@@ -16,13 +17,18 @@ import pickle
 import time
 import sys
 import uuid
-from typing import Optional
+from typing import List,Optional,Dict,Any
+
+import numpy as np
 
 from rich import print
 from rich.pretty import pprint
 
 from mcshell.Matrix3 import Matrix3
 from mcshell.Vec3 import Vec3
+
+class PowerCancelledException(Exception):
+    pass
 
 try:
     from icecream import ic
@@ -55,6 +61,14 @@ MC_ENTITY_ID_MAP_PATH = MC_DATA_DIR.joinpath('entities/entity_id_map.pkl')
 MC_ENTITY_PICKERS_PATH = MC_DATA_DIR.joinpath('entities/pickers.json')
 
 MC_APP_DIR = MC_DATA_DIR.joinpath('app')
+
+MC_APP_STATIC_DIR = MC_DATA_DIR.joinpath('static')
+MC_APP_SRC_DIR = pathlib.Path(__file__).parent.parent.joinpath('mced/src')
+
+MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
+MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
+
+
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS
 #MC_ENTITY_URL = urlpath.URL('https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html')

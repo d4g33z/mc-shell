@@ -69,41 +69,79 @@ export function defineMineCraftBlocks(Blockly) {
         }
     };
 
+    // Blockly.Blocks['minecraft_vector_2d'] = {
+    //   init: function() {
+    //     this.appendDummyInput()
+    //         .appendField("w:") // Or "dim1:", "u:"
+    //         .appendField(new Blockly.FieldNumber(0), "W") // Using FieldNumber for direct number input
+    //         .appendField(" h:") // Or "dim2:", "v:"
+    //         .appendField(new Blockly.FieldNumber(0), "H");
+    //     this.setOutput(true, "2DVector"); // Output type
+    //     this.setColour(180); // A distinct color for 2D vectors
+    //     this.setTooltip("A 2D vector or dimension (width, height/length).");
+    //     this.setInputsInline(true); // Keep it compact
+    //   }
+    // };
+
     Blockly.Blocks['minecraft_vector_2d'] = {
       init: function() {
-        this.appendDummyInput()
-            .appendField("w:") // Or "dim1:", "u:"
-            .appendField(new Blockly.FieldNumber(0), "W") // Using FieldNumber for direct number input
-            .appendField(" h:") // Or "dim2:", "v:"
-            .appendField(new Blockly.FieldNumber(0), "H");
-        this.setOutput(true, "2DVector"); // Output type
-        this.setColour(180); // A distinct color for 2D vectors
-        this.setTooltip("A 2D vector or dimension (width, height/length).");
-        this.setInputsInline(true); // Keep it compact
+        this.appendValueInput("W")
+            .setCheck("Number")
+            .appendField("Vec2 w"); // Changed label slightly for clarity
+        this.appendValueInput("H")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT) // Align the 'h' label to the right
+            .appendField("h");
+        this.setOutput(true, "2DVector"); // Output type remains the same
+        this.setColour(180); // Vector Math color
+        this.setTooltip("Creates a 2D vector or dimension (width, height/length). Accepts numbers or variables.");
+        this.setInputsInline(true); // Keep it on one line
       }
     };
 
-    Blockly.Blocks['minecraft_vector_3d'] = {
-        init: function () {
-            if (this.isInFlyout) {
-                this.appendDummyInput()
-                    .appendField(Blockly.Msg.MINECRAFT_VECTOR);
-                this.setOutput(true, "3DVector");
-                this.setColour(160);
-            } else {
-                this.appendDummyInput()
-                    .appendField("x:")
-                    .appendField(new Blockly.FieldTextInput("0"), "X")
-                    .appendField("y:")
-                    .appendField(new Blockly.FieldTextInput("0"), "Y")
-                    .appendField("z:")
-                    .appendField(new Blockly.FieldTextInput("0"), "Z");
-                this.setOutput(true, "3DVector");
-                this.setColour(160);
-            }
-        }
-    };
+    // Blockly.Blocks['minecraft_vector_3d'] = {
+    //     init: function () {
+    //         if (this.isInFlyout) {
+    //             this.appendDummyInput()
+    //                 .appendField(Blockly.Msg.MINECRAFT_VECTOR);
+    //             this.setOutput(true, "3DVector");
+    //             this.setColour(160);
+    //         } else {
+    //             this.appendDummyInput()
+    //                 .appendField("x:")
+    //                 .appendField(new Blockly.FieldTextInput("0"), "X")
+    //                 .appendField("y:")
+    //                 .appendField(new Blockly.FieldTextInput("0"), "Y")
+    //                 .appendField("z:")
+    //                 .appendField(new Blockly.FieldTextInput("0"), "Z");
+    //             this.setOutput(true, "3DVector");
+    //             this.setColour(160);
+    //         }
+    //     }
+    // };
 
+    Blockly.Blocks['minecraft_vector_3d'] = {
+      init: function() {
+        // We no longer need the isInFlyout check, as this design works well everywhere.
+        this.appendValueInput("X")
+            .setCheck("Number") // This input will only accept blocks that output a Number
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Vec3 x");
+        this.appendValueInput("Y")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("y");
+        this.appendValueInput("Z")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("z");
+
+        this.setOutput(true, "3DVector"); // The output type remains the same
+        this.setColour(180); // Using the Vector Math color for consistency
+        this.setTooltip("Creates a 3D vector from x, y, and z components. Accepts numbers or variables.");
+        this.setInputsInline(true); // This keeps the x, y, z inputs on a single line
+      }
+    };
     Blockly.Blocks['minecraft_vector_delta'] = {
         init: function () {
             if (this.isInFlyout) {
@@ -147,11 +185,20 @@ export function defineMineCraftBlocks(Blockly) {
         init: function () {
             this.appendDummyInput()
                 .appendField("player direction");
-            this.setOutput(true, "3DUnitVector");
+            this.setOutput(true, "3DVector");
             this.setColour(160);
         }
     };
 
+    Blockly.Blocks['minecraft_position_get_compass_direction'] = {
+      init: function() {
+        this.appendDummyInput()
+            .appendField("player compass direction");
+        this.setOutput(true, "String"); // This block returns a String (e.g., "N", "SW")
+        this.setColour(160); // The "Position" category color
+        this.setTooltip("Returns the cardinal or intercardinal direction the player is facing (N, NE, E, SE, S, SW, W, NW).");
+      }
+    };
 
     // --- Vector Math Category ---:/
 
@@ -452,5 +499,88 @@ export function defineMineCraftBlocks(Blockly) {
 
       }
     };
+
+    Blockly.Blocks['minecraft_action_set_block'] = {
+      init: function() {
+        this.appendValueInput("BLOCK_TYPE")
+            .setCheck("Block")
+            .appendField("set block"); // Label is concise
+        this.appendValueInput("POSITION")
+            .setCheck("3DVector")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("at");
+
+        this.setPreviousStatement(true, null); // It's an action, so it connects to other statements
+        this.setNextStatement(true, null);
+        this.setColour(65); // The "action" color
+        this.setTooltip("Places a single block at a specified location.");
+        this.setInputsInline(true); // Makes the block more compact and readable
+
+      }
+    };
+
+    Blockly.Blocks['minecraft_action_get_block'] = {
+      init: function() {
+        this.appendValueInput("POSITION")
+            .setCheck("3DVector")
+            .appendField("get block at");
+        this.setOutput(true, "Block"); // This block returns a value of type "Block"
+        this.setColour(210); // A different color for "getter" blocks
+        this.setTooltip("Gets the type of block at a specific location.");
+        this.setInputsInline(true);
+
+
+      }
+    };
+
+    Blockly.Blocks['minecraft_action_get_height'] = {
+      init: function() {
+        this.appendValueInput("POSITION")
+            .setCheck("3DVector") // Accepts a 3D vector, but we only use X and Z
+            .appendField("get height at (x,z) of");
+        this.setOutput(true, "Number"); // This block returns a Number
+        this.setColour(210); // "Getter" block color
+        this.setTooltip("Gets the Y coordinate of the highest solid block at a given X, Z location.");
+        this.setInputsInline(true);
+
+
+      }
+    };
+
+    Blockly.Blocks['minecraft_action_post_to_chat'] = {
+      init: function() {
+        this.appendValueInput("MESSAGE")
+            .setCheck("String") // Accepts any block that outputs a string
+            .appendField("post to chat");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(65); // The "action" color
+        this.setTooltip("Posts a message to the in-game chat.");
+        this.setInputsInline(true);
+
+
+      }
+    };
+
+    // In src/blocks/mc.mjs
+
+Blockly.Blocks['minecraft_action_create_explosion'] = {
+  init: function() {
+    this.appendValueInput("POSITION")
+        .setCheck("3DVector")
+        .appendField("create explosion at");
+    this.appendValueInput("POWER")
+        .setCheck("Number")
+        .setAlign(Blockly.ALIGN_RIGHT)
+        .appendField("with power");
+    this.setPreviousStatement(true, null);
+    this.setNextStatement(true, null);
+    this.setColour(65); // The "action" color
+    this.setTooltip("Creates an explosion of a specified power at a location. TNT is power 4.");
+    this.setInputsInline(true);
+
+
+  }
+};
 }
 
