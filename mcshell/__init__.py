@@ -406,6 +406,25 @@ class MCShell(Magics):
             code_to_execute = payload.get("code")
             metadata = payload.get("metadata", {})
 
+            try:
+                # Create a unique filename for the power
+                power_dir = pathlib.Path("./powers/blockcode")
+                power_dir.mkdir(parents=True, exist_ok=True)
+
+                # Generate a unique suffix for the filename
+                file_hash = uuid.uuid4().hex[:6]
+                filename = f"power_{file_hash}.py"
+                filepath = power_dir / filename
+
+                with open(filepath, 'w') as f:
+                    f.write(code_to_execute)
+
+                print(f"Successfully saved power to: {filepath}")
+                print(f"To use it, you can now run:\nfrom powers.blockcode.{filename.replace('.py','')} import *")
+
+            except Exception as e:
+                print(f"Error saving script: {e}")
+
             # ... (check if payload is valid) ...
 
             player_name = self._get_mc_name()

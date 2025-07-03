@@ -3,64 +3,64 @@ import { MCED } from "../lib/constants.mjs"; // Ensure MCED is exported from uti
 
 export function defineMineCraftMaterialBlocks(Blockly) {
 
-    Blockly.Blocks['minecraft_material_wool'] = {
+    Blockly.Blocks['minecraft_material_banner'] = {
         init: function() {
             this.appendValueInput("COLOUR")
                 .setCheck("MinecraftColour")
                 .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("WOOL with color");
+                .appendField("BANNER with color");
             this.setOutput(true, "Block");
             this.setColour(160);
-            this.setTooltip("A WOOL block that can be colored.");
-            MCED.Defaults.values['minecraft_material_wool'] = {
+            this.setTooltip("A BANNER block that can be colored.");
+            MCED.Defaults.values['minecraft_material_banner'] = {
                 COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
             };
             MCED.BlocklyUtils.configureShadow(this, "COLOUR");
         }
     };
 
-    Blockly.Blocks['minecraft_material_terracotta'] = {
+    Blockly.Blocks['minecraft_material_bed'] = {
         init: function() {
             this.appendValueInput("COLOUR")
                 .setCheck("MinecraftColour")
                 .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("TERRACOTTA with color");
+                .appendField("BED with color");
             this.setOutput(true, "Block");
             this.setColour(160);
-            this.setTooltip("A TERRACOTTA block that can be colored.");
-            MCED.Defaults.values['minecraft_material_terracotta'] = {
+            this.setTooltip("A BED block that can be colored.");
+            MCED.Defaults.values['minecraft_material_bed'] = {
                 COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
             };
             MCED.BlocklyUtils.configureShadow(this, "COLOUR");
         }
     };
 
-    Blockly.Blocks['minecraft_material_stained_glass'] = {
+    Blockly.Blocks['minecraft_material_candle'] = {
         init: function() {
             this.appendValueInput("COLOUR")
                 .setCheck("MinecraftColour")
                 .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("STAINED GLASS with color");
+                .appendField("CANDLE with color");
             this.setOutput(true, "Block");
             this.setColour(160);
-            this.setTooltip("A STAINED GLASS block that can be colored.");
-            MCED.Defaults.values['minecraft_material_stained_glass'] = {
+            this.setTooltip("A CANDLE block that can be colored.");
+            MCED.Defaults.values['minecraft_material_candle'] = {
                 COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
             };
             MCED.BlocklyUtils.configureShadow(this, "COLOUR");
         }
     };
 
-    Blockly.Blocks['minecraft_material_stained_glass_pane'] = {
+    Blockly.Blocks['minecraft_material_carpet'] = {
         init: function() {
             this.appendValueInput("COLOUR")
                 .setCheck("MinecraftColour")
                 .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("STAINED GLASS PANE with color");
+                .appendField("CARPET with color");
             this.setOutput(true, "Block");
             this.setColour(160);
-            this.setTooltip("A STAINED GLASS PANE block that can be colored.");
-            MCED.Defaults.values['minecraft_material_stained_glass_pane'] = {
+            this.setTooltip("A CARPET block that can be colored.");
+            MCED.Defaults.values['minecraft_material_carpet'] = {
                 COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
             };
             MCED.BlocklyUtils.configureShadow(this, "COLOUR");
@@ -99,48 +99,16 @@ export function defineMineCraftMaterialBlocks(Blockly) {
         }
     };
 
-    Blockly.Blocks['minecraft_material_candle'] = {
+    Blockly.Blocks['minecraft_material_glazed_terracotta'] = {
         init: function() {
             this.appendValueInput("COLOUR")
                 .setCheck("MinecraftColour")
                 .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("CANDLE with color");
+                .appendField("GLAZED TERRACOTTA with color");
             this.setOutput(true, "Block");
             this.setColour(160);
-            this.setTooltip("A CANDLE block that can be colored.");
-            MCED.Defaults.values['minecraft_material_candle'] = {
-                COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
-            };
-            MCED.BlocklyUtils.configureShadow(this, "COLOUR");
-        }
-    };
-
-    Blockly.Blocks['minecraft_material_bed'] = {
-        init: function() {
-            this.appendValueInput("COLOUR")
-                .setCheck("MinecraftColour")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("BED with color");
-            this.setOutput(true, "Block");
-            this.setColour(160);
-            this.setTooltip("A BED block that can be colored.");
-            MCED.Defaults.values['minecraft_material_bed'] = {
-                COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
-            };
-            MCED.BlocklyUtils.configureShadow(this, "COLOUR");
-        }
-    };
-
-    Blockly.Blocks['minecraft_material_banner'] = {
-        init: function() {
-            this.appendValueInput("COLOUR")
-                .setCheck("MinecraftColour")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("BANNER with color");
-            this.setOutput(true, "Block");
-            this.setColour(160);
-            this.setTooltip("A BANNER block that can be colored.");
-            MCED.Defaults.values['minecraft_material_banner'] = {
+            this.setTooltip("A GLAZED TERRACOTTA block that can be colored.");
+            MCED.Defaults.values['minecraft_material_glazed_terracotta'] = {
                 COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
             };
             MCED.BlocklyUtils.configureShadow(this, "COLOUR");
@@ -163,312 +131,100 @@ export function defineMineCraftMaterialBlocks(Blockly) {
         }
     };
 
-    Blockly.Blocks['minecraft_material_carpet'] = {
+    Blockly.Blocks['minecraft_material_stained_glass'] = {
         init: function() {
             this.appendValueInput("COLOUR")
                 .setCheck("MinecraftColour")
                 .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("CARPET with color");
+                .appendField("STAINED GLASS with color");
             this.setOutput(true, "Block");
             this.setColour(160);
-            this.setTooltip("A CARPET block that can be colored.");
-            MCED.Defaults.values['minecraft_material_carpet'] = {
+            this.setTooltip("A STAINED GLASS block that can be colored.");
+            MCED.Defaults.values['minecraft_material_stained_glass'] = {
                 COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
             };
             MCED.BlocklyUtils.configureShadow(this, "COLOUR");
         }
     };
 
-    Blockly.Blocks['minecraft_material_glazed_terracotta'] = {
+    Blockly.Blocks['minecraft_material_stained_glass_pane'] = {
         init: function() {
             this.appendValueInput("COLOUR")
                 .setCheck("MinecraftColour")
                 .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("GLAZED TERRACOTTA with color");
+                .appendField("STAINED GLASS PANE with color");
             this.setOutput(true, "Block");
             this.setColour(160);
-            this.setTooltip("A GLAZED TERRACOTTA block that can be colored.");
-            MCED.Defaults.values['minecraft_material_glazed_terracotta'] = {
+            this.setTooltip("A STAINED GLASS PANE block that can be colored.");
+            MCED.Defaults.values['minecraft_material_stained_glass_pane'] = {
                 COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
             };
             MCED.BlocklyUtils.configureShadow(this, "COLOUR");
         }
     };
 
-    Blockly.Blocks['minecraft_picker_boats'] = {
+    Blockly.Blocks['minecraft_material_terracotta'] = {
         init: function() {
-            this.appendDummyInput()
-                .appendField("Boats")
-                .appendField(new Blockly.FieldDropdown([
-                    ["ACACIA BOAT", "ACACIA_BOAT"],
-                    ["BAMBOO RAFT", "BAMBOO_RAFT"],
-                    ["BIRCH BOAT", "BIRCH_BOAT"],
-                    ["CHERRY BOAT", "CHERRY_BOAT"],
-                    ["DARK OAK BOAT", "DARK_OAK_BOAT"],
-                    ["JUNGLE BOAT", "JUNGLE_BOAT"],
-                    ["MANGROVE BOAT", "MANGROVE_BOAT"],
-                    ["OAK BOAT", "OAK_BOAT"],
-                    ["SPRUCE BOAT", "SPRUCE_BOAT"],
-                    ["PALE OAK BOAT", "PALE_OAK_BOAT"]
-                ]), "MATERIAL_ID");
+            this.appendValueInput("COLOUR")
+                .setCheck("MinecraftColour")
+                .setAlign(Blockly.ALIGN_RIGHT)
+                .appendField("TERRACOTTA with color");
             this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Boats material.");
+            this.setColour(160);
+            this.setTooltip("A TERRACOTTA block that can be colored.");
+            MCED.Defaults.values['minecraft_material_terracotta'] = {
+                COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
+            };
+            MCED.BlocklyUtils.configureShadow(this, "COLOUR");
         }
     };
 
-    Blockly.Blocks['minecraft_picker_chest_boats'] = {
+    Blockly.Blocks['minecraft_material_wool'] = {
         init: function() {
-            this.appendDummyInput()
-                .appendField("Chest Boats")
-                .appendField(new Blockly.FieldDropdown([
-                    ["ACACIA CHEST BOAT", "ACACIA_CHEST_BOAT"],
-                    ["BAMBOO CHEST RAFT", "BAMBOO_CHEST_RAFT"],
-                    ["BIRCH CHEST BOAT", "BIRCH_CHEST_BOAT"],
-                    ["CHERRY CHEST BOAT", "CHERRY_CHEST_BOAT"],
-                    ["DARK OAK CHEST BOAT", "DARK_OAK_CHEST_BOAT"],
-                    ["JUNGLE CHEST BOAT", "JUNGLE_CHEST_BOAT"],
-                    ["MANGROVE CHEST BOAT", "MANGROVE_CHEST_BOAT"],
-                    ["OAK CHEST BOAT", "OAK_CHEST_BOAT"],
-                    ["SPRUCE CHEST BOAT", "SPRUCE_CHEST_BOAT"],
-                    ["PALE OAK CHEST BOAT", "PALE_OAK_CHEST_BOAT"]
-                ]), "MATERIAL_ID");
+            this.appendValueInput("COLOUR")
+                .setCheck("MinecraftColour")
+                .setAlign(Blockly.ALIGN_RIGHT)
+                .appendField("WOOL with color");
             this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Chest Boats material.");
+            this.setColour(160);
+            this.setTooltip("A WOOL block that can be colored.");
+            MCED.Defaults.values['minecraft_material_wool'] = {
+                COLOUR: { shadow: '<shadow type="minecraft_coloured_block_picker"><field name="MINECRAFT_COLOUR_ID">WHITE</field></shadow>' }
+            };
+            MCED.BlocklyUtils.configureShadow(this, "COLOUR");
         }
     };
 
-    Blockly.Blocks['minecraft_picker_minecarts'] = {
+    Blockly.Blocks['minecraft_picker_doors'] = {
         init: function() {
             this.appendDummyInput()
-                .appendField("Minecarts")
+                .appendField("Doors")
                 .appendField(new Blockly.FieldDropdown([
-                    ["MINECART", "MINECART"],
-                    ["CHEST MINECART", "CHEST_MINECART"],
-                    ["COMMAND BLOCK MINECART", "COMMAND_BLOCK_MINECART"],
-                    ["FURNACE MINECART", "FURNACE_MINECART"],
-                    ["HOPPER MINECART", "HOPPER_MINECART"],
-                    ["TNT MINECART", "TNT_MINECART"]
+                    ["BIRCH DOOR", "BIRCH_DOOR"],
+                    ["WEATHERED COPPER DOOR", "WEATHERED_COPPER_DOOR"],
+                    ["WAXED COPPER DOOR", "WAXED_COPPER_DOOR"],
+                    ["COPPER DOOR", "COPPER_DOOR"],
+                    ["WAXED OXIDIZED COPPER DOOR", "WAXED_OXIDIZED_COPPER_DOOR"],
+                    ["ACACIA DOOR", "ACACIA_DOOR"],
+                    ["IRON DOOR", "IRON_DOOR"],
+                    ["BAMBOO DOOR", "BAMBOO_DOOR"],
+                    ["OAK DOOR", "OAK_DOOR"],
+                    ["EXPOSED COPPER DOOR", "EXPOSED_COPPER_DOOR"],
+                    ["DARK OAK DOOR", "DARK_OAK_DOOR"],
+                    ["WAXED EXPOSED COPPER DOOR", "WAXED_EXPOSED_COPPER_DOOR"],
+                    ["MANGROVE DOOR", "MANGROVE_DOOR"],
+                    ["SPRUCE DOOR", "SPRUCE_DOOR"],
+                    ["JUNGLE DOOR", "JUNGLE_DOOR"],
+                    ["PALE OAK DOOR", "PALE_OAK_DOOR"],
+                    ["WARPED DOOR", "WARPED_DOOR"],
+                    ["CHERRY DOOR", "CHERRY_DOOR"],
+                    ["OXIDIZED COPPER DOOR", "OXIDIZED_COPPER_DOOR"],
+                    ["CRIMSON DOOR", "CRIMSON_DOOR"],
+                    ["WAXED WEATHERED COPPER DOOR", "WAXED_WEATHERED_COPPER_DOOR"]
                 ]), "MATERIAL_ID");
             this.setOutput(true, "Block");
             this.setColour(180);
-            this.setTooltip("Select a Minecarts material.");
-        }
-    };
-
-    Blockly.Blocks['minecraft_picker_passive_mobs'] = {
-        init: function() {
-            this.appendDummyInput()
-                .appendField("Passive Mobs")
-                .appendField(new Blockly.FieldDropdown([
-                    ["CHICKEN", "CHICKEN"],
-                    ["COD", "COD"],
-                    ["PUFFERFISH", "PUFFERFISH"],
-                    ["RABBIT", "RABBIT"],
-                    ["SALMON", "SALMON"],
-                    ["TROPICAL FISH", "TROPICAL_FISH"]
-                ]), "MATERIAL_ID");
-            this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Passive Mobs material.");
-        }
-    };
-
-    Blockly.Blocks['minecraft_picker_hostile_mobs'] = {
-        init: function() {
-            this.appendDummyInput()
-                .appendField("Hostile Mobs")
-                .appendField(new Blockly.FieldDropdown([
-                    
-                ]), "MATERIAL_ID");
-            this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Hostile Mobs material.");
-        }
-    };
-
-    Blockly.Blocks['minecraft_picker_projectiles'] = {
-        init: function() {
-            this.appendDummyInput()
-                .appendField("Projectiles")
-                .appendField(new Blockly.FieldDropdown([
-                    ["ARROW", "ARROW"],
-                    ["EGG", "EGG"],
-                    ["ENDER PEARL", "ENDER_PEARL"],
-                    ["EXPERIENCE BOTTLE", "EXPERIENCE_BOTTLE"],
-                    ["FIREWORK ROCKET", "FIREWORK_ROCKET"],
-                    ["SNOWBALL", "SNOWBALL"],
-                    ["SPECTRAL ARROW", "SPECTRAL_ARROW"],
-                    ["SPLASH POTION", "SPLASH_POTION"],
-                    ["LINGERING POTION", "LINGERING_POTION"],
-                    ["TRIDENT", "TRIDENT"],
-                    ["WIND CHARGE", "WIND_CHARGE"]
-                ]), "MATERIAL_ID");
-            this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Projectiles material.");
-        }
-    };
-
-    Blockly.Blocks['minecraft_picker_utility_and_special'] = {
-        init: function() {
-            this.appendDummyInput()
-                .appendField("Utility And Special")
-                .appendField(new Blockly.FieldDropdown([
-                    ["ARMOR STAND", "ARMOR_STAND"],
-                    ["END CRYSTAL", "END_CRYSTAL"],
-                    ["GLOW ITEM FRAME", "GLOW_ITEM_FRAME"],
-                    ["ITEM FRAME", "ITEM_FRAME"],
-                    ["PAINTING", "PAINTING"]
-                ]), "MATERIAL_ID");
-            this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Utility And Special material.");
-        }
-    };
-
-    Blockly.Blocks['minecraft_picker_stairs'] = {
-        init: function() {
-            this.appendDummyInput()
-                .appendField("Stairs")
-                .appendField(new Blockly.FieldDropdown([
-                    ["SPRUCE STAIRS", "SPRUCE_STAIRS"],
-                    ["DARK OAK STAIRS", "DARK_OAK_STAIRS"],
-                    ["STONE STAIRS", "STONE_STAIRS"],
-                    ["PRISMARINE BRICK STAIRS", "PRISMARINE_BRICK_STAIRS"],
-                    ["TUFF STAIRS", "TUFF_STAIRS"],
-                    ["DIORITE STAIRS", "DIORITE_STAIRS"],
-                    ["RED SANDSTONE STAIRS", "RED_SANDSTONE_STAIRS"],
-                    ["MOSSY COBBLESTONE STAIRS", "MOSSY_COBBLESTONE_STAIRS"],
-                    ["RESIN BRICK STAIRS", "RESIN_BRICK_STAIRS"],
-                    ["POLISHED GRANITE STAIRS", "POLISHED_GRANITE_STAIRS"],
-                    ["SMOOTH RED SANDSTONE STAIRS", "SMOOTH_RED_SANDSTONE_STAIRS"],
-                    ["BAMBOO MOSAIC STAIRS", "BAMBOO_MOSAIC_STAIRS"],
-                    ["TUFF BRICK STAIRS", "TUFF_BRICK_STAIRS"],
-                    ["SANDSTONE STAIRS", "SANDSTONE_STAIRS"],
-                    ["MOSSY STONE BRICK STAIRS", "MOSSY_STONE_BRICK_STAIRS"],
-                    ["MUD BRICK STAIRS", "MUD_BRICK_STAIRS"],
-                    ["EXPOSED CUT COPPER STAIRS", "EXPOSED_CUT_COPPER_STAIRS"],
-                    ["DEEPSLATE BRICK STAIRS", "DEEPSLATE_BRICK_STAIRS"],
-                    ["PALE OAK STAIRS", "PALE_OAK_STAIRS"],
-                    ["OXIDIZED CUT COPPER STAIRS", "OXIDIZED_CUT_COPPER_STAIRS"],
-                    ["STONE BRICK STAIRS", "STONE_BRICK_STAIRS"],
-                    ["COBBLED DEEPSLATE STAIRS", "COBBLED_DEEPSLATE_STAIRS"],
-                    ["POLISHED DIORITE STAIRS", "POLISHED_DIORITE_STAIRS"],
-                    ["COBBLESTONE STAIRS", "COBBLESTONE_STAIRS"],
-                    ["BRICK STAIRS", "BRICK_STAIRS"],
-                    ["SMOOTH QUARTZ STAIRS", "SMOOTH_QUARTZ_STAIRS"],
-                    ["ANDESITE STAIRS", "ANDESITE_STAIRS"],
-                    ["POLISHED BLACKSTONE BRICK STAIRS", "POLISHED_BLACKSTONE_BRICK_STAIRS"],
-                    ["BIRCH STAIRS", "BIRCH_STAIRS"],
-                    ["POLISHED DEEPSLATE STAIRS", "POLISHED_DEEPSLATE_STAIRS"],
-                    ["WAXED EXPOSED CUT COPPER STAIRS", "WAXED_EXPOSED_CUT_COPPER_STAIRS"],
-                    ["RED NETHER BRICK STAIRS", "RED_NETHER_BRICK_STAIRS"],
-                    ["PURPUR STAIRS", "PURPUR_STAIRS"],
-                    ["END STONE BRICK STAIRS", "END_STONE_BRICK_STAIRS"],
-                    ["POLISHED TUFF STAIRS", "POLISHED_TUFF_STAIRS"],
-                    ["OAK STAIRS", "OAK_STAIRS"],
-                    ["NETHER BRICK STAIRS", "NETHER_BRICK_STAIRS"],
-                    ["WARPED STAIRS", "WARPED_STAIRS"],
-                    ["DEEPSLATE TILE STAIRS", "DEEPSLATE_TILE_STAIRS"],
-                    ["JUNGLE STAIRS", "JUNGLE_STAIRS"],
-                    ["SMOOTH SANDSTONE STAIRS", "SMOOTH_SANDSTONE_STAIRS"],
-                    ["POLISHED ANDESITE STAIRS", "POLISHED_ANDESITE_STAIRS"],
-                    ["WEATHERED CUT COPPER STAIRS", "WEATHERED_CUT_COPPER_STAIRS"],
-                    ["CUT COPPER STAIRS", "CUT_COPPER_STAIRS"],
-                    ["WAXED OXIDIZED CUT COPPER STAIRS", "WAXED_OXIDIZED_CUT_COPPER_STAIRS"],
-                    ["PRISMARINE STAIRS", "PRISMARINE_STAIRS"],
-                    ["QUARTZ STAIRS", "QUARTZ_STAIRS"],
-                    ["POLISHED BLACKSTONE STAIRS", "POLISHED_BLACKSTONE_STAIRS"],
-                    ["MANGROVE STAIRS", "MANGROVE_STAIRS"],
-                    ["GRANITE STAIRS", "GRANITE_STAIRS"],
-                    ["WAXED CUT COPPER STAIRS", "WAXED_CUT_COPPER_STAIRS"],
-                    ["BAMBOO STAIRS", "BAMBOO_STAIRS"],
-                    ["WAXED WEATHERED CUT COPPER STAIRS", "WAXED_WEATHERED_CUT_COPPER_STAIRS"],
-                    ["CHERRY STAIRS", "CHERRY_STAIRS"],
-                    ["DARK PRISMARINE STAIRS", "DARK_PRISMARINE_STAIRS"],
-                    ["CRIMSON STAIRS", "CRIMSON_STAIRS"],
-                    ["BLACKSTONE STAIRS", "BLACKSTONE_STAIRS"],
-                    ["ACACIA STAIRS", "ACACIA_STAIRS"]
-                ]), "MATERIAL_ID");
-            this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Stairs material.");
-        }
-    };
-
-    Blockly.Blocks['minecraft_picker_slabs'] = {
-        init: function() {
-            this.appendDummyInput()
-                .appendField("Slabs")
-                .appendField(new Blockly.FieldDropdown([
-                    ["MANGROVE SLAB", "MANGROVE_SLAB"],
-                    ["SMOOTH RED SANDSTONE SLAB", "SMOOTH_RED_SANDSTONE_SLAB"],
-                    ["BAMBOO MOSAIC SLAB", "BAMBOO_MOSAIC_SLAB"],
-                    ["POLISHED BLACKSTONE SLAB", "POLISHED_BLACKSTONE_SLAB"],
-                    ["WAXED CUT COPPER SLAB", "WAXED_CUT_COPPER_SLAB"],
-                    ["MUD BRICK SLAB", "MUD_BRICK_SLAB"],
-                    ["END STONE BRICK SLAB", "END_STONE_BRICK_SLAB"],
-                    ["BIRCH SLAB", "BIRCH_SLAB"],
-                    ["WAXED OXIDIZED CUT COPPER SLAB", "WAXED_OXIDIZED_CUT_COPPER_SLAB"],
-                    ["WAXED WEATHERED CUT COPPER SLAB", "WAXED_WEATHERED_CUT_COPPER_SLAB"],
-                    ["SPRUCE SLAB", "SPRUCE_SLAB"],
-                    ["WEATHERED CUT COPPER SLAB", "WEATHERED_CUT_COPPER_SLAB"],
-                    ["SMOOTH STONE SLAB", "SMOOTH_STONE_SLAB"],
-                    ["ANDESITE SLAB", "ANDESITE_SLAB"],
-                    ["PETRIFIED OAK SLAB", "PETRIFIED_OAK_SLAB"],
-                    ["RED NETHER BRICK SLAB", "RED_NETHER_BRICK_SLAB"],
-                    ["RED SANDSTONE SLAB", "RED_SANDSTONE_SLAB"],
-                    ["TUFF SLAB", "TUFF_SLAB"],
-                    ["STONE BRICK SLAB", "STONE_BRICK_SLAB"],
-                    ["BAMBOO SLAB", "BAMBOO_SLAB"],
-                    ["POLISHED TUFF SLAB", "POLISHED_TUFF_SLAB"],
-                    ["MOSSY STONE BRICK SLAB", "MOSSY_STONE_BRICK_SLAB"],
-                    ["DIORITE SLAB", "DIORITE_SLAB"],
-                    ["PALE OAK SLAB", "PALE_OAK_SLAB"],
-                    ["CHERRY SLAB", "CHERRY_SLAB"],
-                    ["EXPOSED CUT COPPER SLAB", "EXPOSED_CUT_COPPER_SLAB"],
-                    ["CUT COPPER SLAB", "CUT_COPPER_SLAB"],
-                    ["GRANITE SLAB", "GRANITE_SLAB"],
-                    ["QUARTZ SLAB", "QUARTZ_SLAB"],
-                    ["PURPUR SLAB", "PURPUR_SLAB"],
-                    ["ACACIA SLAB", "ACACIA_SLAB"],
-                    ["DARK OAK SLAB", "DARK_OAK_SLAB"],
-                    ["PRISMARINE SLAB", "PRISMARINE_SLAB"],
-                    ["POLISHED BLACKSTONE BRICK SLAB", "POLISHED_BLACKSTONE_BRICK_SLAB"],
-                    ["COBBLESTONE SLAB", "COBBLESTONE_SLAB"],
-                    ["OXIDIZED CUT COPPER SLAB", "OXIDIZED_CUT_COPPER_SLAB"],
-                    ["CUT SANDSTONE SLAB", "CUT_SANDSTONE_SLAB"],
-                    ["DEEPSLATE TILE SLAB", "DEEPSLATE_TILE_SLAB"],
-                    ["POLISHED ANDESITE SLAB", "POLISHED_ANDESITE_SLAB"],
-                    ["STONE SLAB", "STONE_SLAB"],
-                    ["BRICK SLAB", "BRICK_SLAB"],
-                    ["NETHER BRICK SLAB", "NETHER_BRICK_SLAB"],
-                    ["BLACKSTONE SLAB", "BLACKSTONE_SLAB"],
-                    ["DEEPSLATE BRICK SLAB", "DEEPSLATE_BRICK_SLAB"],
-                    ["SMOOTH QUARTZ SLAB", "SMOOTH_QUARTZ_SLAB"],
-                    ["DARK PRISMARINE SLAB", "DARK_PRISMARINE_SLAB"],
-                    ["PRISMARINE BRICK SLAB", "PRISMARINE_BRICK_SLAB"],
-                    ["TUFF BRICK SLAB", "TUFF_BRICK_SLAB"],
-                    ["CRIMSON SLAB", "CRIMSON_SLAB"],
-                    ["POLISHED DIORITE SLAB", "POLISHED_DIORITE_SLAB"],
-                    ["OAK SLAB", "OAK_SLAB"],
-                    ["WAXED EXPOSED CUT COPPER SLAB", "WAXED_EXPOSED_CUT_COPPER_SLAB"],
-                    ["MOSSY COBBLESTONE SLAB", "MOSSY_COBBLESTONE_SLAB"],
-                    ["JUNGLE SLAB", "JUNGLE_SLAB"],
-                    ["COBBLED DEEPSLATE SLAB", "COBBLED_DEEPSLATE_SLAB"],
-                    ["CUT RED SANDSTONE SLAB", "CUT_RED_SANDSTONE_SLAB"],
-                    ["POLISHED GRANITE SLAB", "POLISHED_GRANITE_SLAB"],
-                    ["WARPED SLAB", "WARPED_SLAB"],
-                    ["POLISHED DEEPSLATE SLAB", "POLISHED_DEEPSLATE_SLAB"],
-                    ["SMOOTH SANDSTONE SLAB", "SMOOTH_SANDSTONE_SLAB"],
-                    ["SANDSTONE SLAB", "SANDSTONE_SLAB"],
-                    ["RESIN BRICK SLAB", "RESIN_BRICK_SLAB"]
-                ]), "MATERIAL_ID");
-            this.setOutput(true, "Block");
-            this.setColour(180);
-            this.setTooltip("Select a Slabs material.");
+            this.setTooltip("Select a Doors material.");
         }
     };
 
@@ -477,19 +233,19 @@ export function defineMineCraftMaterialBlocks(Blockly) {
             this.appendDummyInput()
                 .appendField("Fences")
                 .appendField(new Blockly.FieldDropdown([
+                    ["CRIMSON FENCE", "CRIMSON_FENCE"],
+                    ["ACACIA FENCE", "ACACIA_FENCE"],
                     ["OAK FENCE", "OAK_FENCE"],
                     ["CHERRY FENCE", "CHERRY_FENCE"],
-                    ["CRIMSON FENCE", "CRIMSON_FENCE"],
                     ["DARK OAK FENCE", "DARK_OAK_FENCE"],
-                    ["BIRCH FENCE", "BIRCH_FENCE"],
                     ["MANGROVE FENCE", "MANGROVE_FENCE"],
-                    ["WARPED FENCE", "WARPED_FENCE"],
-                    ["SPRUCE FENCE", "SPRUCE_FENCE"],
-                    ["ACACIA FENCE", "ACACIA_FENCE"],
                     ["NETHER BRICK FENCE", "NETHER_BRICK_FENCE"],
+                    ["PALE OAK FENCE", "PALE_OAK_FENCE"],
+                    ["SPRUCE FENCE", "SPRUCE_FENCE"],
                     ["BAMBOO FENCE", "BAMBOO_FENCE"],
                     ["JUNGLE FENCE", "JUNGLE_FENCE"],
-                    ["PALE OAK FENCE", "PALE_OAK_FENCE"]
+                    ["WARPED FENCE", "WARPED_FENCE"],
+                    ["BIRCH FENCE", "BIRCH_FENCE"]
                 ]), "MATERIAL_ID");
             this.setOutput(true, "Block");
             this.setColour(180);
@@ -502,18 +258,18 @@ export function defineMineCraftMaterialBlocks(Blockly) {
             this.appendDummyInput()
                 .appendField("Gates")
                 .appendField(new Blockly.FieldDropdown([
-                    ["JUNGLE FENCE GATE", "JUNGLE_FENCE_GATE"],
-                    ["BAMBOO FENCE GATE", "BAMBOO_FENCE_GATE"],
-                    ["BIRCH FENCE GATE", "BIRCH_FENCE_GATE"],
-                    ["DARK OAK FENCE GATE", "DARK_OAK_FENCE_GATE"],
-                    ["WARPED FENCE GATE", "WARPED_FENCE_GATE"],
-                    ["OAK FENCE GATE", "OAK_FENCE_GATE"],
-                    ["SPRUCE FENCE GATE", "SPRUCE_FENCE_GATE"],
-                    ["MANGROVE FENCE GATE", "MANGROVE_FENCE_GATE"],
                     ["ACACIA FENCE GATE", "ACACIA_FENCE_GATE"],
+                    ["WARPED FENCE GATE", "WARPED_FENCE_GATE"],
+                    ["SPRUCE FENCE GATE", "SPRUCE_FENCE_GATE"],
                     ["CRIMSON FENCE GATE", "CRIMSON_FENCE_GATE"],
+                    ["JUNGLE FENCE GATE", "JUNGLE_FENCE_GATE"],
+                    ["MANGROVE FENCE GATE", "MANGROVE_FENCE_GATE"],
+                    ["CHERRY FENCE GATE", "CHERRY_FENCE_GATE"],
                     ["PALE OAK FENCE GATE", "PALE_OAK_FENCE_GATE"],
-                    ["CHERRY FENCE GATE", "CHERRY_FENCE_GATE"]
+                    ["DARK OAK FENCE GATE", "DARK_OAK_FENCE_GATE"],
+                    ["OAK FENCE GATE", "OAK_FENCE_GATE"],
+                    ["BAMBOO FENCE GATE", "BAMBOO_FENCE_GATE"],
+                    ["BIRCH FENCE GATE", "BIRCH_FENCE_GATE"]
                 ]), "MATERIAL_ID");
             this.setOutput(true, "Block");
             this.setColour(180);
@@ -521,36 +277,262 @@ export function defineMineCraftMaterialBlocks(Blockly) {
         }
     };
 
-    Blockly.Blocks['minecraft_picker_doors'] = {
+    Blockly.Blocks['minecraft_picker_glass'] = {
         init: function() {
             this.appendDummyInput()
-                .appendField("Doors")
+                .appendField("Glass")
                 .appendField(new Blockly.FieldDropdown([
-                    ["WAXED COPPER DOOR", "WAXED_COPPER_DOOR"],
-                    ["CHERRY DOOR", "CHERRY_DOOR"],
-                    ["WEATHERED COPPER DOOR", "WEATHERED_COPPER_DOOR"],
-                    ["PALE OAK DOOR", "PALE_OAK_DOOR"],
-                    ["SPRUCE DOOR", "SPRUCE_DOOR"],
-                    ["IRON DOOR", "IRON_DOOR"],
-                    ["EXPOSED COPPER DOOR", "EXPOSED_COPPER_DOOR"],
-                    ["COPPER DOOR", "COPPER_DOOR"],
-                    ["CRIMSON DOOR", "CRIMSON_DOOR"],
-                    ["OXIDIZED COPPER DOOR", "OXIDIZED_COPPER_DOOR"],
-                    ["DARK OAK DOOR", "DARK_OAK_DOOR"],
-                    ["ACACIA DOOR", "ACACIA_DOOR"],
-                    ["BIRCH DOOR", "BIRCH_DOOR"],
-                    ["BAMBOO DOOR", "BAMBOO_DOOR"],
-                    ["MANGROVE DOOR", "MANGROVE_DOOR"],
-                    ["WARPED DOOR", "WARPED_DOOR"],
-                    ["WAXED OXIDIZED COPPER DOOR", "WAXED_OXIDIZED_COPPER_DOOR"],
-                    ["OAK DOOR", "OAK_DOOR"],
-                    ["JUNGLE DOOR", "JUNGLE_DOOR"],
-                    ["WAXED WEATHERED COPPER DOOR", "WAXED_WEATHERED_COPPER_DOOR"],
-                    ["WAXED EXPOSED COPPER DOOR", "WAXED_EXPOSED_COPPER_DOOR"]
+                    ["GLASS", "GLASS"],
+                    ["GLASS PANE", "GLASS_PANE"],
+                    ["TINTED GLASS", "TINTED_GLASS"]
                 ]), "MATERIAL_ID");
             this.setOutput(true, "Block");
             this.setColour(180);
-            this.setTooltip("Select a Doors material.");
+            this.setTooltip("Select a Glass material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_ores'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Ores")
+                .appendField(new Blockly.FieldDropdown([
+                    ["COAL ORE", "COAL_ORE"],
+                    ["DEEPSLATE COAL ORE", "DEEPSLATE_COAL_ORE"],
+                    ["IRON ORE", "IRON_ORE"],
+                    ["DEEPSLATE IRON ORE", "DEEPSLATE_IRON_ORE"],
+                    ["COPPER ORE", "COPPER_ORE"],
+                    ["DEEPSLATE COPPER ORE", "DEEPSLATE_COPPER_ORE"],
+                    ["GOLD ORE", "GOLD_ORE"],
+                    ["DEEPSLATE GOLD ORE", "DEEPSLATE_GOLD_ORE"],
+                    ["REDSTONE ORE", "REDSTONE_ORE"],
+                    ["DEEPSLATE REDSTONE ORE", "DEEPSLATE_REDSTONE_ORE"],
+                    ["EMERALD ORE", "EMERALD_ORE"],
+                    ["DEEPSLATE EMERALD ORE", "DEEPSLATE_EMERALD_ORE"],
+                    ["LAPIS ORE", "LAPIS_ORE"],
+                    ["DEEPSLATE LAPIS ORE", "DEEPSLATE_LAPIS_ORE"],
+                    ["DIAMOND ORE", "DIAMOND_ORE"],
+                    ["DEEPSLATE DIAMOND ORE", "DEEPSLATE_DIAMOND_ORE"],
+                    ["NETHER GOLD ORE", "NETHER_GOLD_ORE"],
+                    ["NETHER QUARTZ ORE", "NETHER_QUARTZ_ORE"],
+                    ["ANCIENT DEBRIS", "ANCIENT_DEBRIS"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Ores material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_redstone_components'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Redstone Components")
+                .appendField(new Blockly.FieldDropdown([
+                    ["REDSTONE WIRE", "REDSTONE_WIRE"],
+                    ["REDSTONE BLOCK", "REDSTONE_BLOCK"],
+                    ["REDSTONE TORCH", "REDSTONE_TORCH"],
+                    ["REPEATER", "REPEATER"],
+                    ["COMPARATOR", "COMPARATOR"],
+                    ["PISTON", "PISTON"],
+                    ["STICKY PISTON", "STICKY_PISTON"],
+                    ["SLIME BLOCK", "SLIME_BLOCK"],
+                    ["HONEY BLOCK", "HONEY_BLOCK"],
+                    ["OBSERVER", "OBSERVER"],
+                    ["DROPPER", "DROPPER"],
+                    ["DISPENSER", "DISPENSER"],
+                    ["HOPPER", "HOPPER"],
+                    ["LECTERN", "LECTERN"],
+                    ["LEVER", "LEVER"],
+                    ["DAYLIGHT DETECTOR", "DAYLIGHT_DETECTOR"],
+                    ["TRIPWIRE HOOK", "TRIPWIRE_HOOK"],
+                    ["TARGET", "TARGET"],
+                    ["NOTE BLOCK", "NOTE_BLOCK"],
+                    ["RAIL", "RAIL"],
+                    ["POWERED RAIL", "POWERED_RAIL"],
+                    ["DETECTOR RAIL", "DETECTOR_RAIL"],
+                    ["ACTIVATOR RAIL", "ACTIVATOR_RAIL"],
+                    ["REDSTONE LAMP", "REDSTONE_LAMP"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Redstone Components material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_slabs'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Slabs")
+                .appendField(new Blockly.FieldDropdown([
+                    ["DIORITE SLAB", "DIORITE_SLAB"],
+                    ["BAMBOO MOSAIC SLAB", "BAMBOO_MOSAIC_SLAB"],
+                    ["NETHER BRICK SLAB", "NETHER_BRICK_SLAB"],
+                    ["OAK SLAB", "OAK_SLAB"],
+                    ["DARK OAK SLAB", "DARK_OAK_SLAB"],
+                    ["QUARTZ SLAB", "QUARTZ_SLAB"],
+                    ["TUFF SLAB", "TUFF_SLAB"],
+                    ["SMOOTH RED SANDSTONE SLAB", "SMOOTH_RED_SANDSTONE_SLAB"],
+                    ["RESIN BRICK SLAB", "RESIN_BRICK_SLAB"],
+                    ["MOSSY COBBLESTONE SLAB", "MOSSY_COBBLESTONE_SLAB"],
+                    ["POLISHED GRANITE SLAB", "POLISHED_GRANITE_SLAB"],
+                    ["PRISMARINE SLAB", "PRISMARINE_SLAB"],
+                    ["SMOOTH STONE SLAB", "SMOOTH_STONE_SLAB"],
+                    ["CHERRY SLAB", "CHERRY_SLAB"],
+                    ["BIRCH SLAB", "BIRCH_SLAB"],
+                    ["DEEPSLATE TILE SLAB", "DEEPSLATE_TILE_SLAB"],
+                    ["WAXED CUT COPPER SLAB", "WAXED_CUT_COPPER_SLAB"],
+                    ["WARPED SLAB", "WARPED_SLAB"],
+                    ["CUT RED SANDSTONE SLAB", "CUT_RED_SANDSTONE_SLAB"],
+                    ["WEATHERED CUT COPPER SLAB", "WEATHERED_CUT_COPPER_SLAB"],
+                    ["STONE SLAB", "STONE_SLAB"],
+                    ["CUT COPPER SLAB", "CUT_COPPER_SLAB"],
+                    ["CRIMSON SLAB", "CRIMSON_SLAB"],
+                    ["GRANITE SLAB", "GRANITE_SLAB"],
+                    ["BRICK SLAB", "BRICK_SLAB"],
+                    ["PALE OAK SLAB", "PALE_OAK_SLAB"],
+                    ["MUD BRICK SLAB", "MUD_BRICK_SLAB"],
+                    ["WAXED EXPOSED CUT COPPER SLAB", "WAXED_EXPOSED_CUT_COPPER_SLAB"],
+                    ["POLISHED TUFF SLAB", "POLISHED_TUFF_SLAB"],
+                    ["JUNGLE SLAB", "JUNGLE_SLAB"],
+                    ["ACACIA SLAB", "ACACIA_SLAB"],
+                    ["POLISHED BLACKSTONE SLAB", "POLISHED_BLACKSTONE_SLAB"],
+                    ["COBBLESTONE SLAB", "COBBLESTONE_SLAB"],
+                    ["BAMBOO SLAB", "BAMBOO_SLAB"],
+                    ["STONE BRICK SLAB", "STONE_BRICK_SLAB"],
+                    ["SANDSTONE SLAB", "SANDSTONE_SLAB"],
+                    ["PETRIFIED OAK SLAB", "PETRIFIED_OAK_SLAB"],
+                    ["SPRUCE SLAB", "SPRUCE_SLAB"],
+                    ["PURPUR SLAB", "PURPUR_SLAB"],
+                    ["EXPOSED CUT COPPER SLAB", "EXPOSED_CUT_COPPER_SLAB"],
+                    ["RED SANDSTONE SLAB", "RED_SANDSTONE_SLAB"],
+                    ["MANGROVE SLAB", "MANGROVE_SLAB"],
+                    ["RED NETHER BRICK SLAB", "RED_NETHER_BRICK_SLAB"],
+                    ["END STONE BRICK SLAB", "END_STONE_BRICK_SLAB"],
+                    ["POLISHED ANDESITE SLAB", "POLISHED_ANDESITE_SLAB"],
+                    ["DEEPSLATE BRICK SLAB", "DEEPSLATE_BRICK_SLAB"],
+                    ["WAXED OXIDIZED CUT COPPER SLAB", "WAXED_OXIDIZED_CUT_COPPER_SLAB"],
+                    ["MOSSY STONE BRICK SLAB", "MOSSY_STONE_BRICK_SLAB"],
+                    ["CUT SANDSTONE SLAB", "CUT_SANDSTONE_SLAB"],
+                    ["DARK PRISMARINE SLAB", "DARK_PRISMARINE_SLAB"],
+                    ["PRISMARINE BRICK SLAB", "PRISMARINE_BRICK_SLAB"],
+                    ["POLISHED DIORITE SLAB", "POLISHED_DIORITE_SLAB"],
+                    ["OXIDIZED CUT COPPER SLAB", "OXIDIZED_CUT_COPPER_SLAB"],
+                    ["BLACKSTONE SLAB", "BLACKSTONE_SLAB"],
+                    ["SMOOTH QUARTZ SLAB", "SMOOTH_QUARTZ_SLAB"],
+                    ["WAXED WEATHERED CUT COPPER SLAB", "WAXED_WEATHERED_CUT_COPPER_SLAB"],
+                    ["POLISHED BLACKSTONE BRICK SLAB", "POLISHED_BLACKSTONE_BRICK_SLAB"],
+                    ["ANDESITE SLAB", "ANDESITE_SLAB"],
+                    ["TUFF BRICK SLAB", "TUFF_BRICK_SLAB"],
+                    ["POLISHED DEEPSLATE SLAB", "POLISHED_DEEPSLATE_SLAB"],
+                    ["SMOOTH SANDSTONE SLAB", "SMOOTH_SANDSTONE_SLAB"],
+                    ["COBBLED DEEPSLATE SLAB", "COBBLED_DEEPSLATE_SLAB"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Slabs material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_stairs'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Stairs")
+                .appendField(new Blockly.FieldDropdown([
+                    ["GRANITE STAIRS", "GRANITE_STAIRS"],
+                    ["SMOOTH QUARTZ STAIRS", "SMOOTH_QUARTZ_STAIRS"],
+                    ["DEEPSLATE BRICK STAIRS", "DEEPSLATE_BRICK_STAIRS"],
+                    ["OAK STAIRS", "OAK_STAIRS"],
+                    ["RED SANDSTONE STAIRS", "RED_SANDSTONE_STAIRS"],
+                    ["WAXED CUT COPPER STAIRS", "WAXED_CUT_COPPER_STAIRS"],
+                    ["COBBLED DEEPSLATE STAIRS", "COBBLED_DEEPSLATE_STAIRS"],
+                    ["PALE OAK STAIRS", "PALE_OAK_STAIRS"],
+                    ["RESIN BRICK STAIRS", "RESIN_BRICK_STAIRS"],
+                    ["WAXED EXPOSED CUT COPPER STAIRS", "WAXED_EXPOSED_CUT_COPPER_STAIRS"],
+                    ["POLISHED BLACKSTONE STAIRS", "POLISHED_BLACKSTONE_STAIRS"],
+                    ["BLACKSTONE STAIRS", "BLACKSTONE_STAIRS"],
+                    ["ACACIA STAIRS", "ACACIA_STAIRS"],
+                    ["BRICK STAIRS", "BRICK_STAIRS"],
+                    ["MUD BRICK STAIRS", "MUD_BRICK_STAIRS"],
+                    ["CUT COPPER STAIRS", "CUT_COPPER_STAIRS"],
+                    ["EXPOSED CUT COPPER STAIRS", "EXPOSED_CUT_COPPER_STAIRS"],
+                    ["WEATHERED CUT COPPER STAIRS", "WEATHERED_CUT_COPPER_STAIRS"],
+                    ["SPRUCE STAIRS", "SPRUCE_STAIRS"],
+                    ["QUARTZ STAIRS", "QUARTZ_STAIRS"],
+                    ["DARK OAK STAIRS", "DARK_OAK_STAIRS"],
+                    ["POLISHED GRANITE STAIRS", "POLISHED_GRANITE_STAIRS"],
+                    ["CHERRY STAIRS", "CHERRY_STAIRS"],
+                    ["WAXED OXIDIZED CUT COPPER STAIRS", "WAXED_OXIDIZED_CUT_COPPER_STAIRS"],
+                    ["END STONE BRICK STAIRS", "END_STONE_BRICK_STAIRS"],
+                    ["BAMBOO STAIRS", "BAMBOO_STAIRS"],
+                    ["JUNGLE STAIRS", "JUNGLE_STAIRS"],
+                    ["WARPED STAIRS", "WARPED_STAIRS"],
+                    ["DEEPSLATE TILE STAIRS", "DEEPSLATE_TILE_STAIRS"],
+                    ["MANGROVE STAIRS", "MANGROVE_STAIRS"],
+                    ["SANDSTONE STAIRS", "SANDSTONE_STAIRS"],
+                    ["OXIDIZED CUT COPPER STAIRS", "OXIDIZED_CUT_COPPER_STAIRS"],
+                    ["BIRCH STAIRS", "BIRCH_STAIRS"],
+                    ["MOSSY COBBLESTONE STAIRS", "MOSSY_COBBLESTONE_STAIRS"],
+                    ["COBBLESTONE STAIRS", "COBBLESTONE_STAIRS"],
+                    ["RED NETHER BRICK STAIRS", "RED_NETHER_BRICK_STAIRS"],
+                    ["TUFF STAIRS", "TUFF_STAIRS"],
+                    ["NETHER BRICK STAIRS", "NETHER_BRICK_STAIRS"],
+                    ["CRIMSON STAIRS", "CRIMSON_STAIRS"],
+                    ["STONE BRICK STAIRS", "STONE_BRICK_STAIRS"],
+                    ["PURPUR STAIRS", "PURPUR_STAIRS"],
+                    ["ANDESITE STAIRS", "ANDESITE_STAIRS"],
+                    ["POLISHED DEEPSLATE STAIRS", "POLISHED_DEEPSLATE_STAIRS"],
+                    ["PRISMARINE BRICK STAIRS", "PRISMARINE_BRICK_STAIRS"],
+                    ["MOSSY STONE BRICK STAIRS", "MOSSY_STONE_BRICK_STAIRS"],
+                    ["POLISHED DIORITE STAIRS", "POLISHED_DIORITE_STAIRS"],
+                    ["TUFF BRICK STAIRS", "TUFF_BRICK_STAIRS"],
+                    ["STONE STAIRS", "STONE_STAIRS"],
+                    ["POLISHED ANDESITE STAIRS", "POLISHED_ANDESITE_STAIRS"],
+                    ["SMOOTH SANDSTONE STAIRS", "SMOOTH_SANDSTONE_STAIRS"],
+                    ["WAXED WEATHERED CUT COPPER STAIRS", "WAXED_WEATHERED_CUT_COPPER_STAIRS"],
+                    ["POLISHED BLACKSTONE BRICK STAIRS", "POLISHED_BLACKSTONE_BRICK_STAIRS"],
+                    ["SMOOTH RED SANDSTONE STAIRS", "SMOOTH_RED_SANDSTONE_STAIRS"],
+                    ["PRISMARINE STAIRS", "PRISMARINE_STAIRS"],
+                    ["POLISHED TUFF STAIRS", "POLISHED_TUFF_STAIRS"],
+                    ["DIORITE STAIRS", "DIORITE_STAIRS"],
+                    ["BAMBOO MOSAIC STAIRS", "BAMBOO_MOSAIC_STAIRS"],
+                    ["DARK PRISMARINE STAIRS", "DARK_PRISMARINE_STAIRS"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Stairs material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_stone_bricks'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Stone Bricks")
+                .appendField(new Blockly.FieldDropdown([
+                    ["BRICKS", "BRICKS"],
+                    ["STONE BRICKS", "STONE_BRICKS"],
+                    ["MUD BRICKS", "MUD_BRICKS"],
+                    ["DEEPSLATE BRICKS", "DEEPSLATE_BRICKS"],
+                    ["DEEPSLATE TILES", "DEEPSLATE_TILES"],
+                    ["NETHER BRICKS", "NETHER_BRICKS"],
+                    ["RED NETHER BRICKS", "RED_NETHER_BRICKS"],
+                    ["POLISHED BLACKSTONE BRICKS", "POLISHED_BLACKSTONE_BRICKS"],
+                    ["END STONE BRICKS", "END_STONE_BRICKS"],
+                    ["QUARTZ BRICKS", "QUARTZ_BRICKS"],
+                    ["CHISELED STONE BRICKS", "CHISELED_STONE_BRICKS"],
+                    ["CRACKED STONE BRICKS", "CRACKED_STONE_BRICKS"],
+                    ["MOSSY STONE BRICKS", "MOSSY_STONE_BRICKS"],
+                    ["CHISELED NETHER BRICKS", "CHISELED_NETHER_BRICKS"],
+                    ["CRACKED NETHER BRICKS", "CRACKED_NETHER_BRICKS"],
+                    ["CHISELED POLISHED BLACKSTONE", "CHISELED_POLISHED_BLACKSTONE"],
+                    ["CRACKED POLISHED BLACKSTONE BRICKS", "CRACKED_POLISHED_BLACKSTONE_BRICKS"],
+                    ["CHISELED DEEPSLATE", "CHISELED_DEEPSLATE"],
+                    ["CRACKED DEEPSLATE BRICKS", "CRACKED_DEEPSLATE_BRICKS"],
+                    ["CRACKED DEEPSLATE TILES", "CRACKED_DEEPSLATE_TILES"],
+                    ["CHISELED TUFF BRICKS", "CHISELED_TUFF_BRICKS"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Stone Bricks material.");
         }
     };
 
@@ -559,27 +541,27 @@ export function defineMineCraftMaterialBlocks(Blockly) {
             this.appendDummyInput()
                 .appendField("Trapdoors")
                 .appendField(new Blockly.FieldDropdown([
-                    ["IRON TRAPDOOR", "IRON_TRAPDOOR"],
-                    ["ACACIA TRAPDOOR", "ACACIA_TRAPDOOR"],
-                    ["BIRCH TRAPDOOR", "BIRCH_TRAPDOOR"],
-                    ["PALE OAK TRAPDOOR", "PALE_OAK_TRAPDOOR"],
-                    ["CHERRY TRAPDOOR", "CHERRY_TRAPDOOR"],
-                    ["WAXED OXIDIZED COPPER TRAPDOOR", "WAXED_OXIDIZED_COPPER_TRAPDOOR"],
-                    ["WEATHERED COPPER TRAPDOOR", "WEATHERED_COPPER_TRAPDOOR"],
-                    ["BAMBOO TRAPDOOR", "BAMBOO_TRAPDOOR"],
-                    ["COPPER TRAPDOOR", "COPPER_TRAPDOOR"],
                     ["CRIMSON TRAPDOOR", "CRIMSON_TRAPDOOR"],
-                    ["MANGROVE TRAPDOOR", "MANGROVE_TRAPDOOR"],
-                    ["JUNGLE TRAPDOOR", "JUNGLE_TRAPDOOR"],
-                    ["EXPOSED COPPER TRAPDOOR", "EXPOSED_COPPER_TRAPDOOR"],
-                    ["WAXED WEATHERED COPPER TRAPDOOR", "WAXED_WEATHERED_COPPER_TRAPDOOR"],
-                    ["OXIDIZED COPPER TRAPDOOR", "OXIDIZED_COPPER_TRAPDOOR"],
-                    ["WAXED COPPER TRAPDOOR", "WAXED_COPPER_TRAPDOOR"],
-                    ["SPRUCE TRAPDOOR", "SPRUCE_TRAPDOOR"],
-                    ["DARK OAK TRAPDOOR", "DARK_OAK_TRAPDOOR"],
-                    ["WAXED EXPOSED COPPER TRAPDOOR", "WAXED_EXPOSED_COPPER_TRAPDOOR"],
                     ["WARPED TRAPDOOR", "WARPED_TRAPDOOR"],
-                    ["OAK TRAPDOOR", "OAK_TRAPDOOR"]
+                    ["EXPOSED COPPER TRAPDOOR", "EXPOSED_COPPER_TRAPDOOR"],
+                    ["BIRCH TRAPDOOR", "BIRCH_TRAPDOOR"],
+                    ["WAXED WEATHERED COPPER TRAPDOOR", "WAXED_WEATHERED_COPPER_TRAPDOOR"],
+                    ["IRON TRAPDOOR", "IRON_TRAPDOOR"],
+                    ["WEATHERED COPPER TRAPDOOR", "WEATHERED_COPPER_TRAPDOOR"],
+                    ["WAXED EXPOSED COPPER TRAPDOOR", "WAXED_EXPOSED_COPPER_TRAPDOOR"],
+                    ["MANGROVE TRAPDOOR", "MANGROVE_TRAPDOOR"],
+                    ["SPRUCE TRAPDOOR", "SPRUCE_TRAPDOOR"],
+                    ["COPPER TRAPDOOR", "COPPER_TRAPDOOR"],
+                    ["OAK TRAPDOOR", "OAK_TRAPDOOR"],
+                    ["WAXED COPPER TRAPDOOR", "WAXED_COPPER_TRAPDOOR"],
+                    ["DARK OAK TRAPDOOR", "DARK_OAK_TRAPDOOR"],
+                    ["JUNGLE TRAPDOOR", "JUNGLE_TRAPDOOR"],
+                    ["CHERRY TRAPDOOR", "CHERRY_TRAPDOOR"],
+                    ["ACACIA TRAPDOOR", "ACACIA_TRAPDOOR"],
+                    ["BAMBOO TRAPDOOR", "BAMBOO_TRAPDOOR"],
+                    ["PALE OAK TRAPDOOR", "PALE_OAK_TRAPDOOR"],
+                    ["WAXED OXIDIZED COPPER TRAPDOOR", "WAXED_OXIDIZED_COPPER_TRAPDOOR"],
+                    ["OXIDIZED COPPER TRAPDOOR", "OXIDIZED_COPPER_TRAPDOOR"]
                 ]), "MATERIAL_ID");
             this.setOutput(true, "Block");
             this.setColour(180);
@@ -592,36 +574,168 @@ export function defineMineCraftMaterialBlocks(Blockly) {
             this.appendDummyInput()
                 .appendField("Walls")
                 .appendField(new Blockly.FieldDropdown([
-                    ["RESIN BRICK WALL", "RESIN_BRICK_WALL"],
-                    ["NETHER BRICK WALL", "NETHER_BRICK_WALL"],
-                    ["POLISHED BLACKSTONE WALL", "POLISHED_BLACKSTONE_WALL"],
-                    ["MUD BRICK WALL", "MUD_BRICK_WALL"],
-                    ["END STONE BRICK WALL", "END_STONE_BRICK_WALL"],
-                    ["BLACKSTONE WALL", "BLACKSTONE_WALL"],
-                    ["DIORITE WALL", "DIORITE_WALL"],
-                    ["STONE BRICK WALL", "STONE_BRICK_WALL"],
-                    ["TUFF WALL", "TUFF_WALL"],
-                    ["DEEPSLATE TILE WALL", "DEEPSLATE_TILE_WALL"],
-                    ["PRISMARINE WALL", "PRISMARINE_WALL"],
-                    ["DEEPSLATE BRICK WALL", "DEEPSLATE_BRICK_WALL"],
-                    ["GRANITE WALL", "GRANITE_WALL"],
-                    ["RED SANDSTONE WALL", "RED_SANDSTONE_WALL"],
-                    ["COBBLED DEEPSLATE WALL", "COBBLED_DEEPSLATE_WALL"],
-                    ["BRICK WALL", "BRICK_WALL"],
-                    ["POLISHED DEEPSLATE WALL", "POLISHED_DEEPSLATE_WALL"],
+                    ["RED NETHER BRICK WALL", "RED_NETHER_BRICK_WALL"],
                     ["MOSSY COBBLESTONE WALL", "MOSSY_COBBLESTONE_WALL"],
-                    ["COBBLESTONE WALL", "COBBLESTONE_WALL"],
-                    ["MOSSY STONE BRICK WALL", "MOSSY_STONE_BRICK_WALL"],
-                    ["POLISHED BLACKSTONE BRICK WALL", "POLISHED_BLACKSTONE_BRICK_WALL"],
+                    ["NETHER BRICK WALL", "NETHER_BRICK_WALL"],
+                    ["MUD BRICK WALL", "MUD_BRICK_WALL"],
+                    ["RESIN BRICK WALL", "RESIN_BRICK_WALL"],
+                    ["TUFF WALL", "TUFF_WALL"],
                     ["ANDESITE WALL", "ANDESITE_WALL"],
-                    ["TUFF BRICK WALL", "TUFF_BRICK_WALL"],
+                    ["PRISMARINE WALL", "PRISMARINE_WALL"],
+                    ["DEEPSLATE TILE WALL", "DEEPSLATE_TILE_WALL"],
+                    ["GRANITE WALL", "GRANITE_WALL"],
+                    ["BRICK WALL", "BRICK_WALL"],
+                    ["COBBLED DEEPSLATE WALL", "COBBLED_DEEPSLATE_WALL"],
+                    ["POLISHED DEEPSLATE WALL", "POLISHED_DEEPSLATE_WALL"],
+                    ["COBBLESTONE WALL", "COBBLESTONE_WALL"],
+                    ["STONE BRICK WALL", "STONE_BRICK_WALL"],
                     ["POLISHED TUFF WALL", "POLISHED_TUFF_WALL"],
+                    ["MOSSY STONE BRICK WALL", "MOSSY_STONE_BRICK_WALL"],
                     ["SANDSTONE WALL", "SANDSTONE_WALL"],
-                    ["RED NETHER BRICK WALL", "RED_NETHER_BRICK_WALL"]
+                    ["POLISHED BLACKSTONE WALL", "POLISHED_BLACKSTONE_WALL"],
+                    ["DIORITE WALL", "DIORITE_WALL"],
+                    ["DEEPSLATE BRICK WALL", "DEEPSLATE_BRICK_WALL"],
+                    ["RED SANDSTONE WALL", "RED_SANDSTONE_WALL"],
+                    ["BLACKSTONE WALL", "BLACKSTONE_WALL"],
+                    ["TUFF BRICK WALL", "TUFF_BRICK_WALL"],
+                    ["END STONE BRICK WALL", "END_STONE_BRICK_WALL"],
+                    ["POLISHED BLACKSTONE BRICK WALL", "POLISHED_BLACKSTONE_BRICK_WALL"]
                 ]), "MATERIAL_ID");
             this.setOutput(true, "Block");
             this.setColour(180);
             this.setTooltip("Select a Walls material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_wood_full'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Wood Full")
+                .appendField(new Blockly.FieldDropdown([
+                    ["OAK WOOD", "OAK_WOOD"],
+                    ["SPRUCE WOOD", "SPRUCE_WOOD"],
+                    ["BIRCH WOOD", "BIRCH_WOOD"],
+                    ["JUNGLE WOOD", "JUNGLE_WOOD"],
+                    ["ACACIA WOOD", "ACACIA_WOOD"],
+                    ["DARK OAK WOOD", "DARK_OAK_WOOD"],
+                    ["MANGROVE WOOD", "MANGROVE_WOOD"],
+                    ["CHERRY WOOD", "CHERRY_WOOD"],
+                    ["CRIMSON HYPHAE", "CRIMSON_HYPHAE"],
+                    ["WARPED HYPHAE", "WARPED_HYPHAE"],
+                    ["STRIPPED OAK WOOD", "STRIPPED_OAK_WOOD"],
+                    ["STRIPPED SPRUCE WOOD", "STRIPPED_SPRUCE_WOOD"],
+                    ["STRIPPED BIRCH WOOD", "STRIPPED_BIRCH_WOOD"],
+                    ["STRIPPED JUNGLE WOOD", "STRIPPED_JUNGLE_WOOD"],
+                    ["STRIPPED ACACIA WOOD", "STRIPPED_ACACIA_WOOD"],
+                    ["STRIPPED DARK OAK WOOD", "STRIPPED_DARK_OAK_WOOD"],
+                    ["STRIPPED MANGROVE WOOD", "STRIPPED_MANGROVE_WOOD"],
+                    ["STRIPPED CHERRY WOOD", "STRIPPED_CHERRY_WOOD"],
+                    ["STRIPPED CRIMSON HYPHAE", "STRIPPED_CRIMSON_HYPHAE"],
+                    ["STRIPPED WARPED HYPHAE", "STRIPPED_WARPED_HYPHAE"],
+                    ["BAMBOO BLOCK", "BAMBOO_BLOCK"],
+                    ["STRIPPED BAMBOO BLOCK", "STRIPPED_BAMBOO_BLOCK"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Wood Full material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_wood_logs'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Wood Logs")
+                .appendField(new Blockly.FieldDropdown([
+                    ["OAK LOG", "OAK_LOG"],
+                    ["SPRUCE LOG", "SPRUCE_LOG"],
+                    ["BIRCH LOG", "BIRCH_LOG"],
+                    ["JUNGLE LOG", "JUNGLE_LOG"],
+                    ["ACACIA LOG", "ACACIA_LOG"],
+                    ["DARK OAK LOG", "DARK_OAK_LOG"],
+                    ["MANGROVE LOG", "MANGROVE_LOG"],
+                    ["CHERRY LOG", "CHERRY_LOG"],
+                    ["CRIMSON STEM", "CRIMSON_STEM"],
+                    ["WARPED STEM", "WARPED_STEM"],
+                    ["STRIPPED OAK LOG", "STRIPPED_OAK_LOG"],
+                    ["STRIPPED SPRUCE LOG", "STRIPPED_SPRUCE_LOG"],
+                    ["STRIPPED BIRCH LOG", "STRIPPED_BIRCH_LOG"],
+                    ["STRIPPED JUNGLE LOG", "STRIPPED_JUNGLE_LOG"],
+                    ["STRIPPED ACACIA LOG", "STRIPPED_ACACIA_LOG"],
+                    ["STRIPPED DARK OAK LOG", "STRIPPED_DARK_OAK_LOG"],
+                    ["STRIPPED MANGROVE LOG", "STRIPPED_MANGROVE_LOG"],
+                    ["STRIPPED CHERRY LOG", "STRIPPED_CHERRY_LOG"],
+                    ["STRIPPED CRIMSON STEM", "STRIPPED_CRIMSON_STEM"],
+                    ["STRIPPED WARPED STEM", "STRIPPED_WARPED_STEM"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Wood Logs material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_wood_planks'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("Wood Planks")
+                .appendField(new Blockly.FieldDropdown([
+                    ["OAK PLANKS", "OAK_PLANKS"],
+                    ["SPRUCE PLANKS", "SPRUCE_PLANKS"],
+                    ["BIRCH PLANKS", "BIRCH_PLANKS"],
+                    ["JUNGLE PLANKS", "JUNGLE_PLANKS"],
+                    ["ACACIA PLANKS", "ACACIA_PLANKS"],
+                    ["DARK OAK PLANKS", "DARK_OAK_PLANKS"],
+                    ["MANGROVE PLANKS", "MANGROVE_PLANKS"],
+                    ["CHERRY PLANKS", "CHERRY_PLANKS"],
+                    ["BAMBOO PLANKS", "BAMBOO_PLANKS"],
+                    ["CRIMSON PLANKS", "CRIMSON_PLANKS"],
+                    ["WARPED PLANKS", "WARPED_PLANKS"],
+                    ["BAMBOO MOSAIC", "BAMBOO_MOSAIC"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a Wood Planks material.");
+        }
+    };
+
+    Blockly.Blocks['minecraft_picker_world'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("World")
+                .appendField(new Blockly.FieldDropdown([
+                    ["AIR", "AIR"],
+                    ["STONE", "STONE"],
+                    ["GRANITE", "GRANITE"],
+                    ["DIORITE", "DIORITE"],
+                    ["ANDESITE", "ANDESITE"],
+                    ["DEEPSLATE", "DEEPSLATE"],
+                    ["CALCITE", "CALCITE"],
+                    ["TUFF", "TUFF"],
+                    ["DIRT", "DIRT"],
+                    ["COARSE DIRT", "COARSE_DIRT"],
+                    ["ROOTED DIRT", "ROOTED_DIRT"],
+                    ["GRASS BLOCK", "GRASS_BLOCK"],
+                    ["PODZOL", "PODZOL"],
+                    ["MYCELIUM", "MYCELIUM"],
+                    ["DIRT PATH", "DIRT_PATH"],
+                    ["SAND", "SAND"],
+                    ["RED SAND", "RED_SAND"],
+                    ["GRAVEL", "GRAVEL"],
+                    ["CLAY", "CLAY"],
+                    ["ICE", "ICE"],
+                    ["PACKED ICE", "PACKED_ICE"],
+                    ["BLUE ICE", "BLUE_ICE"],
+                    ["SNOW", "SNOW"],
+                    ["SNOW BLOCK", "SNOW_BLOCK"],
+                    ["WATER", "WATER"],
+                    ["LAVA", "LAVA"],
+                    ["BEDROCK", "BEDROCK"],
+                    ["OBSIDIAN", "OBSIDIAN"],
+                    ["CRYING OBSIDIAN", "CRYING_OBSIDIAN"],
+                    ["MAGMA BLOCK", "MAGMA_BLOCK"]
+                ]), "MATERIAL_ID");
+            this.setOutput(true, "Block");
+            this.setColour(180);
+            this.setTooltip("Select a World material.");
         }
     };
 
@@ -630,33 +744,30 @@ export function defineMineCraftMaterialBlocks(Blockly) {
             this.appendDummyInput()
                 .appendField("Misc. Block/Item")
                 .appendField(new Blockly.FieldDropdown([
+                    ["ACACIA BOAT", "ACACIA_BOAT"],
                     ["ACACIA BUTTON", "ACACIA_BUTTON"],
+                    ["ACACIA CHEST BOAT", "ACACIA_CHEST_BOAT"],
                     ["ACACIA HANGING SIGN", "ACACIA_HANGING_SIGN"],
                     ["ACACIA LEAVES", "ACACIA_LEAVES"],
-                    ["ACACIA LOG", "ACACIA_LOG"],
-                    ["ACACIA PLANKS", "ACACIA_PLANKS"],
                     ["ACACIA PRESSURE PLATE", "ACACIA_PRESSURE_PLATE"],
                     ["ACACIA SAPLING", "ACACIA_SAPLING"],
                     ["ACACIA SIGN", "ACACIA_SIGN"],
                     ["ACACIA WALL HANGING SIGN", "ACACIA_WALL_HANGING_SIGN"],
                     ["ACACIA WALL SIGN", "ACACIA_WALL_SIGN"],
-                    ["ACACIA WOOD", "ACACIA_WOOD"],
-                    ["ACTIVATOR RAIL", "ACTIVATOR_RAIL"],
-                    ["AIR", "AIR"],
                     ["ALLAY SPAWN EGG", "ALLAY_SPAWN_EGG"],
                     ["ALLIUM", "ALLIUM"],
                     ["AMETHYST BLOCK", "AMETHYST_BLOCK"],
                     ["AMETHYST CLUSTER", "AMETHYST_CLUSTER"],
                     ["AMETHYST SHARD", "AMETHYST_SHARD"],
-                    ["ANCIENT DEBRIS", "ANCIENT_DEBRIS"],
-                    ["ANDESITE", "ANDESITE"],
                     ["ANGLER POTTERY SHERD", "ANGLER_POTTERY_SHERD"],
                     ["ANVIL", "ANVIL"],
                     ["APPLE", "APPLE"],
                     ["ARCHER POTTERY SHERD", "ARCHER_POTTERY_SHERD"],
                     ["ARMADILLO SCUTE", "ARMADILLO_SCUTE"],
                     ["ARMADILLO SPAWN EGG", "ARMADILLO_SPAWN_EGG"],
+                    ["ARMOR STAND", "ARMOR_STAND"],
                     ["ARMS UP POTTERY SHERD", "ARMS_UP_POTTERY_SHERD"],
+                    ["ARROW", "ARROW"],
                     ["ATTACHED MELON STEM", "ATTACHED_MELON_STEM"],
                     ["ATTACHED PUMPKIN STEM", "ATTACHED_PUMPKIN_STEM"],
                     ["AXOLOTL BUCKET", "AXOLOTL_BUCKET"],
@@ -666,12 +777,11 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["AZURE BLUET", "AZURE_BLUET"],
                     ["BAKED POTATO", "BAKED_POTATO"],
                     ["BAMBOO", "BAMBOO"],
-                    ["BAMBOO BLOCK", "BAMBOO_BLOCK"],
                     ["BAMBOO BUTTON", "BAMBOO_BUTTON"],
+                    ["BAMBOO CHEST RAFT", "BAMBOO_CHEST_RAFT"],
                     ["BAMBOO HANGING SIGN", "BAMBOO_HANGING_SIGN"],
-                    ["BAMBOO MOSAIC", "BAMBOO_MOSAIC"],
-                    ["BAMBOO PLANKS", "BAMBOO_PLANKS"],
                     ["BAMBOO PRESSURE PLATE", "BAMBOO_PRESSURE_PLATE"],
+                    ["BAMBOO RAFT", "BAMBOO_RAFT"],
                     ["BAMBOO SAPLING", "BAMBOO_SAPLING"],
                     ["BAMBOO SIGN", "BAMBOO_SIGN"],
                     ["BAMBOO WALL HANGING SIGN", "BAMBOO_WALL_HANGING_SIGN"],
@@ -681,7 +791,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["BASALT", "BASALT"],
                     ["BAT SPAWN EGG", "BAT_SPAWN_EGG"],
                     ["BEACON", "BEACON"],
-                    ["BEDROCK", "BEDROCK"],
                     ["BEEF", "BEEF"],
                     ["BEEHIVE", "BEEHIVE"],
                     ["BEETROOT", "BEETROOT"],
@@ -693,17 +802,16 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["BELL", "BELL"],
                     ["BIG DRIPLEAF", "BIG_DRIPLEAF"],
                     ["BIG DRIPLEAF STEM", "BIG_DRIPLEAF_STEM"],
+                    ["BIRCH BOAT", "BIRCH_BOAT"],
                     ["BIRCH BUTTON", "BIRCH_BUTTON"],
+                    ["BIRCH CHEST BOAT", "BIRCH_CHEST_BOAT"],
                     ["BIRCH HANGING SIGN", "BIRCH_HANGING_SIGN"],
                     ["BIRCH LEAVES", "BIRCH_LEAVES"],
-                    ["BIRCH LOG", "BIRCH_LOG"],
-                    ["BIRCH PLANKS", "BIRCH_PLANKS"],
                     ["BIRCH PRESSURE PLATE", "BIRCH_PRESSURE_PLATE"],
                     ["BIRCH SAPLING", "BIRCH_SAPLING"],
                     ["BIRCH SIGN", "BIRCH_SIGN"],
                     ["BIRCH WALL HANGING SIGN", "BIRCH_WALL_HANGING_SIGN"],
                     ["BIRCH WALL SIGN", "BIRCH_WALL_SIGN"],
-                    ["BIRCH WOOD", "BIRCH_WOOD"],
                     ["BLACKSTONE", "BLACKSTONE"],
                     ["BLACK BUNDLE", "BLACK_BUNDLE"],
                     ["BLACK CANDLE CAKE", "BLACK_CANDLE_CAKE"],
@@ -717,7 +825,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["BLUE CANDLE CAKE", "BLUE_CANDLE_CAKE"],
                     ["BLUE DYE", "BLUE_DYE"],
                     ["BLUE EGG", "BLUE_EGG"],
-                    ["BLUE ICE", "BLUE_ICE"],
                     ["BLUE ORCHID", "BLUE_ORCHID"],
                     ["BOGGED SPAWN EGG", "BOGGED_SPAWN_EGG"],
                     ["BOLT ARMOR TRIM SMITHING TEMPLATE", "BOLT_ARMOR_TRIM_SMITHING_TEMPLATE"],
@@ -739,7 +846,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["BREWER POTTERY SHERD", "BREWER_POTTERY_SHERD"],
                     ["BREWING STAND", "BREWING_STAND"],
                     ["BRICK", "BRICK"],
-                    ["BRICKS", "BRICKS"],
                     ["BROWN BUNDLE", "BROWN_BUNDLE"],
                     ["BROWN CANDLE CAKE", "BROWN_CANDLE_CAKE"],
                     ["BROWN DYE", "BROWN_DYE"],
@@ -760,7 +866,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["CACTUS", "CACTUS"],
                     ["CACTUS FLOWER", "CACTUS_FLOWER"],
                     ["CAKE", "CAKE"],
-                    ["CALCITE", "CALCITE"],
                     ["CALIBRATED SCULK SENSOR", "CALIBRATED_SCULK_SENSOR"],
                     ["CAMEL SPAWN EGG", "CAMEL_SPAWN_EGG"],
                     ["CAMPFIRE", "CAMPFIRE"],
@@ -784,53 +889,47 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["CHAINMAIL LEGGINGS", "CHAINMAIL_LEGGINGS"],
                     ["CHAIN COMMAND BLOCK", "CHAIN_COMMAND_BLOCK"],
                     ["CHARCOAL", "CHARCOAL"],
+                    ["CHERRY BOAT", "CHERRY_BOAT"],
                     ["CHERRY BUTTON", "CHERRY_BUTTON"],
+                    ["CHERRY CHEST BOAT", "CHERRY_CHEST_BOAT"],
                     ["CHERRY HANGING SIGN", "CHERRY_HANGING_SIGN"],
                     ["CHERRY LEAVES", "CHERRY_LEAVES"],
-                    ["CHERRY LOG", "CHERRY_LOG"],
-                    ["CHERRY PLANKS", "CHERRY_PLANKS"],
                     ["CHERRY PRESSURE PLATE", "CHERRY_PRESSURE_PLATE"],
                     ["CHERRY SAPLING", "CHERRY_SAPLING"],
                     ["CHERRY SIGN", "CHERRY_SIGN"],
                     ["CHERRY WALL HANGING SIGN", "CHERRY_WALL_HANGING_SIGN"],
                     ["CHERRY WALL SIGN", "CHERRY_WALL_SIGN"],
-                    ["CHERRY WOOD", "CHERRY_WOOD"],
                     ["CHEST", "CHEST"],
+                    ["CHEST MINECART", "CHEST_MINECART"],
+                    ["CHICKEN", "CHICKEN"],
                     ["CHICKEN SPAWN EGG", "CHICKEN_SPAWN_EGG"],
                     ["CHIPPED ANVIL", "CHIPPED_ANVIL"],
                     ["CHISELED BOOKSHELF", "CHISELED_BOOKSHELF"],
                     ["CHISELED COPPER", "CHISELED_COPPER"],
-                    ["CHISELED DEEPSLATE", "CHISELED_DEEPSLATE"],
-                    ["CHISELED NETHER BRICKS", "CHISELED_NETHER_BRICKS"],
-                    ["CHISELED POLISHED BLACKSTONE", "CHISELED_POLISHED_BLACKSTONE"],
                     ["CHISELED QUARTZ BLOCK", "CHISELED_QUARTZ_BLOCK"],
                     ["CHISELED RED SANDSTONE", "CHISELED_RED_SANDSTONE"],
                     ["CHISELED RESIN BRICKS", "CHISELED_RESIN_BRICKS"],
                     ["CHISELED SANDSTONE", "CHISELED_SANDSTONE"],
-                    ["CHISELED STONE BRICKS", "CHISELED_STONE_BRICKS"],
                     ["CHISELED TUFF", "CHISELED_TUFF"],
-                    ["CHISELED TUFF BRICKS", "CHISELED_TUFF_BRICKS"],
                     ["CHORUS FLOWER", "CHORUS_FLOWER"],
                     ["CHORUS FRUIT", "CHORUS_FRUIT"],
                     ["CHORUS PLANT", "CHORUS_PLANT"],
-                    ["CLAY", "CLAY"],
                     ["CLAY BALL", "CLAY_BALL"],
                     ["CLOCK", "CLOCK"],
                     ["CLOSED EYEBLOSSOM", "CLOSED_EYEBLOSSOM"],
                     ["COAL", "COAL"],
                     ["COAL BLOCK", "COAL_BLOCK"],
-                    ["COAL ORE", "COAL_ORE"],
-                    ["COARSE DIRT", "COARSE_DIRT"],
                     ["COAST ARMOR TRIM SMITHING TEMPLATE", "COAST_ARMOR_TRIM_SMITHING_TEMPLATE"],
                     ["COBBLED DEEPSLATE", "COBBLED_DEEPSLATE"],
                     ["COBBLESTONE", "COBBLESTONE"],
                     ["COBWEB", "COBWEB"],
                     ["COCOA", "COCOA"],
                     ["COCOA BEANS", "COCOA_BEANS"],
+                    ["COD", "COD"],
                     ["COD BUCKET", "COD_BUCKET"],
                     ["COD SPAWN EGG", "COD_SPAWN_EGG"],
                     ["COMMAND BLOCK", "COMMAND_BLOCK"],
-                    ["COMPARATOR", "COMPARATOR"],
+                    ["COMMAND BLOCK MINECART", "COMMAND_BLOCK_MINECART"],
                     ["COMPASS", "COMPASS"],
                     ["COMPOSTER", "COMPOSTER"],
                     ["CONDUIT", "CONDUIT"],
@@ -846,14 +945,8 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["COPPER BULB", "COPPER_BULB"],
                     ["COPPER GRATE", "COPPER_GRATE"],
                     ["COPPER INGOT", "COPPER_INGOT"],
-                    ["COPPER ORE", "COPPER_ORE"],
                     ["CORNFLOWER", "CORNFLOWER"],
                     ["COW SPAWN EGG", "COW_SPAWN_EGG"],
-                    ["CRACKED DEEPSLATE BRICKS", "CRACKED_DEEPSLATE_BRICKS"],
-                    ["CRACKED DEEPSLATE TILES", "CRACKED_DEEPSLATE_TILES"],
-                    ["CRACKED NETHER BRICKS", "CRACKED_NETHER_BRICKS"],
-                    ["CRACKED POLISHED BLACKSTONE BRICKS", "CRACKED_POLISHED_BLACKSTONE_BRICKS"],
-                    ["CRACKED STONE BRICKS", "CRACKED_STONE_BRICKS"],
                     ["CRAFTER", "CRAFTER"],
                     ["CRAFTING TABLE", "CRAFTING_TABLE"],
                     ["CREAKING HEART", "CREAKING_HEART"],
@@ -865,17 +958,13 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["CRIMSON BUTTON", "CRIMSON_BUTTON"],
                     ["CRIMSON FUNGUS", "CRIMSON_FUNGUS"],
                     ["CRIMSON HANGING SIGN", "CRIMSON_HANGING_SIGN"],
-                    ["CRIMSON HYPHAE", "CRIMSON_HYPHAE"],
                     ["CRIMSON NYLIUM", "CRIMSON_NYLIUM"],
-                    ["CRIMSON PLANKS", "CRIMSON_PLANKS"],
                     ["CRIMSON PRESSURE PLATE", "CRIMSON_PRESSURE_PLATE"],
                     ["CRIMSON ROOTS", "CRIMSON_ROOTS"],
                     ["CRIMSON SIGN", "CRIMSON_SIGN"],
-                    ["CRIMSON STEM", "CRIMSON_STEM"],
                     ["CRIMSON WALL HANGING SIGN", "CRIMSON_WALL_HANGING_SIGN"],
                     ["CRIMSON WALL SIGN", "CRIMSON_WALL_SIGN"],
                     ["CROSSBOW", "CROSSBOW"],
-                    ["CRYING OBSIDIAN", "CRYING_OBSIDIAN"],
                     ["CUT COPPER", "CUT_COPPER"],
                     ["CUT RED SANDSTONE", "CUT_RED_SANDSTONE"],
                     ["CUT SANDSTONE", "CUT_SANDSTONE"],
@@ -885,19 +974,17 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["DAMAGED ANVIL", "DAMAGED_ANVIL"],
                     ["DANDELION", "DANDELION"],
                     ["DANGER POTTERY SHERD", "DANGER_POTTERY_SHERD"],
+                    ["DARK OAK BOAT", "DARK_OAK_BOAT"],
                     ["DARK OAK BUTTON", "DARK_OAK_BUTTON"],
+                    ["DARK OAK CHEST BOAT", "DARK_OAK_CHEST_BOAT"],
                     ["DARK OAK HANGING SIGN", "DARK_OAK_HANGING_SIGN"],
                     ["DARK OAK LEAVES", "DARK_OAK_LEAVES"],
-                    ["DARK OAK LOG", "DARK_OAK_LOG"],
-                    ["DARK OAK PLANKS", "DARK_OAK_PLANKS"],
                     ["DARK OAK PRESSURE PLATE", "DARK_OAK_PRESSURE_PLATE"],
                     ["DARK OAK SAPLING", "DARK_OAK_SAPLING"],
                     ["DARK OAK SIGN", "DARK_OAK_SIGN"],
                     ["DARK OAK WALL HANGING SIGN", "DARK_OAK_WALL_HANGING_SIGN"],
                     ["DARK OAK WALL SIGN", "DARK_OAK_WALL_SIGN"],
-                    ["DARK OAK WOOD", "DARK_OAK_WOOD"],
                     ["DARK PRISMARINE", "DARK_PRISMARINE"],
-                    ["DAYLIGHT DETECTOR", "DAYLIGHT_DETECTOR"],
                     ["DEAD BRAIN CORAL", "DEAD_BRAIN_CORAL"],
                     ["DEAD BRAIN CORAL BLOCK", "DEAD_BRAIN_CORAL_BLOCK"],
                     ["DEAD BRAIN CORAL FAN", "DEAD_BRAIN_CORAL_FAN"],
@@ -921,18 +1008,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["DEAD TUBE CORAL WALL FAN", "DEAD_TUBE_CORAL_WALL_FAN"],
                     ["DEBUG STICK", "DEBUG_STICK"],
                     ["DECORATED POT", "DECORATED_POT"],
-                    ["DEEPSLATE", "DEEPSLATE"],
-                    ["DEEPSLATE BRICKS", "DEEPSLATE_BRICKS"],
-                    ["DEEPSLATE COAL ORE", "DEEPSLATE_COAL_ORE"],
-                    ["DEEPSLATE COPPER ORE", "DEEPSLATE_COPPER_ORE"],
-                    ["DEEPSLATE DIAMOND ORE", "DEEPSLATE_DIAMOND_ORE"],
-                    ["DEEPSLATE EMERALD ORE", "DEEPSLATE_EMERALD_ORE"],
-                    ["DEEPSLATE GOLD ORE", "DEEPSLATE_GOLD_ORE"],
-                    ["DEEPSLATE IRON ORE", "DEEPSLATE_IRON_ORE"],
-                    ["DEEPSLATE LAPIS ORE", "DEEPSLATE_LAPIS_ORE"],
-                    ["DEEPSLATE REDSTONE ORE", "DEEPSLATE_REDSTONE_ORE"],
-                    ["DEEPSLATE TILES", "DEEPSLATE_TILES"],
-                    ["DETECTOR RAIL", "DETECTOR_RAIL"],
                     ["DIAMOND", "DIAMOND"],
                     ["DIAMOND AXE", "DIAMOND_AXE"],
                     ["DIAMOND BLOCK", "DIAMOND_BLOCK"],
@@ -942,15 +1017,10 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["DIAMOND HOE", "DIAMOND_HOE"],
                     ["DIAMOND HORSE ARMOR", "DIAMOND_HORSE_ARMOR"],
                     ["DIAMOND LEGGINGS", "DIAMOND_LEGGINGS"],
-                    ["DIAMOND ORE", "DIAMOND_ORE"],
                     ["DIAMOND PICKAXE", "DIAMOND_PICKAXE"],
                     ["DIAMOND SHOVEL", "DIAMOND_SHOVEL"],
                     ["DIAMOND SWORD", "DIAMOND_SWORD"],
-                    ["DIORITE", "DIORITE"],
-                    ["DIRT", "DIRT"],
-                    ["DIRT PATH", "DIRT_PATH"],
                     ["DISC FRAGMENT 5", "DISC_FRAGMENT_5"],
-                    ["DISPENSER", "DISPENSER"],
                     ["DOLPHIN SPAWN EGG", "DOLPHIN_SPAWN_EGG"],
                     ["DONKEY SPAWN EGG", "DONKEY_SPAWN_EGG"],
                     ["DRAGON BREATH", "DRAGON_BREATH"],
@@ -960,15 +1030,14 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["DRIED KELP", "DRIED_KELP"],
                     ["DRIED KELP BLOCK", "DRIED_KELP_BLOCK"],
                     ["DRIPSTONE BLOCK", "DRIPSTONE_BLOCK"],
-                    ["DROPPER", "DROPPER"],
                     ["DROWNED SPAWN EGG", "DROWNED_SPAWN_EGG"],
                     ["DUNE ARMOR TRIM SMITHING TEMPLATE", "DUNE_ARMOR_TRIM_SMITHING_TEMPLATE"],
                     ["ECHO SHARD", "ECHO_SHARD"],
+                    ["EGG", "EGG"],
                     ["ELDER GUARDIAN SPAWN EGG", "ELDER_GUARDIAN_SPAWN_EGG"],
                     ["ELYTRA", "ELYTRA"],
                     ["EMERALD", "EMERALD"],
                     ["EMERALD BLOCK", "EMERALD_BLOCK"],
-                    ["EMERALD ORE", "EMERALD_ORE"],
                     ["ENCHANTED BOOK", "ENCHANTED_BOOK"],
                     ["ENCHANTED GOLDEN APPLE", "ENCHANTED_GOLDEN_APPLE"],
                     ["ENCHANTING TABLE", "ENCHANTING_TABLE"],
@@ -977,13 +1046,15 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["ENDER CHEST", "ENDER_CHEST"],
                     ["ENDER DRAGON SPAWN EGG", "ENDER_DRAGON_SPAWN_EGG"],
                     ["ENDER EYE", "ENDER_EYE"],
+                    ["ENDER PEARL", "ENDER_PEARL"],
+                    ["END CRYSTAL", "END_CRYSTAL"],
                     ["END GATEWAY", "END_GATEWAY"],
                     ["END PORTAL", "END_PORTAL"],
                     ["END PORTAL FRAME", "END_PORTAL_FRAME"],
                     ["END ROD", "END_ROD"],
                     ["END STONE", "END_STONE"],
-                    ["END STONE BRICKS", "END_STONE_BRICKS"],
                     ["EVOKER SPAWN EGG", "EVOKER_SPAWN_EGG"],
+                    ["EXPERIENCE BOTTLE", "EXPERIENCE_BOTTLE"],
                     ["EXPLORER POTTERY SHERD", "EXPLORER_POTTERY_SHERD"],
                     ["EXPOSED CHISELED COPPER", "EXPOSED_CHISELED_COPPER"],
                     ["EXPOSED COPPER", "EXPOSED_COPPER"],
@@ -999,6 +1070,7 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["FILLED MAP", "FILLED_MAP"],
                     ["FIRE", "FIRE"],
                     ["FIREFLY BUSH", "FIREFLY_BUSH"],
+                    ["FIREWORK ROCKET", "FIREWORK_ROCKET"],
                     ["FIREWORK STAR", "FIREWORK_STAR"],
                     ["FIRE CHARGE", "FIRE_CHARGE"],
                     ["FIRE CORAL", "FIRE_CORAL"],
@@ -1022,18 +1094,18 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["FROG SPAWN EGG", "FROG_SPAWN_EGG"],
                     ["FROSTED ICE", "FROSTED_ICE"],
                     ["FURNACE", "FURNACE"],
+                    ["FURNACE MINECART", "FURNACE_MINECART"],
                     ["GHAST SPAWN EGG", "GHAST_SPAWN_EGG"],
                     ["GHAST TEAR", "GHAST_TEAR"],
                     ["GILDED BLACKSTONE", "GILDED_BLACKSTONE"],
-                    ["GLASS", "GLASS"],
                     ["GLASS BOTTLE", "GLASS_BOTTLE"],
-                    ["GLASS PANE", "GLASS_PANE"],
                     ["GLISTERING MELON SLICE", "GLISTERING_MELON_SLICE"],
                     ["GLOBE BANNER PATTERN", "GLOBE_BANNER_PATTERN"],
                     ["GLOWSTONE", "GLOWSTONE"],
                     ["GLOWSTONE DUST", "GLOWSTONE_DUST"],
                     ["GLOW BERRIES", "GLOW_BERRIES"],
                     ["GLOW INK SAC", "GLOW_INK_SAC"],
+                    ["GLOW ITEM FRAME", "GLOW_ITEM_FRAME"],
                     ["GLOW LICHEN", "GLOW_LICHEN"],
                     ["GLOW SQUID SPAWN EGG", "GLOW_SQUID_SPAWN_EGG"],
                     ["GOAT HORN", "GOAT_HORN"],
@@ -1053,10 +1125,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["GOLD BLOCK", "GOLD_BLOCK"],
                     ["GOLD INGOT", "GOLD_INGOT"],
                     ["GOLD NUGGET", "GOLD_NUGGET"],
-                    ["GOLD ORE", "GOLD_ORE"],
-                    ["GRANITE", "GRANITE"],
-                    ["GRASS BLOCK", "GRASS_BLOCK"],
-                    ["GRAVEL", "GRAVEL"],
                     ["GRAY BUNDLE", "GRAY_BUNDLE"],
                     ["GRAY CANDLE CAKE", "GRAY_CANDLE_CAKE"],
                     ["GRAY DYE", "GRAY_DYE"],
@@ -1078,9 +1146,8 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["HOGLIN SPAWN EGG", "HOGLIN_SPAWN_EGG"],
                     ["HONEYCOMB", "HONEYCOMB"],
                     ["HONEYCOMB BLOCK", "HONEYCOMB_BLOCK"],
-                    ["HONEY BLOCK", "HONEY_BLOCK"],
                     ["HONEY BOTTLE", "HONEY_BOTTLE"],
-                    ["HOPPER", "HOPPER"],
+                    ["HOPPER MINECART", "HOPPER_MINECART"],
                     ["HORN CORAL", "HORN_CORAL"],
                     ["HORN CORAL BLOCK", "HORN_CORAL_BLOCK"],
                     ["HORN CORAL FAN", "HORN_CORAL_FAN"],
@@ -1089,7 +1156,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["HOST ARMOR TRIM SMITHING TEMPLATE", "HOST_ARMOR_TRIM_SMITHING_TEMPLATE"],
                     ["HOWL POTTERY SHERD", "HOWL_POTTERY_SHERD"],
                     ["HUSK SPAWN EGG", "HUSK_SPAWN_EGG"],
-                    ["ICE", "ICE"],
                     ["INFESTED CHISELED STONE BRICKS", "INFESTED_CHISELED_STONE_BRICKS"],
                     ["INFESTED COBBLESTONE", "INFESTED_COBBLESTONE"],
                     ["INFESTED CRACKED STONE BRICKS", "INFESTED_CRACKED_STONE_BRICKS"],
@@ -1110,24 +1176,23 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["IRON INGOT", "IRON_INGOT"],
                     ["IRON LEGGINGS", "IRON_LEGGINGS"],
                     ["IRON NUGGET", "IRON_NUGGET"],
-                    ["IRON ORE", "IRON_ORE"],
                     ["IRON PICKAXE", "IRON_PICKAXE"],
                     ["IRON SHOVEL", "IRON_SHOVEL"],
                     ["IRON SWORD", "IRON_SWORD"],
+                    ["ITEM FRAME", "ITEM_FRAME"],
                     ["JACK O LANTERN", "JACK_O_LANTERN"],
                     ["JIGSAW", "JIGSAW"],
                     ["JUKEBOX", "JUKEBOX"],
+                    ["JUNGLE BOAT", "JUNGLE_BOAT"],
                     ["JUNGLE BUTTON", "JUNGLE_BUTTON"],
+                    ["JUNGLE CHEST BOAT", "JUNGLE_CHEST_BOAT"],
                     ["JUNGLE HANGING SIGN", "JUNGLE_HANGING_SIGN"],
                     ["JUNGLE LEAVES", "JUNGLE_LEAVES"],
-                    ["JUNGLE LOG", "JUNGLE_LOG"],
-                    ["JUNGLE PLANKS", "JUNGLE_PLANKS"],
                     ["JUNGLE PRESSURE PLATE", "JUNGLE_PRESSURE_PLATE"],
                     ["JUNGLE SAPLING", "JUNGLE_SAPLING"],
                     ["JUNGLE SIGN", "JUNGLE_SIGN"],
                     ["JUNGLE WALL HANGING SIGN", "JUNGLE_WALL_HANGING_SIGN"],
                     ["JUNGLE WALL SIGN", "JUNGLE_WALL_SIGN"],
-                    ["JUNGLE WOOD", "JUNGLE_WOOD"],
                     ["KELP", "KELP"],
                     ["KELP PLANT", "KELP_PLANT"],
                     ["KNOWLEDGE BOOK", "KNOWLEDGE_BOOK"],
@@ -1135,10 +1200,8 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["LANTERN", "LANTERN"],
                     ["LAPIS BLOCK", "LAPIS_BLOCK"],
                     ["LAPIS LAZULI", "LAPIS_LAZULI"],
-                    ["LAPIS ORE", "LAPIS_ORE"],
                     ["LARGE AMETHYST BUD", "LARGE_AMETHYST_BUD"],
                     ["LARGE FERN", "LARGE_FERN"],
-                    ["LAVA", "LAVA"],
                     ["LAVA BUCKET", "LAVA_BUCKET"],
                     ["LAVA CAULDRON", "LAVA_CAULDRON"],
                     ["LEAD", "LEAD"],
@@ -1149,8 +1212,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["LEATHER HELMET", "LEATHER_HELMET"],
                     ["LEATHER HORSE ARMOR", "LEATHER_HORSE_ARMOR"],
                     ["LEATHER LEGGINGS", "LEATHER_LEGGINGS"],
-                    ["LECTERN", "LECTERN"],
-                    ["LEVER", "LEVER"],
                     ["LIGHT", "LIGHT"],
                     ["LIGHTNING ROD", "LIGHTNING_ROD"],
                     ["LIGHT BLUE BUNDLE", "LIGHT_BLUE_BUNDLE"],
@@ -1166,6 +1227,7 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["LIME BUNDLE", "LIME_BUNDLE"],
                     ["LIME CANDLE CAKE", "LIME_CANDLE_CAKE"],
                     ["LIME DYE", "LIME_DYE"],
+                    ["LINGERING POTION", "LINGERING_POTION"],
                     ["LLAMA SPAWN EGG", "LLAMA_SPAWN_EGG"],
                     ["LODESTONE", "LODESTONE"],
                     ["LOOM", "LOOM"],
@@ -1173,21 +1235,19 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["MAGENTA BUNDLE", "MAGENTA_BUNDLE"],
                     ["MAGENTA CANDLE CAKE", "MAGENTA_CANDLE_CAKE"],
                     ["MAGENTA DYE", "MAGENTA_DYE"],
-                    ["MAGMA BLOCK", "MAGMA_BLOCK"],
                     ["MAGMA CREAM", "MAGMA_CREAM"],
                     ["MAGMA CUBE SPAWN EGG", "MAGMA_CUBE_SPAWN_EGG"],
+                    ["MANGROVE BOAT", "MANGROVE_BOAT"],
                     ["MANGROVE BUTTON", "MANGROVE_BUTTON"],
+                    ["MANGROVE CHEST BOAT", "MANGROVE_CHEST_BOAT"],
                     ["MANGROVE HANGING SIGN", "MANGROVE_HANGING_SIGN"],
                     ["MANGROVE LEAVES", "MANGROVE_LEAVES"],
-                    ["MANGROVE LOG", "MANGROVE_LOG"],
-                    ["MANGROVE PLANKS", "MANGROVE_PLANKS"],
                     ["MANGROVE PRESSURE PLATE", "MANGROVE_PRESSURE_PLATE"],
                     ["MANGROVE PROPAGULE", "MANGROVE_PROPAGULE"],
                     ["MANGROVE ROOTS", "MANGROVE_ROOTS"],
                     ["MANGROVE SIGN", "MANGROVE_SIGN"],
                     ["MANGROVE WALL HANGING SIGN", "MANGROVE_WALL_HANGING_SIGN"],
                     ["MANGROVE WALL SIGN", "MANGROVE_WALL_SIGN"],
-                    ["MANGROVE WOOD", "MANGROVE_WOOD"],
                     ["MAP", "MAP"],
                     ["MEDIUM AMETHYST BUD", "MEDIUM_AMETHYST_BUD"],
                     ["MELON", "MELON"],
@@ -1195,18 +1255,17 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["MELON SLICE", "MELON_SLICE"],
                     ["MELON STEM", "MELON_STEM"],
                     ["MILK BUCKET", "MILK_BUCKET"],
+                    ["MINECART", "MINECART"],
                     ["MINER POTTERY SHERD", "MINER_POTTERY_SHERD"],
                     ["MOJANG BANNER PATTERN", "MOJANG_BANNER_PATTERN"],
                     ["MOOSHROOM SPAWN EGG", "MOOSHROOM_SPAWN_EGG"],
                     ["MOSSY COBBLESTONE", "MOSSY_COBBLESTONE"],
-                    ["MOSSY STONE BRICKS", "MOSSY_STONE_BRICKS"],
                     ["MOSS BLOCK", "MOSS_BLOCK"],
                     ["MOSS CARPET", "MOSS_CARPET"],
                     ["MOURNER POTTERY SHERD", "MOURNER_POTTERY_SHERD"],
                     ["MOVING PISTON", "MOVING_PISTON"],
                     ["MUD", "MUD"],
                     ["MUDDY MANGROVE ROOTS", "MUDDY_MANGROVE_ROOTS"],
-                    ["MUD BRICKS", "MUD_BRICKS"],
                     ["MULE SPAWN EGG", "MULE_SPAWN_EGG"],
                     ["MUSHROOM STEM", "MUSHROOM_STEM"],
                     ["MUSHROOM STEW", "MUSHROOM_STEW"],
@@ -1230,7 +1289,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["MUSIC DISC WAIT", "MUSIC_DISC_WAIT"],
                     ["MUSIC DISC WARD", "MUSIC_DISC_WARD"],
                     ["MUTTON", "MUTTON"],
-                    ["MYCELIUM", "MYCELIUM"],
                     ["NAME TAG", "NAME_TAG"],
                     ["NAUTILUS SHELL", "NAUTILUS_SHELL"],
                     ["NETHERITE AXE", "NETHERITE_AXE"],
@@ -1248,28 +1306,21 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["NETHERITE UPGRADE SMITHING TEMPLATE", "NETHERITE_UPGRADE_SMITHING_TEMPLATE"],
                     ["NETHERRACK", "NETHERRACK"],
                     ["NETHER BRICK", "NETHER_BRICK"],
-                    ["NETHER BRICKS", "NETHER_BRICKS"],
-                    ["NETHER GOLD ORE", "NETHER_GOLD_ORE"],
                     ["NETHER PORTAL", "NETHER_PORTAL"],
-                    ["NETHER QUARTZ ORE", "NETHER_QUARTZ_ORE"],
                     ["NETHER SPROUTS", "NETHER_SPROUTS"],
                     ["NETHER STAR", "NETHER_STAR"],
                     ["NETHER WART", "NETHER_WART"],
                     ["NETHER WART BLOCK", "NETHER_WART_BLOCK"],
-                    ["NOTE BLOCK", "NOTE_BLOCK"],
+                    ["OAK BOAT", "OAK_BOAT"],
                     ["OAK BUTTON", "OAK_BUTTON"],
+                    ["OAK CHEST BOAT", "OAK_CHEST_BOAT"],
                     ["OAK HANGING SIGN", "OAK_HANGING_SIGN"],
                     ["OAK LEAVES", "OAK_LEAVES"],
-                    ["OAK LOG", "OAK_LOG"],
-                    ["OAK PLANKS", "OAK_PLANKS"],
                     ["OAK PRESSURE PLATE", "OAK_PRESSURE_PLATE"],
                     ["OAK SAPLING", "OAK_SAPLING"],
                     ["OAK SIGN", "OAK_SIGN"],
                     ["OAK WALL HANGING SIGN", "OAK_WALL_HANGING_SIGN"],
                     ["OAK WALL SIGN", "OAK_WALL_SIGN"],
-                    ["OAK WOOD", "OAK_WOOD"],
-                    ["OBSERVER", "OBSERVER"],
-                    ["OBSIDIAN", "OBSIDIAN"],
                     ["OCELOT SPAWN EGG", "OCELOT_SPAWN_EGG"],
                     ["OCHRE FROGLIGHT", "OCHRE_FROGLIGHT"],
                     ["OMINOUS BOTTLE", "OMINOUS_BOTTLE"],
@@ -1285,12 +1336,14 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["OXIDIZED COPPER BULB", "OXIDIZED_COPPER_BULB"],
                     ["OXIDIZED COPPER GRATE", "OXIDIZED_COPPER_GRATE"],
                     ["OXIDIZED CUT COPPER", "OXIDIZED_CUT_COPPER"],
-                    ["PACKED ICE", "PACKED_ICE"],
                     ["PACKED MUD", "PACKED_MUD"],
+                    ["PAINTING", "PAINTING"],
                     ["PALE HANGING MOSS", "PALE_HANGING_MOSS"],
                     ["PALE MOSS BLOCK", "PALE_MOSS_BLOCK"],
                     ["PALE MOSS CARPET", "PALE_MOSS_CARPET"],
+                    ["PALE OAK BOAT", "PALE_OAK_BOAT"],
                     ["PALE OAK BUTTON", "PALE_OAK_BUTTON"],
+                    ["PALE OAK CHEST BOAT", "PALE_OAK_CHEST_BOAT"],
                     ["PALE OAK HANGING SIGN", "PALE_OAK_HANGING_SIGN"],
                     ["PALE OAK LEAVES", "PALE_OAK_LEAVES"],
                     ["PALE OAK LOG", "PALE_OAK_LOG"],
@@ -1320,7 +1373,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["PINK DYE", "PINK_DYE"],
                     ["PINK PETALS", "PINK_PETALS"],
                     ["PINK TULIP", "PINK_TULIP"],
-                    ["PISTON", "PISTON"],
                     ["PISTON HEAD", "PISTON_HEAD"],
                     ["PITCHER CROP", "PITCHER_CROP"],
                     ["PITCHER PLANT", "PITCHER_PLANT"],
@@ -1328,14 +1380,12 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["PLAYER HEAD", "PLAYER_HEAD"],
                     ["PLAYER WALL HEAD", "PLAYER_WALL_HEAD"],
                     ["PLENTY POTTERY SHERD", "PLENTY_POTTERY_SHERD"],
-                    ["PODZOL", "PODZOL"],
                     ["POINTED DRIPSTONE", "POINTED_DRIPSTONE"],
                     ["POISONOUS POTATO", "POISONOUS_POTATO"],
                     ["POLAR BEAR SPAWN EGG", "POLAR_BEAR_SPAWN_EGG"],
                     ["POLISHED ANDESITE", "POLISHED_ANDESITE"],
                     ["POLISHED BASALT", "POLISHED_BASALT"],
                     ["POLISHED BLACKSTONE", "POLISHED_BLACKSTONE"],
-                    ["POLISHED BLACKSTONE BRICKS", "POLISHED_BLACKSTONE_BRICKS"],
                     ["POLISHED BLACKSTONE BUTTON", "POLISHED_BLACKSTONE_BUTTON"],
                     ["POLISHED BLACKSTONE PRESSURE PLATE", "POLISHED_BLACKSTONE_PRESSURE_PLATE"],
                     ["POLISHED DEEPSLATE", "POLISHED_DEEPSLATE"],
@@ -1388,12 +1438,12 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["POWDER SNOW", "POWDER_SNOW"],
                     ["POWDER SNOW BUCKET", "POWDER_SNOW_BUCKET"],
                     ["POWDER SNOW CAULDRON", "POWDER_SNOW_CAULDRON"],
-                    ["POWERED RAIL", "POWERED_RAIL"],
                     ["PRISMARINE", "PRISMARINE"],
                     ["PRISMARINE BRICKS", "PRISMARINE_BRICKS"],
                     ["PRISMARINE CRYSTALS", "PRISMARINE_CRYSTALS"],
                     ["PRISMARINE SHARD", "PRISMARINE_SHARD"],
                     ["PRIZE POTTERY SHERD", "PRIZE_POTTERY_SHERD"],
+                    ["PUFFERFISH", "PUFFERFISH"],
                     ["PUFFERFISH BUCKET", "PUFFERFISH_BUCKET"],
                     ["PUFFERFISH SPAWN EGG", "PUFFERFISH_SPAWN_EGG"],
                     ["PUMPKIN", "PUMPKIN"],
@@ -1407,13 +1457,12 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["PURPUR PILLAR", "PURPUR_PILLAR"],
                     ["QUARTZ", "QUARTZ"],
                     ["QUARTZ BLOCK", "QUARTZ_BLOCK"],
-                    ["QUARTZ BRICKS", "QUARTZ_BRICKS"],
                     ["QUARTZ PILLAR", "QUARTZ_PILLAR"],
+                    ["RABBIT", "RABBIT"],
                     ["RABBIT FOOT", "RABBIT_FOOT"],
                     ["RABBIT HIDE", "RABBIT_HIDE"],
                     ["RABBIT SPAWN EGG", "RABBIT_SPAWN_EGG"],
                     ["RABBIT STEW", "RABBIT_STEW"],
-                    ["RAIL", "RAIL"],
                     ["RAISER ARMOR TRIM SMITHING TEMPLATE", "RAISER_ARMOR_TRIM_SMITHING_TEMPLATE"],
                     ["RAVAGER SPAWN EGG", "RAVAGER_SPAWN_EGG"],
                     ["RAW COPPER", "RAW_COPPER"],
@@ -1424,23 +1473,15 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["RAW IRON BLOCK", "RAW_IRON_BLOCK"],
                     ["RECOVERY COMPASS", "RECOVERY_COMPASS"],
                     ["REDSTONE", "REDSTONE"],
-                    ["REDSTONE BLOCK", "REDSTONE_BLOCK"],
-                    ["REDSTONE LAMP", "REDSTONE_LAMP"],
-                    ["REDSTONE ORE", "REDSTONE_ORE"],
-                    ["REDSTONE TORCH", "REDSTONE_TORCH"],
                     ["REDSTONE WALL TORCH", "REDSTONE_WALL_TORCH"],
-                    ["REDSTONE WIRE", "REDSTONE_WIRE"],
                     ["RED BUNDLE", "RED_BUNDLE"],
                     ["RED CANDLE CAKE", "RED_CANDLE_CAKE"],
                     ["RED DYE", "RED_DYE"],
                     ["RED MUSHROOM", "RED_MUSHROOM"],
                     ["RED MUSHROOM BLOCK", "RED_MUSHROOM_BLOCK"],
-                    ["RED NETHER BRICKS", "RED_NETHER_BRICKS"],
-                    ["RED SAND", "RED_SAND"],
                     ["RED SANDSTONE", "RED_SANDSTONE"],
                     ["RED TULIP", "RED_TULIP"],
                     ["REINFORCED DEEPSLATE", "REINFORCED_DEEPSLATE"],
-                    ["REPEATER", "REPEATER"],
                     ["REPEATING COMMAND BLOCK", "REPEATING_COMMAND_BLOCK"],
                     ["RESIN BLOCK", "RESIN_BLOCK"],
                     ["RESIN BRICK", "RESIN_BRICK"],
@@ -1448,13 +1489,12 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["RESIN CLUMP", "RESIN_CLUMP"],
                     ["RESPAWN ANCHOR", "RESPAWN_ANCHOR"],
                     ["RIB ARMOR TRIM SMITHING TEMPLATE", "RIB_ARMOR_TRIM_SMITHING_TEMPLATE"],
-                    ["ROOTED DIRT", "ROOTED_DIRT"],
                     ["ROSE BUSH", "ROSE_BUSH"],
                     ["ROTTEN FLESH", "ROTTEN_FLESH"],
                     ["SADDLE", "SADDLE"],
+                    ["SALMON", "SALMON"],
                     ["SALMON BUCKET", "SALMON_BUCKET"],
                     ["SALMON SPAWN EGG", "SALMON_SPAWN_EGG"],
-                    ["SAND", "SAND"],
                     ["SANDSTONE", "SANDSTONE"],
                     ["SCAFFOLDING", "SCAFFOLDING"],
                     ["SCRAPE POTTERY SHERD", "SCRAPE_POTTERY_SHERD"],
@@ -1488,7 +1528,6 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["SKULL BANNER PATTERN", "SKULL_BANNER_PATTERN"],
                     ["SKULL POTTERY SHERD", "SKULL_POTTERY_SHERD"],
                     ["SLIME BALL", "SLIME_BALL"],
-                    ["SLIME BLOCK", "SLIME_BLOCK"],
                     ["SLIME SPAWN EGG", "SLIME_SPAWN_EGG"],
                     ["SMALL AMETHYST BUD", "SMALL_AMETHYST_BUD"],
                     ["SMALL DRIPLEAF", "SMALL_DRIPLEAF"],
@@ -1503,8 +1542,7 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["SNIFFER SPAWN EGG", "SNIFFER_SPAWN_EGG"],
                     ["SNORT POTTERY SHERD", "SNORT_POTTERY_SHERD"],
                     ["SNOUT ARMOR TRIM SMITHING TEMPLATE", "SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE"],
-                    ["SNOW", "SNOW"],
-                    ["SNOW BLOCK", "SNOW_BLOCK"],
+                    ["SNOWBALL", "SNOWBALL"],
                     ["SNOW GOLEM SPAWN EGG", "SNOW_GOLEM_SPAWN_EGG"],
                     ["SOUL CAMPFIRE", "SOUL_CAMPFIRE"],
                     ["SOUL FIRE", "SOUL_FIRE"],
@@ -1514,30 +1552,28 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["SOUL TORCH", "SOUL_TORCH"],
                     ["SOUL WALL TORCH", "SOUL_WALL_TORCH"],
                     ["SPAWNER", "SPAWNER"],
+                    ["SPECTRAL ARROW", "SPECTRAL_ARROW"],
                     ["SPIDER EYE", "SPIDER_EYE"],
                     ["SPIDER SPAWN EGG", "SPIDER_SPAWN_EGG"],
                     ["SPIRE ARMOR TRIM SMITHING TEMPLATE", "SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE"],
+                    ["SPLASH POTION", "SPLASH_POTION"],
                     ["SPONGE", "SPONGE"],
                     ["SPORE BLOSSOM", "SPORE_BLOSSOM"],
+                    ["SPRUCE BOAT", "SPRUCE_BOAT"],
                     ["SPRUCE BUTTON", "SPRUCE_BUTTON"],
+                    ["SPRUCE CHEST BOAT", "SPRUCE_CHEST_BOAT"],
                     ["SPRUCE HANGING SIGN", "SPRUCE_HANGING_SIGN"],
                     ["SPRUCE LEAVES", "SPRUCE_LEAVES"],
-                    ["SPRUCE LOG", "SPRUCE_LOG"],
-                    ["SPRUCE PLANKS", "SPRUCE_PLANKS"],
                     ["SPRUCE PRESSURE PLATE", "SPRUCE_PRESSURE_PLATE"],
                     ["SPRUCE SAPLING", "SPRUCE_SAPLING"],
                     ["SPRUCE SIGN", "SPRUCE_SIGN"],
                     ["SPRUCE WALL HANGING SIGN", "SPRUCE_WALL_HANGING_SIGN"],
                     ["SPRUCE WALL SIGN", "SPRUCE_WALL_SIGN"],
-                    ["SPRUCE WOOD", "SPRUCE_WOOD"],
                     ["SPYGLASS", "SPYGLASS"],
                     ["SQUID SPAWN EGG", "SQUID_SPAWN_EGG"],
                     ["STICK", "STICK"],
-                    ["STICKY PISTON", "STICKY_PISTON"],
-                    ["STONE", "STONE"],
                     ["STONECUTTER", "STONECUTTER"],
                     ["STONE AXE", "STONE_AXE"],
-                    ["STONE BRICKS", "STONE_BRICKS"],
                     ["STONE BUTTON", "STONE_BUTTON"],
                     ["STONE HOE", "STONE_HOE"],
                     ["STONE PICKAXE", "STONE_PICKAXE"],
@@ -1547,29 +1583,8 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["STRAY SPAWN EGG", "STRAY_SPAWN_EGG"],
                     ["STRIDER SPAWN EGG", "STRIDER_SPAWN_EGG"],
                     ["STRING", "STRING"],
-                    ["STRIPPED ACACIA LOG", "STRIPPED_ACACIA_LOG"],
-                    ["STRIPPED ACACIA WOOD", "STRIPPED_ACACIA_WOOD"],
-                    ["STRIPPED BAMBOO BLOCK", "STRIPPED_BAMBOO_BLOCK"],
-                    ["STRIPPED BIRCH LOG", "STRIPPED_BIRCH_LOG"],
-                    ["STRIPPED BIRCH WOOD", "STRIPPED_BIRCH_WOOD"],
-                    ["STRIPPED CHERRY LOG", "STRIPPED_CHERRY_LOG"],
-                    ["STRIPPED CHERRY WOOD", "STRIPPED_CHERRY_WOOD"],
-                    ["STRIPPED CRIMSON HYPHAE", "STRIPPED_CRIMSON_HYPHAE"],
-                    ["STRIPPED CRIMSON STEM", "STRIPPED_CRIMSON_STEM"],
-                    ["STRIPPED DARK OAK LOG", "STRIPPED_DARK_OAK_LOG"],
-                    ["STRIPPED DARK OAK WOOD", "STRIPPED_DARK_OAK_WOOD"],
-                    ["STRIPPED JUNGLE LOG", "STRIPPED_JUNGLE_LOG"],
-                    ["STRIPPED JUNGLE WOOD", "STRIPPED_JUNGLE_WOOD"],
-                    ["STRIPPED MANGROVE LOG", "STRIPPED_MANGROVE_LOG"],
-                    ["STRIPPED MANGROVE WOOD", "STRIPPED_MANGROVE_WOOD"],
-                    ["STRIPPED OAK LOG", "STRIPPED_OAK_LOG"],
-                    ["STRIPPED OAK WOOD", "STRIPPED_OAK_WOOD"],
                     ["STRIPPED PALE OAK LOG", "STRIPPED_PALE_OAK_LOG"],
                     ["STRIPPED PALE OAK WOOD", "STRIPPED_PALE_OAK_WOOD"],
-                    ["STRIPPED SPRUCE LOG", "STRIPPED_SPRUCE_LOG"],
-                    ["STRIPPED SPRUCE WOOD", "STRIPPED_SPRUCE_WOOD"],
-                    ["STRIPPED WARPED HYPHAE", "STRIPPED_WARPED_HYPHAE"],
-                    ["STRIPPED WARPED STEM", "STRIPPED_WARPED_STEM"],
                     ["STRUCTURE BLOCK", "STRUCTURE_BLOCK"],
                     ["STRUCTURE VOID", "STRUCTURE_VOID"],
                     ["SUGAR", "SUGAR"],
@@ -1585,14 +1600,13 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["TALL DRY GRASS", "TALL_DRY_GRASS"],
                     ["TALL GRASS", "TALL_GRASS"],
                     ["TALL SEAGRASS", "TALL_SEAGRASS"],
-                    ["TARGET", "TARGET"],
                     ["TERRACOTTA", "TERRACOTTA"],
                     ["TEST BLOCK", "TEST_BLOCK"],
                     ["TEST INSTANCE BLOCK", "TEST_INSTANCE_BLOCK"],
                     ["TIDE ARMOR TRIM SMITHING TEMPLATE", "TIDE_ARMOR_TRIM_SMITHING_TEMPLATE"],
-                    ["TINTED GLASS", "TINTED_GLASS"],
                     ["TIPPED ARROW", "TIPPED_ARROW"],
                     ["TNT", "TNT"],
+                    ["TNT MINECART", "TNT_MINECART"],
                     ["TORCH", "TORCH"],
                     ["TORCHFLOWER", "TORCHFLOWER"],
                     ["TORCHFLOWER CROP", "TORCHFLOWER_CROP"],
@@ -1602,15 +1616,15 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["TRAPPED CHEST", "TRAPPED_CHEST"],
                     ["TRIAL KEY", "TRIAL_KEY"],
                     ["TRIAL SPAWNER", "TRIAL_SPAWNER"],
+                    ["TRIDENT", "TRIDENT"],
                     ["TRIPWIRE", "TRIPWIRE"],
-                    ["TRIPWIRE HOOK", "TRIPWIRE_HOOK"],
+                    ["TROPICAL FISH", "TROPICAL_FISH"],
                     ["TROPICAL FISH BUCKET", "TROPICAL_FISH_BUCKET"],
                     ["TROPICAL FISH SPAWN EGG", "TROPICAL_FISH_SPAWN_EGG"],
                     ["TUBE CORAL", "TUBE_CORAL"],
                     ["TUBE CORAL BLOCK", "TUBE_CORAL_BLOCK"],
                     ["TUBE CORAL FAN", "TUBE_CORAL_FAN"],
                     ["TUBE CORAL WALL FAN", "TUBE_CORAL_WALL_FAN"],
-                    ["TUFF", "TUFF"],
                     ["TUFF BRICKS", "TUFF_BRICKS"],
                     ["TURTLE EGG", "TURTLE_EGG"],
                     ["TURTLE HELMET", "TURTLE_HELMET"],
@@ -1634,17 +1648,13 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["WARPED FUNGUS", "WARPED_FUNGUS"],
                     ["WARPED FUNGUS ON A STICK", "WARPED_FUNGUS_ON_A_STICK"],
                     ["WARPED HANGING SIGN", "WARPED_HANGING_SIGN"],
-                    ["WARPED HYPHAE", "WARPED_HYPHAE"],
                     ["WARPED NYLIUM", "WARPED_NYLIUM"],
-                    ["WARPED PLANKS", "WARPED_PLANKS"],
                     ["WARPED PRESSURE PLATE", "WARPED_PRESSURE_PLATE"],
                     ["WARPED ROOTS", "WARPED_ROOTS"],
                     ["WARPED SIGN", "WARPED_SIGN"],
-                    ["WARPED STEM", "WARPED_STEM"],
                     ["WARPED WALL HANGING SIGN", "WARPED_WALL_HANGING_SIGN"],
                     ["WARPED WALL SIGN", "WARPED_WALL_SIGN"],
                     ["WARPED WART BLOCK", "WARPED_WART_BLOCK"],
-                    ["WATER", "WATER"],
                     ["WATER BUCKET", "WATER_BUCKET"],
                     ["WATER CAULDRON", "WATER_CAULDRON"],
                     ["WAXED CHISELED COPPER", "WAXED_CHISELED_COPPER"],
@@ -1684,6 +1694,7 @@ export function defineMineCraftMaterialBlocks(Blockly) {
                     ["WHITE TULIP", "WHITE_TULIP"],
                     ["WILDFLOWERS", "WILDFLOWERS"],
                     ["WILD ARMOR TRIM SMITHING TEMPLATE", "WILD_ARMOR_TRIM_SMITHING_TEMPLATE"],
+                    ["WIND CHARGE", "WIND_CHARGE"],
                     ["WITCH SPAWN EGG", "WITCH_SPAWN_EGG"],
                     ["WITHER ROSE", "WITHER_ROSE"],
                     ["WITHER SKELETON SKULL", "WITHER_SKELETON_SKULL"],

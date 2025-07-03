@@ -57,7 +57,6 @@
                             &times;
                         </button>
                     </div>
-
                     <form class="power-params" :id="`form-${power.power_id}`" x-ref="paramsForm">
                         <template x-for="param in power.parameters" :key="param.name">
                             <div class="param-control">
@@ -71,88 +70,41 @@
                                 </template>
 
                                 <template x-if="param.type === 'Block'">
-                                    <select :name="param.name" x-model="formValues[param.name]">
-                                        <option value="STONE">Stone</option>
-                                        <option value="OAK_PLANKS">Oak Planks</option>
-                                        <option value="GLASS">Glass</option>
-                                        <option value="DIAMOND_BLOCK">Diamond Block</option>
-                                    </select>
+                                    <div class="custom-picker"
+                                         x-data="materialPicker(param.default, param.name)"
+                                         @click.outside="isOpen = false">
+
+                                        <input type="hidden" :name="paramName" x-model="selected">
+
+                                        <button type="button" class="picker-trigger" @click="isOpen = !isOpen">
+                                            <span x-text="selected.replace(/_/g, ' ')"></span>
+                                            <span>&#9660;</span>
+                                        </button>
+
+                                        <div class="picker-dropdown" x-show="isOpen" x-transition x-cloak>
+                                            <input type="text" x-model="filter" placeholder="Filter blocks..." class="picker-filter">
+                                            <div class="picker-options">
+                                                <template x-for="category in Object.keys($store.materials.groups)">
+                                                    <div class="picker-category">
+                                                        <strong x-text="category.replace(/_/g, ' ')"></strong>
+                                                        <ul>
+                                                            <template x-for="block in $store.materials.groups[category]">
+                                                                <li x-show="!filter || block.toLowerCase().includes(filter.toLowerCase())">
+                                                                    <button type="button"
+                                                                            @click="selected = block; isOpen = false;"
+                                                                            x-text="block.replace(/_/g, ' ')"></button>
+                                                                </li>
+                                                            </template>
+                                                        </ul>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </template>
-                            </div>
+                                </div>
                         </template>
                     </form>
-
-                    <div class="power-status"
-                         x-text="getStatusForWidget(widget.power_id).status === 'error' ?
-                                 `Error: ${getStatusForWidget(widget.power_id).message}` :
-                                 `Status: ${getStatusForWidget(widget.power_id).status}`">
-                        Status: Idle
-                    </div>
-<!--                    <div class="widget-main-actions">-->
-<!--                        <button class="execute-btn"-->
-<!--                                :disabled="status === 'running'"-->
-<!--                                @click="executePower()">-->
-<!--                            Execute-->
-<!--                        </button>-->
-
-<!--                        <template x-if="status === 'running' && currentExecutionId">-->
-<!--                            <button class="btn-small btn-danger cancel-btn"-->
-<!--                                    @click="cancelPower()">-->
-<!--                                Cancel-->
-<!--                            </button>-->
-<!--                        </template>-->
-<!--                    </div>-->
-                       <div class="widget-main-actions">
-                                <template x-if="status !== 'running'">
-                                    <button class="execute-btn" @click="executePower()">
-                                        Execute
-                                    </button>
-                                </template>
-
-                                <template x-if="status === 'running' && currentExecutionId">
-                                    <button class="btn-small btn-danger cancel-btn" @click="cancelPower()">
-                                        Cancel
-                                    </button>
-                                </template>
-                        </div>
-<!--                    <div class="widget-main-actions">-->
-<!--                        <button class="execute-btn"-->
-<!--                                :disabled="getStatusForWidget(widget.power_id).status === 'running'"-->
-<!--                                hx-post="/api/execute_power"-->
-<!--                                :hx-include="`#form-${widget.power_id}`"-->
-<!--                                :hx-vals="`js:{power_id: '${widget.power_id}'}`">-->
-<!--                            Execute-->
-<!--                        </button>-->
-
-<!--                        <template x-if="getStatusForWidget(widget.power_id).status === 'running'">-->
-<!--                            <button class="btn-small btn-danger cancel-btn"-->
-<!--                                    hx-post="/api/cancel_power"-->
-<!--                                    hx-ext="json-enc"-->
-<!--                                    :hx-vals="`{ 'execution_id': '${getStatusForWidget(widget.power_id).execution_id}' }`">-->
-<!--                                Cancel-->
-<!--                            </button>-->
-<!--                        </template>-->
-<!--                    </div>-->
-                </div>
-            </template>
-
-<!--            <template x-for="widget in layout.widgets" :key="widget.power_id">-->
-
-<!--                <div class="power-widget"-->
-<!--                     :id="`widget-${power.power_id}`"-->
-<!--                     x-data="powerWidget(powers[widget.power_id])"-->
-<!--                     @update-status.stop="updateStatus($event.detail.status, $event.detail.executionId, $event.detail.message)"-->
-<!--                     :class="{ 'is-running': status === 'running', 'has-error': status === 'error' }">-->
-
-<!--                    <div class="power-header">-->
-<!--                        <span class="power-name" x-text="power.name"></span>-->
-<!--                        <button class="remove-widget-btn"-->
-<!--                                x-show="isEditing"-->
-<!--                                @click.stop="removeWidget()">-->
-<!--                            &times;-->
-<!--                        </button>-->
-<!--                    </div>-->
-
 <!--                    <form class="power-params" :id="`form-${power.power_id}`" x-ref="paramsForm">-->
 <!--                        <template x-for="param in power.parameters" :key="param.name">-->
 <!--                            <div class="param-control">-->
@@ -166,37 +118,87 @@
 <!--                                </template>-->
 
 <!--                                <template x-if="param.type === 'Block'">-->
-<!--                                    <select :name="param.name" x-model="formValues[param.name]">-->
-<!--                                        <option value="STONE">Stone</option>-->
-<!--                                        <option value="OAK_PLANKS">Oak Planks</option>-->
-<!--                                        <option value="GLASS">Glass</option>-->
-<!--                                        <option value="DIAMOND_BLOCK">Diamond Block</option>-->
-<!--                                    </select>-->
+<!--                                    <div class="custom-picker" x-data="{-->
+<!--                                        isOpen: false,-->
+<!--                                        selected: '{{ param.default or 'STONE' }}',-->
+<!--                                        materialGroups: $root.__x.data.materialGroups,-->
+<!--                                        filter: ''-->
+<!--                                        }" @click.outside="isOpen = false">-->
+
+<!--                                        <input type="hidden" :name="param.name" x-model="selected">-->
+
+<!--                                        <button type="button" class="picker-trigger" @click="isOpen = !isOpen">-->
+<!--                                            <span x-text="selected"></span>-->
+<!--                                            <span>▼</span>-->
+<!--                                        </button>-->
+
+<!--                                        <div class="picker-dropdown" x-show="isOpen" x-transition>-->
+<!--                                            <input type="text" x-model="filter" placeholder="Filter blocks..." class="picker-filter">-->
+
+<!--                                            <div class="picker-dropdown" x-show="isOpen" x-transition x-cloak>-->
+<!--                                                <input type="text" x-model="filter" placeholder="Filter blocks..." class="picker-filter">-->
+<!--                                                <div class="picker-options">-->
+<!--                                                    <template x-for="category in Object.keys($store.materials.groups)">-->
+<!--                                                        <div class="picker-category">-->
+<!--                                                            <strong x-text="category.replace(/_/g, ' ')"></strong>-->
+<!--                                                            <ul>-->
+<!--                                                                <template x-for="block in $store.materials.groups[category]">-->
+<!--                                                                    <li x-show="!filter || block.toLowerCase().includes(filter.toLowerCase())">-->
+<!--                                                                        <button type="button"-->
+<!--                                                                                @click="selected = block; isOpen = false;"-->
+<!--                                                                                x-text="block.replace(/_/g, ' ')"></button>-->
+<!--                                                                    </li>-->
+<!--                                                                </template>-->
+<!--                                                            </ul>-->
+<!--                                                        </div>-->
+<!--                                                    </template>-->
+<!--                                                </div>-->
+
+<!--&lt;!&ndash;                                            <div class="picker-options">&ndash;&gt;-->
+<!--&lt;!&ndash;                                                <template x-for="category in Object.keys(materialGroups)">&ndash;&gt;-->
+<!--&lt;!&ndash;                                                    <div class="picker-category">&ndash;&gt;-->
+<!--&lt;!&ndash;                                                        <strong x-text="category.replace(/_/g, ' ')"></strong>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                        <ul>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                            <template x-for="block in materialGroups[category]">&ndash;&gt;-->
+<!--&lt;!&ndash;                                                                <li x-show="!filter || block.toLowerCase().includes(filter.toLowerCase())">&ndash;&gt;-->
+<!--&lt;!&ndash;                                                                    <button type="button" @click="selected = block; isOpen = false;" x-text="block"></button>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                                </li>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                            </template>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                        </ul>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                    </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                                                </template>&ndash;&gt;-->
+<!--&lt;!&ndash;                                            </div>&ndash;&gt;-->
+<!--&lt;!&ndash;                                        </div>&ndash;&gt;-->
+<!--                                    </div>-->
+
 <!--                                </template>-->
-<!--                                </div>-->
+<!--                            </div>-->
 <!--                        </template>-->
 <!--                    </form>-->
 
-<!--                    <div class="power-status"-->
-<!--                         x-text="status === 'error' ? `Error: ${errorMessage}` : `Status: ${status}`">Status: Idle</div>-->
+                    <div class="power-status"
+                         x-text="getStatusForWidget(widget.power_id).status === 'error' ?
+                                 `Error: ${getStatusForWidget(widget.power_id).message}` :
+                                 `Status: ${getStatusForWidget(widget.power_id).status}`">
+                        Status: Idle
+                    </div>
 
-<!--                    <div class="widget-main-actions">-->
-<!--                        <template x-if="status !== 'running'">-->
-<!--                            <button class="execute-btn" @click="executePower()">-->
-<!--                                Execute-->
-<!--                            </button>-->
-<!--                        </template>-->
+                       <div class="widget-main-actions">
+                                <template x-if="status !== 'running'">
+                                    <button class="execute-btn" @click="executePower()">
+                                        Execute
+                                    </button>
+                                </template>
 
-<!--                        <template x-if="status === 'running'">-->
-<!--                            <button class="btn-small btn-danger cancel-btn" @click="cancelPower()">-->
-<!--                                Cancel-->
-<!--                            </button>-->
-<!--                        </template>-->
-<!--                    </div>-->
+                                <template x-if="status === 'running' && currentExecutionId">
+                                    <button class="btn-small btn-danger cancel-btn" @click="cancelPower()">
+                                        Cancel
+                                    </button>
+                                </template>
+                        </div>
 
-<!--                </div>-->
-<!--            </template>-->
-
+                </div>
+            </template>
         </div>
     </main>
     <script type="module" src="./control.js"></script>

@@ -1,15 +1,7 @@
 import Alpine from 'alpinejs';
-import Sortable from 'sortablejs'; // For drag-and-drop later
+import Sortable from 'sortablejs';
 
 import htmx from 'htmx.org'
-// import 'htmx.org'; // Keep for executing powers
-// 1. Import all exports from the htmx.org package into a namespace variable called `htmx`.
-// import * as htmx from 'htmx.org';
-// import 'htmx-ext-json-enc';
-
-// 2. Manually attach the imported htmx object to the global window object.
-//    This makes it accessible to the hx-* attributes in your HTML.
-// window.htmx = htmx;
 
 import { io } from "socket.io-client"; // <-- Import the io function
 
@@ -24,42 +16,41 @@ socket.on('disconnect', () => {
     console.log('Control UI disconnected from Socket.IO server.');
 });
 
-// // --- Set up a global listener for power status updates ---
-// socket.on('power_status', (data) => {
-//     console.log('Received power status update:', data);
-//
-//     // Look up the specific widget instance in our registry
-//     const widgetInstance = WIDGET_REGISTRY[data.id];
-//    // Find the specific widget element on the page
-//     //const widgetElement = document.getElementById(`widget-${data.id}`);
-//
-//     if (widgetInstance) {
-//         // If we found it, call its updateStatus method directly.
-//         // This is guaranteed to work and avoids any DOM race conditions.
-//         widgetInstance.updateStatus(data.status, data.execution_id, data.message || '');
-//     } else {
-//         console.warn(`Could not find a registered widget for power ID: ${data.id}`);
-//     }
-// });
-
-// socket.on('power_status', (data) => {
-//     console.log('Received power status update:', data);
-//     // data should look like: {id: "power-id-abc", execution_id: "...", status: "finished", message: ""}
-//
-//     // Find the specific widget element on the page
-//     const widgetElement = document.getElementById(`widget-${data.id}`);
-//
-//     // Check if the element and its Alpine component are ready
-//     if (widgetElement && widgetElement.__x) {
-//         // Call the widget's internal updateStatus method with all the data
-//         widgetElement.__x.data.updateStatus(data.status, data.execution_id, data.message || '');
-//     }
-// });
 const WIDGET_REGISTRY = {};
+
+// --- 1. Define an Alpine Store for Shared Data ---
+document.addEventListener('alpine:init', () => {
+    Alpine.store('materials', {
+        groups: {}, // This will hold the categorized block data
+
+        load() {
+            fetch('/api/block_materials')
+                .then(res => res.json())
+                .then(data => {
+                    this.groups = data;
+                    console.log("Shared material data loaded into Alpine store.");
+                });
+        }
+    });
+});
+
+
+// --- 2. Define the Component for the Custom Picker ---
+function materialPicker(defaultSelection, paramName) {
+    return {
+        isOpen: false,
+        selected: defaultSelection || 'STONE',
+        filter: '',
+        paramName: paramName, // Store the parameter name for the hidden input
+    };
+}
+window.materialPicker = materialPicker;
+
+
+
 
 function powerWidget(initialPowerData) {
     return {
-        // --- EXISTING PROPERTIES ---
         // Remember: this the data from the power library !!!
         // i.e {name,description,category, power_id,blockly_json,python_code,parameters}
         power: initialPowerData,
@@ -68,7 +59,6 @@ function powerWidget(initialPowerData) {
         currentExecutionId: null,
 
         init() {
-            console.log(initialPowerData);
             // Your existing init logic to set up formValues
             if (this.power && this.power.parameters) {
                 this.power.parameters.forEach(param => {
@@ -82,7 +72,6 @@ function powerWidget(initialPowerData) {
             });
 
             WIDGET_REGISTRY[this.power.power_id] = this;
-            console.log(WIDGET_REGISTRY);
         },
 
        removeWidget() {
@@ -90,8 +79,6 @@ function powerWidget(initialPowerData) {
             WIDGET_REGISTRY[this.power.power_id] = null;
         },
 
-        // --- THIS IS THE FIX ---
-        // This method now robustly manages the entire execution state.
         updateStatus(newStatus, executionId, message = '') {
             console.log(`updateStatus called with: status=${newStatus}, executionId=${executionId}`);
             this.status = newStatus;
@@ -106,7 +93,6 @@ function powerWidget(initialPowerData) {
             }
         },
 
-        // --- NEW METHOD to execute the power ---
         executePower() {
             // Use this.$refs to get the form element reliably
             const formElement = this.$refs.paramsForm;
@@ -143,7 +129,6 @@ function powerWidget(initialPowerData) {
             });
         },
 
-        // --- NEW METHOD to cancel the power ---
         cancelPower() {
             if (!this.currentExecutionId) return;
 
@@ -169,14 +154,17 @@ function controlPanel() {
     layout: { grid: { columns: 4 }, widgets: [] }, // Will hold the layout data
     isEditing: false, // Toggles edit mode for drag-and-drop
     sortableInstance: null, // To hold our SortableJS instance
-
+    // materialGroups: {}, // To hold materials for control UI
     // NEW: A dictionary to hold the live status of each power widget
     // e.g., { "power-id-123": { status: 'running', message: '' }, ... }
     powerStatuses: {},
 
       init() {
 
+      // Tell the materials store to load its data
+      Alpine.store('materials').load();
       console.log('Initializing control panel...');
+
       // The socket listener now lives inside the init method and updates our state.
           // // --- Set up a global listener for power status updates ---
           if (window.socket) {
@@ -193,7 +181,6 @@ function controlPanel() {
                   else  {
                       // const widgetInstance= document.getElementById(`widget-${data.id}`);
                       const widgetInstance = WIDGET_REGISTRY[data.id]
-                      console.log(widgetInstance);
                       if (widgetInstance) {
                           // If we found it, call its updateStatus method directly.
                           // This is guaranteed to work and avoids any DOM race conditions.
@@ -205,22 +192,6 @@ function controlPanel() {
               });
           }
 
-//       if (window.socket) {
-//           socket.on('power_status', (data) => {
-//               console.log('Received power status update:', data);
-//              // Ensure the data has the required 'id' to identify the widget.
-//                 if (!data || !data.id) {
-//                 console.error('Received power status update with no power ID.', data);
-//                 return;
-//                 }
-//               // Update the status for the specific power ID in our central state object.
-//               this.powerStatuses[data.id] = {
-//                   status: data.status,
-//                   message: data.message || '',
-//                   execution_id: data.execution_id || null
-//               };
-//           });
-//       }
 
       // --- CONSOLIDATED $watch --
       // This single watcher handles ALL logic related to the isEditing state change.
@@ -244,11 +215,13 @@ function controlPanel() {
       // Fetch both layout and power data when the component loads
       Promise.all([
         fetch('/api/control/layout').then(res => res.json()),
-        fetch('/api/powers?view=control').then(res => res.json())
-      ]).then(([layoutData, powersData]) => {
+        fetch('/api/powers?view=control').then(res => res.json()),
+        // fetch('/api/block_materials').then(res => res.json()) // <-- NEW FETCH
+      ]).then(([layoutData, powersData, materialData]) => {
         this.layout = layoutData;
         this.powers = powersData;
-        console.log('Layout and powers loaded.');
+        // this.materialGroups = materialData; // <-- STORE THE DATA
+        console.log('Layout, powers, and material data loaded.');
 
         // Initialize drag-and-drop after the next DOM update
         this.$nextTick(() => {
@@ -316,17 +289,6 @@ function controlPanel() {
     getPowerData(widget) {
       return this.powers[widget.power_id] || { name: 'Unknown Power', parameters: [] };
     },
-
-    // addWidget(powerId) {
-    //     // Check if the widget is already on the grid to prevent duplicates
-    //     if (this.layout.widgets.some(w => w.power_id === powerId)) {
-    //         alert('This power is already on your control grid.');
-    //         return;
-    //     }
-    //     // Add the new widget to the layout data array
-    //     this.layout.widgets.push({ power_id: powerId, position: [0,0] }); // Position will be handled by drag-and-drop
-    //     console.log(`Added widget for power: ${powerId}`);
-    // },
 
     /**
      * Adds a new widget to the client-side layout data, then uses $nextTick

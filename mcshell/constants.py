@@ -62,9 +62,12 @@ MC_ENTITY_PICKERS_PATH = MC_DATA_DIR.joinpath('entities/pickers.json')
 
 MC_APP_DIR = MC_DATA_DIR.joinpath('app')
 
-MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
+MC_APP_STATIC_DIR = MC_DATA_DIR.joinpath('static')
+MC_APP_SRC_DIR = pathlib.Path(__file__).parent.parent.joinpath('mced/src')
 
+MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
 MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
+
 
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS
