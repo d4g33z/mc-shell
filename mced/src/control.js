@@ -18,6 +18,37 @@ socket.on('disconnect', () => {
 
 const WIDGET_REGISTRY = {};
 
+// --- 1. Define an Alpine Store for Shared Data ---
+document.addEventListener('alpine:init', () => {
+    Alpine.store('materials', {
+        groups: {}, // This will hold the categorized block data
+
+        load() {
+            fetch('/api/block_materials')
+                .then(res => res.json())
+                .then(data => {
+                    this.groups = data;
+                    console.log("Shared material data loaded into Alpine store.");
+                });
+        }
+    });
+});
+
+
+// --- 2. Define the Component for the Custom Picker ---
+function materialPicker(defaultSelection, paramName) {
+    return {
+        isOpen: false,
+        selected: defaultSelection || 'STONE',
+        filter: '',
+        paramName: paramName, // Store the parameter name for the hidden input
+    };
+}
+window.materialPicker = materialPicker;
+
+
+
+
 function powerWidget(initialPowerData) {
     return {
         // Remember: this the data from the power library !!!
@@ -123,14 +154,17 @@ function controlPanel() {
     layout: { grid: { columns: 4 }, widgets: [] }, // Will hold the layout data
     isEditing: false, // Toggles edit mode for drag-and-drop
     sortableInstance: null, // To hold our SortableJS instance
-    materialGroups: {}, // To hold materials for control UI
+    // materialGroups: {}, // To hold materials for control UI
     // NEW: A dictionary to hold the live status of each power widget
     // e.g., { "power-id-123": { status: 'running', message: '' }, ... }
     powerStatuses: {},
 
       init() {
 
+      // Tell the materials store to load its data
+      Alpine.store('materials').load();
       console.log('Initializing control panel...');
+
       // The socket listener now lives inside the init method and updates our state.
           // // --- Set up a global listener for power status updates ---
           if (window.socket) {
@@ -182,11 +216,11 @@ function controlPanel() {
       Promise.all([
         fetch('/api/control/layout').then(res => res.json()),
         fetch('/api/powers?view=control').then(res => res.json()),
-        fetch('/api/block_materials').then(res => res.json()) // <-- NEW FETCH
+        // fetch('/api/block_materials').then(res => res.json()) // <-- NEW FETCH
       ]).then(([layoutData, powersData, materialData]) => {
         this.layout = layoutData;
         this.powers = powersData;
-        this.materialGroups = materialData; // <-- STORE THE DATA
+        // this.materialGroups = materialData; // <-- STORE THE DATA
         console.log('Layout, powers, and material data loaded.');
 
         // Initialize drag-and-drop after the next DOM update

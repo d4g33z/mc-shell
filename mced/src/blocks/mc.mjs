@@ -185,11 +185,20 @@ export function defineMineCraftBlocks(Blockly) {
         init: function () {
             this.appendDummyInput()
                 .appendField("player direction");
-            this.setOutput(true, "3DUnitVector");
+            this.setOutput(true, "3DVector");
             this.setColour(160);
         }
     };
 
+    Blockly.Blocks['minecraft_position_get_compass_direction'] = {
+      init: function() {
+        this.appendDummyInput()
+            .appendField("player compass direction");
+        this.setOutput(true, "String"); // This block returns a String (e.g., "N", "SW")
+        this.setColour(160); // The "Position" category color
+        this.setTooltip("Returns the cardinal or intercardinal direction the player is facing (N, NE, E, SE, S, SW, W, NW).");
+      }
+    };
 
     // --- Vector Math Category ---:/
 

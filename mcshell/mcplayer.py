@@ -4,7 +4,6 @@ from mcshell.constants import *
 # Define a tolerance for floating-point comparisons near zero
 DEFAULT_TOLERANCE = 1e-9
 
-
 class MCPlayer(MCClient):
     def __init__(self,name,host=MC_SERVER_HOST,port=MC_SERVER_PORT,password=None,server_type=MC_SERVER_TYPE,fruit_juice_port=FJ_SERVER_PORT,cancel_event=None):
         super().__init__(host,port,password,server_type,fruit_juice_port)
@@ -97,16 +96,11 @@ class MCPlayer(MCClient):
             _hits = self.pc.events.pollBlockHits()
             if _hits:
                 _hit = _hits[0]
+                # We must check that our player did the strike!
+                if not _hit.entityId == self.pc.playerId:
+                    continue
                 _v0 = _hit.pos.clone()
-                self.pc.events.clearAll()
 
-                # _block = self.pc.getBlock(*_v0)
-                #
-                # # replace the block
-                # self.pc.setBlock(*_v0, _block)
-
-                # _direction, _face = self.get_cardial_direction(*self.pc.player.getDirection())
-                # return _hit.pos.clone(), _direction, _face, _block
                 return _hit.pos.clone()
 
 
