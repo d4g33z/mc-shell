@@ -287,16 +287,16 @@ ${indentedBlockCode}
     //     return [code, generator.ORDER_ATOMIC];
     // };
 
-    pythonGenerator.forBlock['minecraft_vector_2d'] = function(block, generator) {
-        // Use valueToCode to get the code from the connected blocks, with a default of '0'.
-        const w = generator.valueToCode(block, 'W', generator.ORDER_ATOMIC) || '0';
-        const h = generator.valueToCode(block, 'H', generator.ORDER_ATOMIC) || '0';
-
-        // The code generates a Python tuple string.
-        const code = `(${w}, ${h})`;
-
-        return [code, generator.ORDER_ATOMIC];
-    };
+    // pythonGenerator.forBlock['minecraft_vector_2d'] = function(block, generator) {
+    //     // Use valueToCode to get the code from the connected blocks, with a default of '0'.
+    //     const w = generator.valueToCode(block, 'W', generator.ORDER_ATOMIC) || '0';
+    //     const h = generator.valueToCode(block, 'H', generator.ORDER_ATOMIC) || '0';
+    //
+    //     // The code generates a Python tuple string.
+    //     const code = `(${w}, ${h})`;
+    //
+    //     return [code, generator.ORDER_ATOMIC];
+    // };
     // pythonGenerator.forBlock['minecraft_vector_3d'] = function (block,generator) {
     //     const xValue = block.getFieldValue('X');
     //     const yValue = block.getFieldValue('Y');
@@ -428,16 +428,33 @@ ${indentedBlockCode}
         const normal = generator.valueToCode(block, 'NORMAL', generator.ORDER_ATOMIC) || "Vec3(0,1,0)";
         const pointOnPlane = generator.valueToCode(block, 'POINT_ON_PLANE', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
         const blockType = generator.valueToCode(block, 'BLOCK_TYPE', generator.ORDER_ATOMIC) || "'STONE'";
-        const outerRectDims = generator.valueToCode(block, 'OUTER_RECT_DIMS', generator.ORDER_ATOMIC) || "(10, 10)"; // Default tuple if not connected
         const planeThickness = generator.valueToCode(block, 'PLANE_THICKNESS', generator.ORDER_ATOMIC) || "1.0";
-        const innerRectDims = generator.valueToCode(block, 'INNER_RECT_DIMS', generator.ORDER_ATOMIC) || "None"; // Python None if not connected
-        const rectCenterOffset = generator.valueToCode(block, 'RECT_CENTER_OFFSET', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
 
+        // --- THIS IS THE FIX ---
+        const outerWidth = generator.valueToCode(block, 'OUTER_WIDTH', generator.ORDER_ATOMIC) || "10";
+        const outerLength = generator.valueToCode(block, 'OUTER_LENGTH', generator.ORDER_ATOMIC) || "10";
+        // --- END OF FIX ---
+
+        // The method call now includes the new parameters
         return `self.action_implementer.create_digital_plane(` +
                `normal_vec3=${normal}, point_on_plane_vec3=${pointOnPlane}, block_type=${blockType}, ` +
-               `outer_rect_dims_tuple=${outerRectDims}, plane_thickness=${planeThickness}, ` +
-               `inner_rect_dims_tuple=${innerRectDims}, rect_center_offset_vec3=${rectCenterOffset})\n`;
+               `outer_width=${outerWidth}, outer_length=${outerLength}, plane_thickness=${planeThickness})\n`;
     };
+
+    // pythonGenerator.forBlock['minecraft_action_create_digital_plane'] = function(block, generator) {
+    //     const normal = generator.valueToCode(block, 'NORMAL', generator.ORDER_ATOMIC) || "Vec3(0,1,0)";
+    //     const pointOnPlane = generator.valueToCode(block, 'POINT_ON_PLANE', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
+    //     const blockType = generator.valueToCode(block, 'BLOCK_TYPE', generator.ORDER_ATOMIC) || "'STONE'";
+    //     const outerRectDims = generator.valueToCode(block, 'OUTER_RECT_DIMS', generator.ORDER_ATOMIC) || "(10, 10)"; // Default tuple if not connected
+    //     const planeThickness = generator.valueToCode(block, 'PLANE_THICKNESS', generator.ORDER_ATOMIC) || "1.0";
+    //     const innerRectDims = generator.valueToCode(block, 'INNER_RECT_DIMS', generator.ORDER_ATOMIC) || "None"; // Python None if not connected
+    //     const rectCenterOffset = generator.valueToCode(block, 'RECT_CENTER_OFFSET', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
+    //
+    //     return `self.action_implementer.create_digital_plane(` +
+    //            `normal_vec3=${normal}, point_on_plane_vec3=${pointOnPlane}, block_type=${blockType}, ` +
+    //            `outer_rect_dims_tuple=${outerRectDims}, plane_thickness=${planeThickness}, ` +
+    //            `inner_rect_dims_tuple=${innerRectDims}, rect_center_offset_vec3=${rectCenterOffset})\n`;
+    // };
 
     pythonGenerator.forBlock['minecraft_action_create_digital_disc'] = function(block, generator) {
         const normal = generator.valueToCode(block, 'NORMAL', generator.ORDER_ATOMIC) || "Vec3(0,1,0)";

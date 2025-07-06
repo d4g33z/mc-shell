@@ -81,21 +81,37 @@ export function defineMineCraftConstants(Blockly) {
         INNER_OFFSET_FACTOR: { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' }
     };
 
-    MCED.Defaults.values.minecraft_vector_2d = {
-        W: { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
-        H: { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' }
-    };
+    // MCED.Defaults.values.minecraft_vector_2d = {
+    //     W: { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
+    //     H: { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' }
+    // };
 
     MCED.Defaults.values['minecraft_action_create_digital_plane'] = {
         NORMAL:             { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-        POINT_ON_PLANE:     { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' },
-        BLOCK_TYPE:         { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="TYPE">STONE</field></shadow>' },
-        OUTER_RECT_DIMS:    { shadow: '<shadow type="minecraft_vector_2d"><field name="W">10</field><field name="H">10</field></shadow>' },
+        POINT_ON_PLANE:     { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
+        BLOCK_TYPE:         { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="MATERIAL_ID">STONE</field></shadow>' },
+
+        // --- THIS IS THE FIX ---
+        // Removed the old 'OUTER_RECT_DIMS' and added the new inputs.
+        OUTER_WIDTH:        { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
+        OUTER_LENGTH:       { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
+        // --- END OF FIX ---
+
         PLANE_THICKNESS:    { shadow: '<shadow type="math_number"><field name="NUM">1</field></shadow>' },
-        // INNER_RECT_DIMS is optional, so no shadow by default or a (0,0) shadow
-        INNER_RECT_DIMS:    { shadow: '<shadow type="minecraft_vector_2d"><field name="W">0</field><field name="H">0</field></shadow>' },
+        // INNER_RECT_DIMS is no longer part of this simplified block, so it is removed.
         RECT_CENTER_OFFSET: { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' }
     };
+
+    // MCED.Defaults.values['minecraft_action_create_digital_plane'] = {
+    //     NORMAL:             { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
+    //     POINT_ON_PLANE:     { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' },
+    //     BLOCK_TYPE:         { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="TYPE">STONE</field></shadow>' },
+    //     OUTER_RECT_DIMS:    { shadow: '<shadow type="minecraft_vector_2d"><field name="W">10</field><field name="H">10</field></shadow>' },
+    //     PLANE_THICKNESS:    { shadow: '<shadow type="math_number"><field name="NUM">1</field></shadow>' },
+    //     // INNER_RECT_DIMS is optional, so no shadow by default or a (0,0) shadow
+    //     INNER_RECT_DIMS:    { shadow: '<shadow type="minecraft_vector_2d"><field name="W">0</field><field name="H">0</field></shadow>' },
+    //     RECT_CENTER_OFFSET: { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' }
+    // };
 
     MCED.Defaults.values['minecraft_action_create_digital_disc'] = {
         NORMAL:         { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },

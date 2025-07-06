@@ -83,21 +83,21 @@ export function defineMineCraftBlocks(Blockly) {
     //   }
     // };
 
-    Blockly.Blocks['minecraft_vector_2d'] = {
-      init: function() {
-        this.appendValueInput("W")
-            .setCheck("Number")
-            .appendField("Vec2 w"); // Changed label slightly for clarity
-        this.appendValueInput("H")
-            .setCheck("Number")
-            .setAlign(Blockly.ALIGN_RIGHT) // Align the 'h' label to the right
-            .appendField("h");
-        this.setOutput(true, "2DVector"); // Output type remains the same
-        this.setColour(180); // Vector Math color
-        this.setTooltip("Creates a 2D vector or dimension (width, height/length). Accepts numbers or variables.");
-        this.setInputsInline(true); // Keep it on one line
-      }
-    };
+    // Blockly.Blocks['minecraft_vector_2d'] = {
+    //   init: function() {
+    //     this.appendValueInput("W")
+    //         .setCheck("Number")
+    //         .appendField("Vec2 w"); // Changed label slightly for clarity
+    //     this.appendValueInput("H")
+    //         .setCheck("Number")
+    //         .setAlign(Blockly.ALIGN_RIGHT) // Align the 'h' label to the right
+    //         .appendField("h");
+    //     this.setOutput(true, "2DVector"); // Output type remains the same
+    //     this.setColour(180); // Vector Math color
+    //     this.setTooltip("Creates a 2D vector or dimension (width, height/length). Accepts numbers or variables.");
+    //     this.setInputsInline(true); // Keep it on one line
+    //   }
+    // };
 
     // Blockly.Blocks['minecraft_vector_3d'] = {
     //     init: function () {
@@ -334,46 +334,90 @@ export function defineMineCraftBlocks(Blockly) {
     };
 
     Blockly.Blocks['minecraft_action_create_digital_plane'] = {
-        init: function() {
-            this.appendDummyInput().appendField("Create Digital Plane (Rectangular)"); // Clarified name
-            this.appendValueInput("NORMAL")
-                .setCheck(["3DVector","3DUnitVector"])
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Normal Vector");
-            this.appendValueInput("POINT_ON_PLANE") // This is the plane's reference point
-                .setCheck("3DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Plane Reference Point");
-            this.appendValueInput("BLOCK_TYPE")
-                .setCheck("Block")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Block Type");
-            this.appendValueInput("OUTER_RECT_DIMS") // Now mandatory
-                .setCheck("2DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Outer Rect Dims (width, length)");
-            this.appendValueInput("PLANE_THICKNESS")
-                .setCheck("Number")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Thickness (default 1)");
-            this.appendValueInput("INNER_RECT_DIMS") // Optional
-                .setCheck("2DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Inner Rect Dims (optional)");
-            this.appendValueInput("RECT_CENTER_OFFSET") // Optional offset for the rectangle
-                .setCheck("3DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Rect Center Offset (from ref. point)");
+      init: function() {
+        this.appendDummyInput().appendField("Create Digital Plane (Rectangular)");
+        this.appendValueInput("NORMAL")
+            .setCheck("3DVector")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Normal Vector");
+        this.appendValueInput("POINT_ON_PLANE")
+            .setCheck("3DVector")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Plane Reference Point");
+        this.appendValueInput("BLOCK_TYPE")
+            .setCheck("Block")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Block Type");
 
-            this.setPreviousStatement(true, null);
-            this.setNextStatement(true, null);
-            this.setColour(65);
-            this.setTooltip("Creates a finite rectangular digital plane of voxels.");
-            this.setInputsInline(false);
+        // --- THIS IS THE FIX ---
+        // Replace the single 2DVector input with two Number inputs.
+        this.appendValueInput("OUTER_WIDTH")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Outer Width");
+        this.appendValueInput("OUTER_LENGTH")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Outer Length");
+        // --- END OF FIX ---
 
+        this.appendValueInput("PLANE_THICKNESS")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Thickness");
 
-        }
+        // We can do the same for inner dimensions if needed, or leave it for later.
+
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(65);
+        this.setTooltip("Creates a finite rectangular digital plane of voxels.");
+        this.setInputsInline(false);
+      }
     };
+    //
+    // Blockly.Blocks['minecraft_action_create_digital_plane'] = {
+    //     init: function() {
+    //         this.appendDummyInput().appendField("Create Digital Plane (Rectangular)"); // Clarified name
+    //         this.appendValueInput("NORMAL")
+    //             .setCheck(["3DVector","3DUnitVector"])
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Normal Vector");
+    //         this.appendValueInput("POINT_ON_PLANE") // This is the plane's reference point
+    //             .setCheck("3DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Plane Reference Point");
+    //         this.appendValueInput("BLOCK_TYPE")
+    //             .setCheck("Block")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Block Type");
+    //         this.appendValueInput("OUTER_RECT_DIMS") // Now mandatory
+    //             .setCheck("2DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Outer Rect Dims (width, length)");
+    //         this.appendValueInput("PLANE_THICKNESS")
+    //             .setCheck("Number")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Thickness (default 1)");
+    //         this.appendValueInput("INNER_RECT_DIMS") // Optional
+    //             .setCheck("2DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Inner Rect Dims (optional)");
+    //         this.appendValueInput("RECT_CENTER_OFFSET") // Optional offset for the rectangle
+    //             .setCheck("3DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Rect Center Offset (from ref. point)");
+    //
+    //         this.setPreviousStatement(true, null);
+    //         this.setNextStatement(true, null);
+    //         this.setColour(65);
+    //         this.setTooltip("Creates a finite rectangular digital plane of voxels.");
+    //         this.setInputsInline(false);
+    //
+    //
+    //     }
+    // };
+
 
     Blockly.Blocks['minecraft_action_create_digital_disc'] = {
         init: function() {
