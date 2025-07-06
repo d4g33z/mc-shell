@@ -350,50 +350,94 @@ ${indentedBlockCode}
         return [code, generator.ORDER_FUNCTION_CALL];
     };
 
-    pythonGenerator.forBlock['minecraft_vector_arithmetic'] = function(block, generator) {
-        const operator = block.getFieldValue('OP');
-        let order, code;
+    // pythonGenerator.forBlock['minecraft_vector_arithmetic'] = function(block, generator) {
+    //     const operator = block.getFieldValue('OP');
+    //     let order, code;
+    //
+    //     if (operator === 'MATRIX_MULTIPLY') {
+    //         // Matrix multiplication: matrix @ vector
+    //         const matrix = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Matrix3.identity()';
+    //         const vector = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         order = generator.ORDER_MULTIPLICATIVE; // The @ operator has the same precedence as *
+    //         code = `${matrix} @ ${vector}`;
+    //     } else if (operator === 'MULTIPLY') {
+    //         // Scalar multiplication: vector * number
+    //         const vector = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
+    //         const scalar = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || '1';
+    //         order = generator.ORDER_MULTIPLICATIVE;
+    //         code = `${vector} * ${scalar}`;
+    //     } else if (operator === 'DOT') {
+    //         // Dot product: vector.dot(vector)
+    //         const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         order = generator.ORDER_FUNCTION_CALL;
+    //         code = `${vector1}.dot(${vector2})`;
+    //     } else if (operator === 'CROSS') {
+    //         // Cross product: vector.cross(vector)
+    //         const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         order = generator.ORDER_FUNCTION_CALL;
+    //         code = `${vector1}.cross(${vector2})`;
+    //     } else { // ADD or SUBTRACT
+    //         const OPERATORS = {
+    //             'ADD': [' + ', generator.ORDER_ADDITIVE],
+    //             'SUBTRACT': [' - ', generator.ORDER_ADDITIVE],
+    //         };
+    //         const tuple = OPERATORS[operator];
+    //         const op_str = tuple[0];
+    //         order = tuple[1];
+    //         const vector1 = generator.valueToCode(block, 'A', order) || 'Vec3()';
+    //         const vector2 = generator.valueToCode(block, 'B', order) || 'Vec3()';
+    //         code = `${vector1}${op_str}${vector2}`;
+    //     }
+    //
+    //     return [code, order];
+    // };
 
-        if (operator === 'MATRIX_MULTIPLY') {
-            // Matrix multiplication: matrix @ vector
-            const matrix = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Matrix3.identity()';
-            const vector = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
-            order = generator.ORDER_MULTIPLICATIVE; // The @ operator has the same precedence as *
-            code = `${matrix} @ ${vector}`;
-        } else if (operator === 'MULTIPLY') {
-            // Scalar multiplication: vector * number
-            const vector = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
-            const scalar = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || '1';
-            order = generator.ORDER_MULTIPLICATIVE;
-            code = `${vector} * ${scalar}`;
-        } else if (operator === 'DOT') {
-            // Dot product: vector.dot(vector)
-            const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
-            const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
-            order = generator.ORDER_FUNCTION_CALL;
-            code = `${vector1}.dot(${vector2})`;
-        } else if (operator === 'CROSS') {
-            // Cross product: vector.cross(vector)
-            const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
-            const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
-            order = generator.ORDER_FUNCTION_CALL;
-            code = `${vector1}.cross(${vector2})`;
-        } else { // ADD or SUBTRACT
-            const OPERATORS = {
-                'ADD': [' + ', generator.ORDER_ADDITIVE],
-                'SUBTRACT': [' - ', generator.ORDER_ADDITIVE],
-            };
-            const tuple = OPERATORS[operator];
-            const op_str = tuple[0];
-            order = tuple[1];
-            const vector1 = generator.valueToCode(block, 'A', order) || 'Vec3()';
-            const vector2 = generator.valueToCode(block, 'B', order) || 'Vec3()';
-            code = `${vector1}${op_str}${vector2}`;
+    pythonGenerator.forBlock['minecraft_vector_binary_op'] = function(block, generator) {
+        const OPERATORS = {
+            'ADD': [' + ', generator.ORDER_ADDITIVE],
+            'SUBTRACT': [' - ', generator.ORDER_ADDITIVE],
+            'CROSS': ['.cross(', generator.ORDER_FUNCTION_CALL],
+        };
+        const op = block.getFieldValue('OP');
+        const tuple = OPERATORS[op];
+        const operatorString = tuple[0];
+        const order = tuple[1];
+
+        const vectorA = generator.valueToCode(block, 'A', order) || 'Vec3()';
+        const vectorB = generator.valueToCode(block, 'B', order) || 'Vec3()';
+
+        let code;
+        if (op === 'CROSS') {
+            code = `${vectorA}${operatorString}${vectorB})`;
+        } else {
+            code = `${vectorA}${operatorString}${vectorB}`;
         }
 
         return [code, order];
     };
 
+    pythonGenerator.forBlock['minecraft_vector_scalar_multiply'] = function(block, generator) {
+        const vector = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
+        const scalar = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || '1';
+        const code = `${vector} * ${scalar}`;
+        return [code, generator.ORDER_MULTIPLICATIVE];
+    };
+
+    pythonGenerator.forBlock['minecraft_vector_dot_product'] = function(block, generator) {
+        const vectorA = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
+        const vectorB = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+        const code = `${vectorA}.dot(${vectorB})`;
+        return [code, generator.ORDER_FUNCTION_CALL];
+    };
+
+    pythonGenerator.forBlock['minecraft_matrix_vector_multiply'] = function(block, generator) {
+        const matrix = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Matrix3.identity()';
+        const vector = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
+        const code = `${matrix} @ ${vector}`; // Use the @ operator for matrix multiplication
+        return [code, generator.ORDER_MULTIPLICATIVE];
+    };
     pythonGenerator.forBlock['minecraft_coloured_block_picker'] = function(block, generator) {
       const colourId = block.getFieldValue('MINECRAFT_COLOUR_ID'); // e.g., "WHITE", "RED"
       // The Python code should return a representation that your MCPlayerActions can understand.

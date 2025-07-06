@@ -18,8 +18,8 @@ export function defineMineCraftConstants(Blockly) {
                     block.getInput(inputName).connection.setShadowDom(Blockly.utils.xml.textToDom(shadowValue));
                 }
             },
-            get3dPickerShadow: () => '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>',
-            getStepperShadow: (defaultValue) => `<shadow type="math_number"><field name="NUM">${defaultValue}</field></shadow>`,
+            // get3dPickerShadow: () => '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>',
+            // getStepperShadow: (defaultValue) => `<shadow type="math_number"><field name="NUM">${defaultValue}</field></shadow>`,
         },
 
         Defaults: {values: {}},
@@ -51,6 +51,28 @@ export function defineMineCraftConstants(Blockly) {
         ]
     };
 
+    // --- A reusable, fully-resolved shadow block for a Vec3 ---
+    const VECTOR_3D_SHADOW = `
+        <shadow type="minecraft_vector_3d">
+            <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            <value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            <value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        </shadow>`;
+
+    const VECTOR_3D_SHADOW_Y_UP = `
+        <shadow type="minecraft_vector_3d">
+            <value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            <value name="Y"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+            <value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+        </shadow>`;
+
+    // --- A reusable shadow for a standard Block Type input ---
+    const BLOCK_TYPE_SHADOW = `
+        <shadow type="minecraft_picker_world">
+            <field name="MATERIAL_ID">STONE</field>
+        </shadow>`;
+
+
     MCED.Defaults.values.minecraft_matrix_3d_euler = { // For shadow on other blocks
         YAW:   { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' },
         PITCH: { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' },
@@ -66,74 +88,108 @@ export function defineMineCraftConstants(Blockly) {
         };
     });
 
-    MCED.Defaults.values['minecraft_action_create_digital_ball'] = { // Define defaults for this block
-        CENTER:       { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' },
-        RADIUS:       { shadow: '<shadow type="math_number"><field name="NUM">5</field></shadow>' },
-        BLOCK_TYPE:   { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="TYPE">STONE</field></shadow>' },
-        INNER_RADIUS: { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' }
+    // MCED.Defaults.values['minecraft_vector_arithmetic'] = {
+    //     A: { shadow: VECTOR_3D_SHADOW },
+    //     B: { shadow: VECTOR_3D_SHADOW }
+    // };
+    
+    MCED.Defaults.values['minecraft_vector_binary_op'] = {
+        A: { shadow: VECTOR_3D_SHADOW },
+        B: { shadow: VECTOR_3D_SHADOW }
+    };
+
+    MCED.Defaults.values['minecraft_vector_scalar_multiply'] = {
+        A: { shadow: VECTOR_3D_SHADOW },
+        B: { shadow: '<shadow type="math_number"><field name="NUM">1</field></shadow>' }
+    };
+
+    MCED.Defaults.values['minecraft_vector_dot_product'] = {
+        A: { shadow: VECTOR_3D_SHADOW },
+        B: { shadow: VECTOR_3D_SHADOW }
+    };
+
+    MCED.Defaults.values['minecraft_matrix_vector_multiply'] = {
+        A: { shadow: '<shadow type="minecraft_matrix_3d_euler"></shadow>' },
+        B: { shadow: VECTOR_3D_SHADOW }
+    };
+    // --- Digital Geometry Actions ---
+
+    MCED.Defaults.values['minecraft_action_create_digital_line'] = {
+        POINT1:     { shadow: VECTOR_3D_SHADOW },
+        POINT2:     { shadow: VECTOR_3D_SHADOW },
+        BLOCK_TYPE: { shadow: BLOCK_TYPE_SHADOW }
+    };
+
+    MCED.Defaults.values['minecraft_action_create_digital_plane'] = {
+        NORMAL:          { shadow: VECTOR_3D_SHADOW_Y_UP },
+        POINT_ON_PLANE:  { shadow: VECTOR_3D_SHADOW },
+        BLOCK_TYPE:      { shadow: BLOCK_TYPE_SHADOW },
+        OUTER_WIDTH:     { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
+        OUTER_LENGTH:    { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
+        PLANE_THICKNESS: { shadow: '<shadow type="math_number"><field name="NUM">1</field></shadow>' }
+    };
+
+    MCED.Defaults.values['minecraft_action_create_digital_ball'] = {
+        CENTER:         { shadow: VECTOR_3D_SHADOW },
+        RADIUS:         { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
+        INNER_RADIUS:   { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' },
+        BLOCK_TYPE:     { shadow: BLOCK_TYPE_SHADOW }
+    };
+
+    MCED.Defaults.values['minecraft_action_create_digital_tube'] = {
+        POINT1:          { shadow: VECTOR_3D_SHADOW },
+        POINT2:          { shadow: `<shadow type="minecraft_vector_3d"><value name="Y"><shadow type="math_number"><field name="NUM">10</field></shadow></value></shadow>` },
+        OUTER_THICKNESS: { shadow: '<shadow type="math_number"><field name="NUM">3</field></shadow>' },
+        INNER_THICKNESS: { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' },
+        BLOCK_TYPE:      { shadow: BLOCK_TYPE_SHADOW }
     };
 
     MCED.Defaults.values['minecraft_action_create_digital_cube'] = {
-        CENTER:              { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' },
+        CENTER:              { shadow: VECTOR_3D_SHADOW },
         SIDE_LENGTH:         { shadow: '<shadow type="math_number"><field name="NUM">5</field></shadow>' },
-        ROTATION_MATRIX:     { shadow: '<shadow type="minecraft_matrix_3d_euler"><field name="YAW">0</field><field name="PITCH">0</field><field name="ROLL">0</field></shadow>' }, // Default to Euler for simplicity
-        BLOCK_TYPE:          { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="TYPE">STONE</field></shadow>' },
+        ROTATION_MATRIX:     { shadow: '<shadow type="minecraft_matrix_3d_euler"></shadow>' },
+        BLOCK_TYPE:          { shadow: BLOCK_TYPE_SHADOW },
         INNER_OFFSET_FACTOR: { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' }
     };
 
-    // MCED.Defaults.values.minecraft_vector_2d = {
-    //     W: { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
-    //     H: { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' }
-    // };
-
-    MCED.Defaults.values['minecraft_action_create_digital_plane'] = {
-        NORMAL:             { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-        POINT_ON_PLANE:     { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-        BLOCK_TYPE:         { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="MATERIAL_ID">STONE</field></shadow>' },
-
-        // --- THIS IS THE FIX ---
-        // Removed the old 'OUTER_RECT_DIMS' and added the new inputs.
-        OUTER_WIDTH:        { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
-        OUTER_LENGTH:       { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
-        // --- END OF FIX ---
-
-        PLANE_THICKNESS:    { shadow: '<shadow type="math_number"><field name="NUM">1</field></shadow>' },
-        // INNER_RECT_DIMS is no longer part of this simplified block, so it is removed.
-        RECT_CENTER_OFFSET: { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' }
-    };
-
-    // MCED.Defaults.values['minecraft_action_create_digital_plane'] = {
-    //     NORMAL:             { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-    //     POINT_ON_PLANE:     { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' },
-    //     BLOCK_TYPE:         { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="TYPE">STONE</field></shadow>' },
-    //     OUTER_RECT_DIMS:    { shadow: '<shadow type="minecraft_vector_2d"><field name="W">10</field><field name="H">10</field></shadow>' },
-    //     PLANE_THICKNESS:    { shadow: '<shadow type="math_number"><field name="NUM">1</field></shadow>' },
-    //     // INNER_RECT_DIMS is optional, so no shadow by default or a (0,0) shadow
-    //     INNER_RECT_DIMS:    { shadow: '<shadow type="minecraft_vector_2d"><field name="W">0</field><field name="H">0</field></shadow>' },
-    //     RECT_CENTER_OFFSET: { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' }
-    // };
-
     MCED.Defaults.values['minecraft_action_create_digital_disc'] = {
-        NORMAL:         { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">1</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-        CENTER_POINT:   { shadow: '<shadow type="minecraft_vector_3d"><field name="X">0</field><field name="Y">0</field><field name="Z">0</field></shadow>' },
+        NORMAL:         { shadow: VECTOR_3D_SHADOW_Y_UP },
+        CENTER_POINT:   { shadow: VECTOR_3D_SHADOW },
         OUTER_RADIUS:   { shadow: '<shadow type="math_number"><field name="NUM">10</field></shadow>' },
-        BLOCK_TYPE:     { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="TYPE">STONE</field></shadow>' },
+        BLOCK_TYPE:     { shadow: BLOCK_TYPE_SHADOW },
         DISC_THICKNESS: { shadow: '<shadow type="math_number"><field name="NUM">1</field></shadow>' },
         INNER_RADIUS:   { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' }
     };
 
-    MCED.Defaults.values['minecraft_action_create_digital_tube'] = {
-        POINT1:          { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-        POINT2:          { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">10</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-        OUTER_THICKNESS: { shadow: '<shadow type="math_number"><field name="NUM">3</field></shadow>' },
-        BLOCK_TYPE:     { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="TYPE">STONE</field></shadow>' },
-        INNER_THICKNESS: { shadow: '<shadow type="math_number"><field name="NUM">0</field></shadow>' }
+
+    MCED.Defaults.values['minecraft_action_set_block'] = {
+        BLOCK_TYPE: { shadow: BLOCK_TYPE_SHADOW },
+        POSITION:   { shadow: VECTOR_3D_SHADOW }
     };
 
-    MCED.Defaults.values['minecraft_action_create_digital_line'] = {
-        POINT1:     { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>' },
-        POINT2:     { shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">10</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">10</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">10</field></shadow></value></shadow>' },
-        BLOCK_TYPE: { shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="MATERIAL_ID">STONE</field></shadow>' }
+    MCED.Defaults.values['minecraft_action_get_block'] = {
+        POSITION:   { shadow: VECTOR_3D_SHADOW }
+    };
+
+    MCED.Defaults.values['minecraft_action_get_height'] = {
+        POSITION:   { shadow: VECTOR_3D_SHADOW }
+    };
+
+    MCED.Defaults.values['minecraft_action_post_to_chat'] = {
+        MESSAGE: { shadow: '<shadow type="text"><field name="TEXT">Hello, Minecraft!</field></shadow>' }
+    };
+
+    MCED.Defaults.values['minecraft_action_set_sign'] = {
+        POSITION: { shadow: VECTOR_3D_SHADOW },
+        LINE1:    { shadow: '<shadow type="text"><field name="TEXT"></field></shadow>' },
+        LINE2:    { shadow: '<shadow type="text"><field name="TEXT">Hello!</field></shadow>' },
+        LINE3:    { shadow: '<shadow type="text"><field name="TEXT"></field></shadow>' },
+        LINE4:    { shadow: '<shadow type="text"><field name="TEXT"></field></shadow>' }
+    };
+
+    MCED.Defaults.values['minecraft_action_create_explosion'] = {
+        POSITION: { shadow: VECTOR_3D_SHADOW },
+        POWER:    { shadow: '<shadow type="math_number"><field name="NUM">4</field></shadow>' }
     };
 
     MCED.Defaults.values['minecraft_action_spawn_entity'] = {
@@ -145,57 +201,6 @@ export function defineMineCraftConstants(Blockly) {
             shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
         }
     };
-    // Apply the shadows
-    // MCED.BlocklyUtils.configureShadow(this, "ENTITY_TYPE");
-    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
-
-    MCED.Defaults.values['minecraft_action_set_block'] = {
-        BLOCK_TYPE: {
-            // Use the standard miscellaneous picker with STONE as the default
-            shadow: '<shadow type="minecraft_picker_miscellaneous"><field name="MATERIAL_ID">STONE</field></shadow>'
-        },
-        POSITION: {
-            shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
-        }
-    };
-
-    MCED.Defaults.values['minecraft_action_get_block'] = {
-        POSITION: {
-            shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
-        }
-    };
-
-    MCED.Defaults.values['minecraft_action_get_height'] = {
-        POSITION: {
-            shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
-        }
-    };
-
-    MCED.Defaults.values['minecraft_action_post_to_chat'] = {
-            MESSAGE: {
-                // Use a standard text block as the shadow
-                shadow: '<shadow type="text"><field name="TEXT">Hello, Minecraft!</field></shadow>'
-            }
-        };
-
-    MCED.Defaults.values['minecraft_action_create_explosion'] = {
-            POSITION: {
-                shadow: '<shadow type="minecraft_vector_3d"><value name="X"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Y"><shadow type="math_number"><field name="NUM">0</field></shadow></value><value name="Z"><shadow type="math_number"><field name="NUM">0</field></shadow></value></shadow>'
-            },
-            POWER: {
-                shadow: '<shadow type="math_number"><field name="NUM">4</field></shadow>'
-            }
-        };
-
-    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
-    // MCED.BlocklyUtils.configureShadow(this, "POWER");
-    // MCED.BlocklyUtils.configureShadow(this, "MESSAGE");
-    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
-    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
-
-    // Apply the shadows
-    // MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
-    // MCED.BlocklyUtils.configureShadow(this, "POSITION");
 
     // TODO do we even need this stuff??
     // Add Blockly.ALIGN_RIGHT
