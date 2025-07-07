@@ -181,59 +181,87 @@ class MCActions(MCActionBase): # Inherits from MCActionBase
             inner_offset_factor=float(inner_offset_factor)
         )
         self._place_blocks_from_coords(coords, block_type)
+    # def create_digital_plane(self, normal_vec3, point_on_plane_vec3, block_type,
+    #                            outer_rect_dims_tuple, # Now mandatory in Blockly block
+    #                            plane_thickness=1.0,
+    #                            inner_rect_dims_tuple=None,
+    #                            rect_center_offset_vec3=None): # Default to Vec3(0,0,0) if None in generator
+    #     # print(f"MCActions: create_digital_plane request with normal {normal_vec3}, point {point_on_plane_vec3}")
+    #
+    #     normal_tuple = (normal_vec3.x, normal_vec3.y, normal_vec3.z)
+    #     point_on_plane_tuple = (point_on_plane_vec3.x, point_on_plane_vec3.y, point_on_plane_vec3.z)
+    #
+    #     rect_center_offset_actual_tuple = (0.0, 0.0, 0.0)
+    #     if rect_center_offset_vec3 and hasattr(rect_center_offset_vec3, 'x'): # Check if it's Vec3-like
+    #         rect_center_offset_actual_tuple = (rect_center_offset_vec3.x, rect_center_offset_vec3.y, rect_center_offset_vec3.z)
+    #
+    #     # outer_rect_dims_tuple comes as a Python tuple string e.g. "(10, 10)" from the generator if minecraft_vector_2d is used.
+    #     # It needs to be parsed if it's a string. If it's already a tuple (e.g. from direct Python call), use as is.
+    #     final_outer_rect_dims = None
+    #     if isinstance(outer_rect_dims_tuple, str):
+    #         try:
+    #             final_outer_rect_dims = ast.literal_eval(outer_rect_dims_tuple)
+    #             if not (isinstance(final_outer_rect_dims, tuple) and len(final_outer_rect_dims) == 2):
+    #                 print(f"Warning: outer_rect_dims_tuple '{outer_rect_dims_tuple}' not a valid 2D tuple. Using None.")
+    #                 final_outer_rect_dims = None # Or a default like (10,10)
+    #         except:
+    #             print(f"Warning: Could not parse outer_rect_dims_tuple '{outer_rect_dims_tuple}'. Using None.")
+    #             final_outer_rect_dims = None
+    #     elif isinstance(outer_rect_dims_tuple, tuple) and len(outer_rect_dims_tuple) == 2:
+    #         final_outer_rect_dims = outer_rect_dims_tuple
+    #     else:
+    #         print(f"Warning: outer_rect_dims type unexpected ({type(outer_rect_dims_tuple)}). Must be tuple or string rep. of tuple. Using (10,10) default.")
+    #         final_outer_rect_dims = (10,10) # Fallback default if no valid outer_rect_dims provided
+    #
+    #     final_inner_rect_dims = None
+    #     if isinstance(inner_rect_dims_tuple, str) and inner_rect_dims_tuple.lower() != 'none':
+    #         try:
+    #             final_inner_rect_dims = ast.literal_eval(inner_rect_dims_tuple)
+    #             if not (isinstance(final_inner_rect_dims, tuple) and len(final_inner_rect_dims) == 2):
+    #                 final_inner_rect_dims = None
+    #         except:
+    #             final_inner_rect_dims = None
+    #     elif isinstance(inner_rect_dims_tuple, tuple) and len(inner_rect_dims_tuple) == 2:
+    #         final_inner_rect_dims = inner_rect_dims_tuple
+    #
+    #
+    #     coords = generate_digital_plane_coordinates( # Call your refactored function
+    #         normal=normal_tuple,
+    #         point_on_plane=point_on_plane_tuple,
+    #         outer_rect_dims=final_outer_rect_dims, # Pass the parsed/validated tuple
+    #         plane_thickness=float(plane_thickness),
+    #         inner_rect_dims=final_inner_rect_dims, # Pass the parsed/validated tuple
+    #         rect_center_offset=rect_center_offset_actual_tuple
+    #     )
+    #     self._place_blocks_from_coords(coords, block_type)
+
     def create_digital_plane(self, normal_vec3, point_on_plane_vec3, block_type,
-                               outer_rect_dims_tuple, # Now mandatory in Blockly block
-                               plane_thickness=1.0,
-                               inner_rect_dims_tuple=None,
-                               rect_center_offset_vec3=None): # Default to Vec3(0,0,0) if None in generator
-        # print(f"MCActions: create_digital_plane request with normal {normal_vec3}, point {point_on_plane_vec3}")
+                               outer_width, outer_length, plane_thickness=1.0):
+        """
+        Blockly action to create a rectangular digital plane.
+        """
+        try:
+            # --- THIS IS THE FIX ---
+            # Cast the incoming string values to numbers immediately.
+            w = float(outer_width)
+            l = float(outer_length)
 
-        normal_tuple = (normal_vec3.x, normal_vec3.y, normal_vec3.z)
-        point_on_plane_tuple = (point_on_plane_vec3.x, point_on_plane_vec3.y, point_on_plane_vec3.z)
+            # Combine them into the tuple that the low-level function expects.
+            outer_rect_dims_tuple = (w, l)
+            # --- END OF FIX ---
 
-        rect_center_offset_actual_tuple = (0.0, 0.0, 0.0)
-        if rect_center_offset_vec3 and hasattr(rect_center_offset_vec3, 'x'): # Check if it's Vec3-like
-            rect_center_offset_actual_tuple = (rect_center_offset_vec3.x, rect_center_offset_vec3.y, rect_center_offset_vec3.z)
+            normal_tuple = (normal_vec3.x, normal_vec3.y, normal_vec3.z)
+            point_tuple = (point_on_plane_vec3.x, point_on_plane_vec3.y, point_on_plane_vec3.z)
 
-        # outer_rect_dims_tuple comes as a Python tuple string e.g. "(10, 10)" from the generator if minecraft_vector_2d is used.
-        # It needs to be parsed if it's a string. If it's already a tuple (e.g. from direct Python call), use as is.
-        final_outer_rect_dims = None
-        if isinstance(outer_rect_dims_tuple, str):
-            try:
-                final_outer_rect_dims = ast.literal_eval(outer_rect_dims_tuple)
-                if not (isinstance(final_outer_rect_dims, tuple) and len(final_outer_rect_dims) == 2):
-                    print(f"Warning: outer_rect_dims_tuple '{outer_rect_dims_tuple}' not a valid 2D tuple. Using None.")
-                    final_outer_rect_dims = None # Or a default like (10,10)
-            except:
-                print(f"Warning: Could not parse outer_rect_dims_tuple '{outer_rect_dims_tuple}'. Using None.")
-                final_outer_rect_dims = None
-        elif isinstance(outer_rect_dims_tuple, tuple) and len(outer_rect_dims_tuple) == 2:
-            final_outer_rect_dims = outer_rect_dims_tuple
-        else:
-            print(f"Warning: outer_rect_dims type unexpected ({type(outer_rect_dims_tuple)}). Must be tuple or string rep. of tuple. Using (10,10) default.")
-            final_outer_rect_dims = (10,10) # Fallback default if no valid outer_rect_dims provided
-
-        final_inner_rect_dims = None
-        if isinstance(inner_rect_dims_tuple, str) and inner_rect_dims_tuple.lower() != 'none':
-            try:
-                final_inner_rect_dims = ast.literal_eval(inner_rect_dims_tuple)
-                if not (isinstance(final_inner_rect_dims, tuple) and len(final_inner_rect_dims) == 2):
-                    final_inner_rect_dims = None
-            except:
-                final_inner_rect_dims = None
-        elif isinstance(inner_rect_dims_tuple, tuple) and len(inner_rect_dims_tuple) == 2:
-            final_inner_rect_dims = inner_rect_dims_tuple
-
-
-        coords = generate_digital_plane_coordinates( # Call your refactored function
-            normal=normal_tuple,
-            point_on_plane=point_on_plane_tuple,
-            outer_rect_dims=final_outer_rect_dims, # Pass the parsed/validated tuple
-            plane_thickness=float(plane_thickness),
-            inner_rect_dims=final_inner_rect_dims, # Pass the parsed/validated tuple
-            rect_center_offset=rect_center_offset_actual_tuple
-        )
-        self._place_blocks_from_coords(coords, block_type)
+            coords = generate_digital_plane_coordinates(
+                normal=normal_tuple,
+                point_on_plane=point_tuple,
+                outer_rect_dims=outer_rect_dims_tuple,
+                plane_thickness=float(plane_thickness)
+            )
+            self._place_blocks_from_coords(coords, block_type)
+        except (ValueError, TypeError) as e:
+            print(f"Error: Invalid parameter type for create_digital_plane. Width, Length, and Thickness must be numbers. Error: {e}")
 
     def create_digital_disc(self, normal_vec3, center_point_vec3, outer_radius,
                               block_type, disc_thickness=1.0, inner_radius=0.0):

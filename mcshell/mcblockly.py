@@ -271,10 +271,10 @@ def update_app():
 
     process_entities()
     os.system(f"node {MC_DATA_DIR.joinpath('entities/generate_entity_blocks.mjs')}")
-    build_final_toolbox(MC_APP_STATIC_DIR.joinpath('toolbox.xml'))
+    build_final_toolbox(MC_APP_SRC_DIR.joinpath('toolbox.xml'))
 
 
-    os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_STATIC_DIR.joinpath('blocks')}")
+    os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
     os.system(f"cp {MC_DATA_DIR.joinpath('materials/python/materials.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
 
     os.system(f"cp {MC_DATA_DIR.joinpath('entities/blocks/entities.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")

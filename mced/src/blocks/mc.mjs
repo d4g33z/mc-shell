@@ -83,21 +83,21 @@ export function defineMineCraftBlocks(Blockly) {
     //   }
     // };
 
-    Blockly.Blocks['minecraft_vector_2d'] = {
-      init: function() {
-        this.appendValueInput("W")
-            .setCheck("Number")
-            .appendField("Vec2 w"); // Changed label slightly for clarity
-        this.appendValueInput("H")
-            .setCheck("Number")
-            .setAlign(Blockly.ALIGN_RIGHT) // Align the 'h' label to the right
-            .appendField("h");
-        this.setOutput(true, "2DVector"); // Output type remains the same
-        this.setColour(180); // Vector Math color
-        this.setTooltip("Creates a 2D vector or dimension (width, height/length). Accepts numbers or variables.");
-        this.setInputsInline(true); // Keep it on one line
-      }
-    };
+    // Blockly.Blocks['minecraft_vector_2d'] = {
+    //   init: function() {
+    //     this.appendValueInput("W")
+    //         .setCheck("Number")
+    //         .appendField("Vec2 w"); // Changed label slightly for clarity
+    //     this.appendValueInput("H")
+    //         .setCheck("Number")
+    //         .setAlign(Blockly.ALIGN_RIGHT) // Align the 'h' label to the right
+    //         .appendField("h");
+    //     this.setOutput(true, "2DVector"); // Output type remains the same
+    //     this.setColour(180); // Vector Math color
+    //     this.setTooltip("Creates a 2D vector or dimension (width, height/length). Accepts numbers or variables.");
+    //     this.setInputsInline(true); // Keep it on one line
+    //   }
+    // };
 
     // Blockly.Blocks['minecraft_vector_3d'] = {
     //     init: function () {
@@ -202,73 +202,142 @@ export function defineMineCraftBlocks(Blockly) {
 
     // --- Vector Math Category ---:/
 
-    Blockly.Blocks['minecraft_vector_arithmetic'] = {
-        init: function() {
-            this.appendValueInput("A")
-                .setCheck(["3DVector", "3DMatrix"]); // Input A can be a Vector or Matrix now
-            this.appendDummyInput()
-                .appendField(new Blockly.FieldDropdown([
-                    ["+", "ADD"],
-                    ["-", "SUBTRACT"],
-                    ["× (scalar)", "MULTIPLY"],
-                    ["• (dot product)", "DOT"],
-                    ["× (cross product)", "CROSS"],
-                    ["Rotated by Matrix", "MATRIX_MULTIPLY"] // <-- NEW OPERATION ADDED
-                ]), "OP");
-            this.appendValueInput("B")
-                .setCheck(["3DVector", "Number"]);
-            this.setInputsInline(true);
-            this.setOutput(true, ["3DVector", "Number"]);
-            this.setColour(180);
-            this.setTooltip(() => { // Dynamic tooltip
-                const op = this.getFieldValue('OP');
-                const tooltips = {
-                    'ADD': 'Returns the sum of two vectors.',
-                    'SUBTRACT': 'Returns the difference of two vectors.',
-                    'MULTIPLY': 'Returns the vector multiplied by a scalar.',
-                    'DOT': 'Returns the dot product of two vectors (a number).',
-                    'CROSS': 'Returns the cross product of two vectors (a new vector perpendicular to both).',
-                    'MATRIX_MULTIPLY': 'Returns a new vector by transforming a vector with a rotation matrix.'
-                };
-                return tooltips[op] || 'Performs vector arithmetic.';
-            });
-            this.setHelpUrl("");
-        },
+    // Blockly.Blocks['minecraft_vector_arithmetic'] = {
+    //     init: function() {
+    //         this.appendValueInput("A")
+    //             .setCheck(["3DVector", "3DMatrix"]); // Input A can be a Vector or Matrix now
+    //         this.appendDummyInput()
+    //             .appendField(new Blockly.FieldDropdown([
+    //                 ["+", "ADD"],
+    //                 ["-", "SUBTRACT"],
+    //                 ["× (scalar)", "MULTIPLY"],
+    //                 ["• (dot product)", "DOT"],
+    //                 ["× (cross product)", "CROSS"],
+    //                 ["Rotated by Matrix", "MATRIX_MULTIPLY"] // <-- NEW OPERATION ADDED
+    //             ]), "OP");
+    //         this.appendValueInput("B")
+    //             .setCheck(["3DVector", "Number"]);
+    //         this.setInputsInline(true);
+    //         this.setOutput(true, ["3DVector", "Number"]);
+    //         this.setColour(180);
+    //         this.setTooltip(() => { // Dynamic tooltip
+    //             const op = this.getFieldValue('OP');
+    //             const tooltips = {
+    //                 'ADD': 'Returns the sum of two vectors.',
+    //                 'SUBTRACT': 'Returns the difference of two vectors.',
+    //                 'MULTIPLY': 'Returns the vector multiplied by a scalar.',
+    //                 'DOT': 'Returns the dot product of two vectors (a number).',
+    //                 'CROSS': 'Returns the cross product of two vectors (a new vector perpendicular to both).',
+    //                 'MATRIX_MULTIPLY': 'Returns a new vector by transforming a vector with a rotation matrix.'
+    //             };
+    //             return tooltips[op] || 'Performs vector arithmetic.';
+    //         });
+    //         this.setHelpUrl("");
+    //
+    //         MCED.BlocklyUtils.configureShadow(this,"A");
+    //         MCED.BlocklyUtils.configureShadow(this,"B");
+    //     },
+    //
+    //     onchange: function(event) {
+    //         // Only run on user-made changes to the operator field
+    //         if (event.type !== Blockly.Events.BLOCK_CHANGE || event.element !== 'field' || event.name !== 'OP') {
+    //             return;
+    //         }
+    //
+    //         const op = this.getFieldValue('OP');
+    //         const inputA = this.getInput('A');
+    //         const inputB = this.getInput('B');
+    //
+    //         if (op === 'MATRIX_MULTIPLY') {
+    //             // A is Matrix, B is Vector -> outputs Vector
+    //             inputA.setCheck('3DMatrix');
+    //             inputB.setCheck('3DVector');
+    //             this.setOutput(true, '3DVector');
+    //         } else if (op === 'MULTIPLY') {
+    //             // A is Vector, B is Number -> outputs Vector
+    //             inputA.setCheck('3DVector');
+    //             inputB.setCheck('Number');
+    //             this.setOutput(true, '3DVector');
+    //         } else if (op === 'DOT') {
+    //             // A is Vector, B is Vector -> outputs Number
+    //             inputA.setCheck('3DVector');
+    //             inputB.setCheck('3DVector');
+    //             this.setOutput(true, 'Number');
+    //         } else { // ADD, SUBTRACT, CROSS
+    //             // A is Vector, B is Vector -> outputs Vector
+    //             inputA.setCheck('3DVector');
+    //             inputB.setCheck('3DVector');
+    //             this.setOutput(true, '3DVector');
+    //         }
+    //     }
+    // };
 
-        onchange: function(event) {
-            // Only run on user-made changes to the operator field
-            if (event.type !== Blockly.Events.BLOCK_CHANGE || event.element !== 'field' || event.name !== 'OP') {
-                return;
-            }
+    // In src/blocks/mc.mjs
 
-            const op = this.getFieldValue('OP');
-            const inputA = this.getInput('A');
-            const inputB = this.getInput('B');
+    // Block 1: For operations that take two VECTORS and return a VECTOR (Add, Subtract, Cross Product)
+    Blockly.Blocks['minecraft_vector_binary_op'] = {
+      init: function() {
+        this.appendValueInput("A").setCheck("3DVector");
+        this.appendDummyInput()
+            .appendField(new Blockly.FieldDropdown([
+                ["+", "ADD"],
+                ["-", "SUBTRACT"],
+                ["× (cross product)", "CROSS"]
+            ]), "OP");
+        this.appendValueInput("B").setCheck("3DVector");
+        this.setInputsInline(true);
+        this.setOutput(true, "3DVector");
+        this.setColour(180);
+        this.setTooltip("Performs vector addition, subtraction, or cross product.");
 
-            if (op === 'MATRIX_MULTIPLY') {
-                // A is Matrix, B is Vector -> outputs Vector
-                inputA.setCheck('3DMatrix');
-                inputB.setCheck('3DVector');
-                this.setOutput(true, '3DVector');
-            } else if (op === 'MULTIPLY') {
-                // A is Vector, B is Number -> outputs Vector
-                inputA.setCheck('3DVector');
-                inputB.setCheck('Number');
-                this.setOutput(true, '3DVector');
-            } else if (op === 'DOT') {
-                // A is Vector, B is Vector -> outputs Number
-                inputA.setCheck('3DVector');
-                inputB.setCheck('3DVector');
-                this.setOutput(true, 'Number');
-            } else { // ADD, SUBTRACT, CROSS
-                // A is Vector, B is Vector -> outputs Vector
-                inputA.setCheck('3DVector');
-                inputB.setCheck('3DVector');
-                this.setOutput(true, '3DVector');
-            }
-        }
+          MCED.BlocklyUtils.configureShadow(this,"A");
+          MCED.BlocklyUtils.configureShadow(this,"B");
+      }
     };
 
+    // Block 2: For operations that take a VECTOR and a NUMBER and return a VECTOR (Scalar Multiply)
+    Blockly.Blocks['minecraft_vector_scalar_multiply'] = {
+      init: function() {
+        this.appendValueInput("A").setCheck("3DVector");
+        this.appendDummyInput().appendField("×"); // Simple multiplication symbol
+        this.appendValueInput("B").setCheck("Number");
+        this.setInputsInline(true);
+        this.setOutput(true, "3DVector");
+        this.setColour(180);
+        this.setTooltip("Multiplies a vector by a scalar number.");
+          MCED.BlocklyUtils.configureShadow(this,"A");
+          MCED.BlocklyUtils.configureShadow(this,"B");
+      }
+    };
+
+    // Block 3: For operations that take two VECTORS and return a NUMBER (Dot Product)
+    Blockly.Blocks['minecraft_vector_dot_product'] = {
+      init: function() {
+        this.appendValueInput("A").setCheck("3DVector");
+        this.appendDummyInput().appendField("• (dot product)");
+        this.appendValueInput("B").setCheck("3DVector");
+        this.setInputsInline(true);
+        this.setOutput(true, "Number"); // Note the different output type
+        this.setColour(210); // Use a different color to indicate it returns a Number
+        this.setTooltip("Calculates the dot product of two vectors, returning a number.");
+          MCED.BlocklyUtils.configureShadow(this,"A");
+          MCED.BlocklyUtils.configureShadow(this,"B");
+      }
+    };
+
+    // Block 4: For Matrix * Vector multiplication
+    Blockly.Blocks['minecraft_matrix_vector_multiply'] = {
+      init: function() {
+        this.appendValueInput("A").setCheck("3DMatrix").appendField("Rotate vector");
+        this.appendValueInput("B").setCheck("3DVector").appendField("by matrix");
+        this.setInputsInline(true);
+        this.setOutput(true, "3DVector");
+        this.setColour(180);
+        this.setTooltip("Rotates a vector by a transformation matrix.");
+          MCED.BlocklyUtils.configureShadow(this,"A");
+          MCED.BlocklyUtils.configureShadow(this,"B");
+      }
+    };
     // --- Digital Geometry Category ---:/
 
     Blockly.Blocks['minecraft_action_create_digital_ball'] = {
@@ -295,6 +364,12 @@ export function defineMineCraftBlocks(Blockly) {
             this.setColour(65); // A distinct color for these new actions
             this.setTooltip("Creates a digital ball (sphere) of voxels.");
             this.setInputsInline(false); // Better for multiple inputs
+
+            MCED.BlocklyUtils.configureShadow(this, "CENTER");
+            MCED.BlocklyUtils.configureShadow(this, "RADIUS");
+            MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
+            MCED.BlocklyUtils.configureShadow(this, "INNER_RADIUS");
+
 
 
         }
@@ -329,51 +404,107 @@ export function defineMineCraftBlocks(Blockly) {
             this.setTooltip("Creates an oriented digital cube of voxels.");
             this.setInputsInline(false);
 
+            MCED.BlocklyUtils.configureShadow(this, "CENTER");
+            MCED.BlocklyUtils.configureShadow(this, "SIDE_LENGTH");
+            MCED.BlocklyUtils.configureShadow(this, "ROTATION_MATRIX");
+            MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
+            MCED.BlocklyUtils.configureShadow(this, "INNER_OFFSET_FACTOR");
 
         }
     };
 
     Blockly.Blocks['minecraft_action_create_digital_plane'] = {
-        init: function() {
-            this.appendDummyInput().appendField("Create Digital Plane (Rectangular)"); // Clarified name
-            this.appendValueInput("NORMAL")
-                .setCheck(["3DVector","3DUnitVector"])
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Normal Vector");
-            this.appendValueInput("POINT_ON_PLANE") // This is the plane's reference point
-                .setCheck("3DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Plane Reference Point");
-            this.appendValueInput("BLOCK_TYPE")
-                .setCheck("Block")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Block Type");
-            this.appendValueInput("OUTER_RECT_DIMS") // Now mandatory
-                .setCheck("2DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Outer Rect Dims (width, length)");
-            this.appendValueInput("PLANE_THICKNESS")
-                .setCheck("Number")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Thickness (default 1)");
-            this.appendValueInput("INNER_RECT_DIMS") // Optional
-                .setCheck("2DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Inner Rect Dims (optional)");
-            this.appendValueInput("RECT_CENTER_OFFSET") // Optional offset for the rectangle
-                .setCheck("3DVector")
-                .setAlign(Blockly.ALIGN_RIGHT)
-                .appendField("Rect Center Offset (from ref. point)");
+      init: function() {
+        this.appendDummyInput().appendField("Create Digital Plane (Rectangular)");
+        this.appendValueInput("NORMAL")
+            .setCheck("3DVector")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Normal Vector");
+        this.appendValueInput("POINT_ON_PLANE")
+            .setCheck("3DVector")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Plane Reference Point");
+        this.appendValueInput("BLOCK_TYPE")
+            .setCheck("Block")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Block Type");
 
-            this.setPreviousStatement(true, null);
-            this.setNextStatement(true, null);
-            this.setColour(65);
-            this.setTooltip("Creates a finite rectangular digital plane of voxels.");
-            this.setInputsInline(false);
+        // --- THIS IS THE FIX ---
+        // Replace the single 2DVector input with two Number inputs.
+        this.appendValueInput("OUTER_WIDTH")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Outer Width");
+        this.appendValueInput("OUTER_LENGTH")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Outer Length");
+        // --- END OF FIX ---
 
+        this.appendValueInput("PLANE_THICKNESS")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("Thickness");
 
-        }
+        // We can do the same for inner dimensions if needed, or leave it for later.
+
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(65);
+        this.setTooltip("Creates a finite rectangular digital plane of voxels.");
+        this.setInputsInline(false);
+
+        MCED.BlocklyUtils.configureShadow(this, "NORMAL");
+        MCED.BlocklyUtils.configureShadow(this, "POINT_ON_PLANE");
+        MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
+        MCED.BlocklyUtils.configureShadow(this, "OUTER_WIDTH");
+        MCED.BlocklyUtils.configureShadow(this, "OUTER_LENGTH");
+        MCED.BlocklyUtils.configureShadow(this, "PLANE_THICKNESS");
+      }
     };
+    //
+    // Blockly.Blocks['minecraft_action_create_digital_plane'] = {
+    //     init: function() {
+    //         this.appendDummyInput().appendField("Create Digital Plane (Rectangular)"); // Clarified name
+    //         this.appendValueInput("NORMAL")
+    //             .setCheck(["3DVector","3DUnitVector"])
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Normal Vector");
+    //         this.appendValueInput("POINT_ON_PLANE") // This is the plane's reference point
+    //             .setCheck("3DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Plane Reference Point");
+    //         this.appendValueInput("BLOCK_TYPE")
+    //             .setCheck("Block")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Block Type");
+    //         this.appendValueInput("OUTER_RECT_DIMS") // Now mandatory
+    //             .setCheck("2DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Outer Rect Dims (width, length)");
+    //         this.appendValueInput("PLANE_THICKNESS")
+    //             .setCheck("Number")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Thickness (default 1)");
+    //         this.appendValueInput("INNER_RECT_DIMS") // Optional
+    //             .setCheck("2DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Inner Rect Dims (optional)");
+    //         this.appendValueInput("RECT_CENTER_OFFSET") // Optional offset for the rectangle
+    //             .setCheck("3DVector")
+    //             .setAlign(Blockly.ALIGN_RIGHT)
+    //             .appendField("Rect Center Offset (from ref. point)");
+    //
+    //         this.setPreviousStatement(true, null);
+    //         this.setNextStatement(true, null);
+    //         this.setColour(65);
+    //         this.setTooltip("Creates a finite rectangular digital plane of voxels.");
+    //         this.setInputsInline(false);
+    //
+    //
+    //     }
+    // };
+
 
     Blockly.Blocks['minecraft_action_create_digital_disc'] = {
         init: function() {
@@ -408,6 +539,13 @@ export function defineMineCraftBlocks(Blockly) {
             this.setColour(65);
             this.setTooltip("Creates a digital disc or annulus (ring) of voxels.");
             this.setInputsInline(false);
+
+            MCED.BlocklyUtils.configureShadow(this, "NORMAL");
+            MCED.BlocklyUtils.configureShadow(this, "CENTER_POINT");
+            MCED.BlocklyUtils.configureShadow(this, "OUTER_RADIUS");
+            MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
+            MCED.BlocklyUtils.configureShadow(this, "DISC_THICKNESS");
+            MCED.BlocklyUtils.configureShadow(this, "INNER_RADIUS");
 
 
         }
@@ -445,6 +583,11 @@ export function defineMineCraftBlocks(Blockly) {
             this.setInputsInline(false);
 
 
+            MCED.BlocklyUtils.configureShadow(this, "POINT1");
+            MCED.BlocklyUtils.configureShadow(this, "POINT2");
+            MCED.BlocklyUtils.configureShadow(this, "OUTER_THICKNESS");
+            MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
+            MCED.BlocklyUtils.configureShadow(this, "INNER_THICKNESS");
         }
     };
 
@@ -472,6 +615,9 @@ export function defineMineCraftBlocks(Blockly) {
             this.setInputsInline(false);
 
 
+            MCED.BlocklyUtils.configureShadow(this, "POINT1");
+            MCED.BlocklyUtils.configureShadow(this, "POINT2");
+            MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
         }
     };
 
@@ -497,6 +643,8 @@ export function defineMineCraftBlocks(Blockly) {
         this.setTooltip("Spawns a specified entity at a given location.");
         this.setInputsInline(false);
 
+          MCED.BlocklyUtils.configureShadow(this, "ENTITY_TYPE");
+          MCED.BlocklyUtils.configureShadow(this, "POSITION");
       }
     };
 
@@ -516,6 +664,8 @@ export function defineMineCraftBlocks(Blockly) {
         this.setTooltip("Places a single block at a specified location.");
         this.setInputsInline(true); // Makes the block more compact and readable
 
+          MCED.BlocklyUtils.configureShadow(this, "BLOCK_TYPE");
+          MCED.BlocklyUtils.configureShadow(this, "POSITION");
       }
     };
 
@@ -529,7 +679,7 @@ export function defineMineCraftBlocks(Blockly) {
         this.setTooltip("Gets the type of block at a specific location.");
         this.setInputsInline(true);
 
-
+        MCED.BlocklyUtils.configureShadow(this, "POSITION");
       }
     };
 
@@ -543,7 +693,7 @@ export function defineMineCraftBlocks(Blockly) {
         this.setTooltip("Gets the Y coordinate of the highest solid block at a given X, Z location.");
         this.setInputsInline(true);
 
-
+        MCED.BlocklyUtils.configureShadow(this, "POSITION");
       }
     };
 
@@ -558,6 +708,7 @@ export function defineMineCraftBlocks(Blockly) {
         this.setTooltip("Posts a message to the in-game chat.");
         this.setInputsInline(true);
 
+        MCED.BlocklyUtils.configureShadow(this, "MESSAGE");
 
       }
     };
@@ -579,7 +730,8 @@ Blockly.Blocks['minecraft_action_create_explosion'] = {
     this.setTooltip("Creates an explosion of a specified power at a location. TNT is power 4.");
     this.setInputsInline(true);
 
-
+      MCED.BlocklyUtils.configureShadow(this,"POSITION");
+      MCED.BlocklyUtils.configureShadow(this,"POWER");
   }
 };
 }

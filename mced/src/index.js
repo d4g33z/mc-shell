@@ -45,6 +45,42 @@ function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
+/**
+ * Inspects the workspace for a functional power and opens the save modal,
+ * pre-filling it with the function's name and description (comment).
+ */
+function prepareAndOpenSaveModal() {
+    let powerName = '';
+    let powerDescription = '';
+
+    // Find the top-level function definition block, if it exists
+    const funcDefBlock = workspace.getTopBlocks(true).find(b =>
+        b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn'
+    );
+
+    if (funcDefBlock) {
+        // If a function block is found, use its properties as defaults
+        powerName = funcDefBlock.getFieldValue('NAME');
+        // The comment text is the best place for a power's description
+        powerDescription = funcDefBlock.getCommentText();
+    }
+
+    // Dispatch the event to open the modal, passing the extracted data.
+    // The modal's listener will use this data to pre-fill the form.
+    window.dispatchEvent(new CustomEvent('open-save-modal', {
+        detail: {
+            name: powerName,
+            description: powerDescription,
+            category: '' // Category can be set by the user in the modal
+        }
+    }));
+}
+
+// TODO put this inside init() ?
+// Attach the function to the window object to make it globally accessible from HTML
+window.prepareAndOpenSaveModal = prepareAndOpenSaveModal;
+
+
 async function handleDeletePower(powerId) {
     if (!powerId) return;
 
