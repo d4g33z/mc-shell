@@ -35,6 +35,52 @@ const AUTOSAVE_KEY = 'mcEdWorkspaceAutosave';
 // A module-scoped variable to hold the main workspace instance
 let workspace;
 
+// Add this helper function somewhere accessible, e.g., near the top of index.js
+/**
+ * Escapes characters in a string that have a special meaning in regular expressions.
+ * @param {string} str The string to escape.
+ * @returns {string} The escaped string.
+ */
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+/**
+ * Inspects the workspace for a functional power and opens the save modal,
+ * pre-filling it with the function's name and description (comment).
+ */
+function prepareAndOpenSaveModal() {
+    let powerName = '';
+    let powerDescription = '';
+
+    // Find the top-level function definition block, if it exists
+    const funcDefBlock = workspace.getTopBlocks(true).find(b =>
+        b.type === 'procedures_defnoreturn' || b.type === 'procedures_defreturn'
+    );
+
+    if (funcDefBlock) {
+        // If a function block is found, use its properties as defaults
+        powerName = funcDefBlock.getFieldValue('NAME');
+        // The comment text is the best place for a power's description
+        powerDescription = funcDefBlock.getCommentText();
+    }
+
+    // Dispatch the event to open the modal, passing the extracted data.
+    // The modal's listener will use this data to pre-fill the form.
+    window.dispatchEvent(new CustomEvent('open-save-modal', {
+        detail: {
+            name: powerName,
+            description: powerDescription,
+            category: '' // Category can be set by the user in the modal
+        }
+    }));
+}
+
+// TODO put this inside init() ?
+// Attach the function to the window object to make it globally accessible from HTML
+window.prepareAndOpenSaveModal = prepareAndOpenSaveModal;
+
+
 async function handleDeletePower(powerId) {
     if (!powerId) return;
 
@@ -714,9 +760,10 @@ async function init() {
         });
     }
 
+
     document.body.addEventListener('loadPower', function(event) {
-        if (!event.detail || !event.detail.powerData) {
-            console.error("loadPower event triggered without powerData.", event.detail);
+        if (!event.detail || !event.detail.powerData || !event.detail.powerData.blockly_json) {
+            alert('Error: Could not load power. Data is missing.');
             return;
         }
 
@@ -725,57 +772,71 @@ async function init() {
 
         console.log(`Received power to load: '${powerData.name}' in '${mode}' mode.`);
 
-        if (!powerData.blockly_json || !powerData.blockly_json.blocks || !Array.isArray(powerData.blockly_json.blocks.blocks)) {
-            alert(`Error: The power '${powerData.name}' has no saved block data.`);
-            return;
-        }
-
         try {
             if (mode === 'replace') {
                 if (workspace.getAllBlocks(false).length > 0) {
-                    if (!confirm("This will replace your current workspace. Are you sure?")) {
+                    if (!confirm(`This will replace your current workspace with the power '${powerData.name}'. Are you sure?`)) {
                         return;
                     }
                 }
-                workspace.clear();
                 Blockly.serialization.workspaces.load(powerData.blockly_json, workspace);
                 console.log("Workspace replaced successfully.");
 
             } else { // mode === 'add'
 
-                // --- CORRECTED APPEND AND POSITIONING LOGIC ---
-                console.log("Appending blocks to workspace...");
+                console.log("Appending power to workspace...");
+                const incomingJson = powerData.blockly_json;
 
-                // Get the array of top-level block definitions from the JSON.
-                const topBlocksJson = powerData.blockly_json.blocks.blocks;
+                // --- THIS IS THE COMPLETE, CORRECT LOGIC ---
 
-                // 1. Get the metrics of the visible workspace area.
-                const metrics = workspace.getMetrics();
-
-                // 2. Define a starting position for the new blocks, e.g., top-left of the view.
-                //    Add a small offset to avoid placing blocks right at the edge.
-                const PADDING = 20;
-                let cursorX = metrics.viewLeft + PADDING;
-                let cursorY = metrics.viewTop + PADDING;
-
-                // 3. Iterate through each top-level block definition in the array.
-                for (const blockJson of topBlocksJson) {
-                    // Set the position for the new block stack.
-                    blockJson.x = cursorX;
-                    blockJson.y = cursorY;
-
-                    // 4. Use blocks.append to add the block structure.
-                    Blockly.serialization.blocks.append(blockJson, workspace);
-
-                    // 5. Update the cursor position for the next block stack to avoid overlap.
-                    //    This creates a cascading effect.
-                    cursorY += PADDING * 2;
+                // 1. Manually create/merge variables and create an ID remap dictionary.
+                const variableMap = workspace.getVariableMap();
+                const idRemap = {};
+                if (incomingJson.variables) {
+                    for (const newVar of incomingJson.variables) {
+                        const existingVar = variableMap.getVariable(newVar.name);
+                        if (existingVar && existingVar.getId() !== newVar.id) {
+                            idRemap[newVar.id] = existingVar.getId();
+                        } else if (!existingVar) {
+                            workspace.createVariable(newVar.name, newVar.type, newVar.id);
+                        }
+                    }
                 }
-                console.log(`Appended ${topBlocksJson.length} new block stack(s) to the workspace.`);
-                // --- END OF CORRECTED LOGIC ---
+
+                // 2. If remappings are needed, stringify, replace all IDs, and parse back.
+                let blocksToAppend = incomingJson.blocks;
+                if (Object.keys(idRemap).length > 0 && blocksToAppend) {
+                    let blockJsonString = JSON.stringify(blocksToAppend);
+                    for (const oldId in idRemap) {
+                        const newId = idRemap[oldId];
+                        const searchRegExp = new RegExp(`"${escapeRegExp(oldId)}"`, 'g');
+                        blockJsonString = blockJsonString.replace(searchRegExp, `"${newId}"`);
+                    }
+                    blocksToAppend = JSON.parse(blockJsonString);
+                }
+
+                // 3. Now, iterate through the top-level blocks and append them one by one.
+                if (blocksToAppend && Array.isArray(blocksToAppend.blocks)) {
+                    Blockly.Events.disable();
+                    try {
+                        const topBlocksJson = blocksToAppend.blocks;
+                        for (const blockJson of topBlocksJson) {
+                            // This is the key: calling .append for each individual block object.
+                            Blockly.serialization.blocks.append(blockJson, workspace);
+                        }
+                        console.log(`Appended ${topBlocksJson.length} new block stack(s).`);
+                    } finally {
+                        Blockly.Events.enable();
+                    }
+
+                    // Clean up the layout to position the new blocks neatly.
+                    if (workspace.getTopBlocks(false).length > 0) {
+                         workspace.render();
+                         workspace.cleanUp();
+                    }
+                }
             }
 
-            // After loading, update the autosave with this new combined state
             autosaveWorkspace();
 
         } catch (e) {
@@ -783,6 +844,75 @@ async function init() {
             alert("Could not load the power. The file may be corrupted.");
         }
     });
+    // document.body.addEventListener('loadPower', function(event) {
+    //     if (!event.detail || !event.detail.powerData) {
+    //         console.error("loadPower event triggered without powerData.", event.detail);
+    //         return;
+    //     }
+    //
+    //     const powerData = event.detail.powerData;
+    //     const mode = event.detail.mode;
+    //
+    //     console.log(`Received power to load: '${powerData.name}' in '${mode}' mode.`);
+    //
+    //     if (!powerData.blockly_json || !powerData.blockly_json.blocks || !Array.isArray(powerData.blockly_json.blocks.blocks)) {
+    //         alert(`Error: The power '${powerData.name}' has no saved block data.`);
+    //         return;
+    //     }
+    //
+    //     try {
+    //         if (mode === 'replace') {
+    //             if (workspace.getAllBlocks(false).length > 0) {
+    //                 if (!confirm("This will replace your current workspace. Are you sure?")) {
+    //                     return;
+    //                 }
+    //             }
+    //             workspace.clear();
+    //             Blockly.serialization.workspaces.load(powerData.blockly_json, workspace);
+    //             console.log("Workspace replaced successfully.");
+    //
+    //         } else { // mode === 'add'
+    //
+    //             // --- CORRECTED APPEND AND POSITIONING LOGIC ---
+    //             console.log("Appending blocks to workspace...");
+    //
+    //             // Get the array of top-level block definitions from the JSON.
+    //             const topBlocksJson = powerData.blockly_json.blocks.blocks;
+    //
+    //             // 1. Get the metrics of the visible workspace area.
+    //             const metrics = workspace.getMetrics();
+    //
+    //             // 2. Define a starting position for the new blocks, e.g., top-left of the view.
+    //             //    Add a small offset to avoid placing blocks right at the edge.
+    //             const PADDING = 20;
+    //             let cursorX = metrics.viewLeft + PADDING;
+    //             let cursorY = metrics.viewTop + PADDING;
+    //
+    //             // 3. Iterate through each top-level block definition in the array.
+    //             for (const blockJson of topBlocksJson) {
+    //                 // Set the position for the new block stack.
+    //                 blockJson.x = cursorX;
+    //                 blockJson.y = cursorY;
+    //
+    //                 // 4. Use blocks.append to add the block structure.
+    //                 Blockly.serialization.blocks.append(blockJson, workspace);
+    //
+    //                 // 5. Update the cursor position for the next block stack to avoid overlap.
+    //                 //    This creates a cascading effect.
+    //                 cursorY += PADDING * 2;
+    //             }
+    //             console.log(`Appended ${topBlocksJson.length} new block stack(s) to the workspace.`);
+    //             // --- END OF CORRECTED LOGIC ---
+    //         }
+    //
+    //         // After loading, update the autosave with this new combined state
+    //         autosaveWorkspace();
+    //
+    //     } catch (e) {
+    //         console.error("Error deserializing or loading workspace:", e);
+    //         alert("Could not load the power. The file may be corrupted.");
+    //     }
+    // });
 
     // --- Logic to handle resizing Blockly when panels collapse ---
 

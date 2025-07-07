@@ -287,16 +287,16 @@ ${indentedBlockCode}
     //     return [code, generator.ORDER_ATOMIC];
     // };
 
-    pythonGenerator.forBlock['minecraft_vector_2d'] = function(block, generator) {
-        // Use valueToCode to get the code from the connected blocks, with a default of '0'.
-        const w = generator.valueToCode(block, 'W', generator.ORDER_ATOMIC) || '0';
-        const h = generator.valueToCode(block, 'H', generator.ORDER_ATOMIC) || '0';
-
-        // The code generates a Python tuple string.
-        const code = `(${w}, ${h})`;
-
-        return [code, generator.ORDER_ATOMIC];
-    };
+    // pythonGenerator.forBlock['minecraft_vector_2d'] = function(block, generator) {
+    //     // Use valueToCode to get the code from the connected blocks, with a default of '0'.
+    //     const w = generator.valueToCode(block, 'W', generator.ORDER_ATOMIC) || '0';
+    //     const h = generator.valueToCode(block, 'H', generator.ORDER_ATOMIC) || '0';
+    //
+    //     // The code generates a Python tuple string.
+    //     const code = `(${w}, ${h})`;
+    //
+    //     return [code, generator.ORDER_ATOMIC];
+    // };
     // pythonGenerator.forBlock['minecraft_vector_3d'] = function (block,generator) {
     //     const xValue = block.getFieldValue('X');
     //     const yValue = block.getFieldValue('Y');
@@ -350,50 +350,94 @@ ${indentedBlockCode}
         return [code, generator.ORDER_FUNCTION_CALL];
     };
 
-    pythonGenerator.forBlock['minecraft_vector_arithmetic'] = function(block, generator) {
-        const operator = block.getFieldValue('OP');
-        let order, code;
+    // pythonGenerator.forBlock['minecraft_vector_arithmetic'] = function(block, generator) {
+    //     const operator = block.getFieldValue('OP');
+    //     let order, code;
+    //
+    //     if (operator === 'MATRIX_MULTIPLY') {
+    //         // Matrix multiplication: matrix @ vector
+    //         const matrix = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Matrix3.identity()';
+    //         const vector = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         order = generator.ORDER_MULTIPLICATIVE; // The @ operator has the same precedence as *
+    //         code = `${matrix} @ ${vector}`;
+    //     } else if (operator === 'MULTIPLY') {
+    //         // Scalar multiplication: vector * number
+    //         const vector = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
+    //         const scalar = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || '1';
+    //         order = generator.ORDER_MULTIPLICATIVE;
+    //         code = `${vector} * ${scalar}`;
+    //     } else if (operator === 'DOT') {
+    //         // Dot product: vector.dot(vector)
+    //         const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         order = generator.ORDER_FUNCTION_CALL;
+    //         code = `${vector1}.dot(${vector2})`;
+    //     } else if (operator === 'CROSS') {
+    //         // Cross product: vector.cross(vector)
+    //         const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+    //         order = generator.ORDER_FUNCTION_CALL;
+    //         code = `${vector1}.cross(${vector2})`;
+    //     } else { // ADD or SUBTRACT
+    //         const OPERATORS = {
+    //             'ADD': [' + ', generator.ORDER_ADDITIVE],
+    //             'SUBTRACT': [' - ', generator.ORDER_ADDITIVE],
+    //         };
+    //         const tuple = OPERATORS[operator];
+    //         const op_str = tuple[0];
+    //         order = tuple[1];
+    //         const vector1 = generator.valueToCode(block, 'A', order) || 'Vec3()';
+    //         const vector2 = generator.valueToCode(block, 'B', order) || 'Vec3()';
+    //         code = `${vector1}${op_str}${vector2}`;
+    //     }
+    //
+    //     return [code, order];
+    // };
 
-        if (operator === 'MATRIX_MULTIPLY') {
-            // Matrix multiplication: matrix @ vector
-            const matrix = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Matrix3.identity()';
-            const vector = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
-            order = generator.ORDER_MULTIPLICATIVE; // The @ operator has the same precedence as *
-            code = `${matrix} @ ${vector}`;
-        } else if (operator === 'MULTIPLY') {
-            // Scalar multiplication: vector * number
-            const vector = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
-            const scalar = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || '1';
-            order = generator.ORDER_MULTIPLICATIVE;
-            code = `${vector} * ${scalar}`;
-        } else if (operator === 'DOT') {
-            // Dot product: vector.dot(vector)
-            const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
-            const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
-            order = generator.ORDER_FUNCTION_CALL;
-            code = `${vector1}.dot(${vector2})`;
-        } else if (operator === 'CROSS') {
-            // Cross product: vector.cross(vector)
-            const vector1 = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
-            const vector2 = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
-            order = generator.ORDER_FUNCTION_CALL;
-            code = `${vector1}.cross(${vector2})`;
-        } else { // ADD or SUBTRACT
-            const OPERATORS = {
-                'ADD': [' + ', generator.ORDER_ADDITIVE],
-                'SUBTRACT': [' - ', generator.ORDER_ADDITIVE],
-            };
-            const tuple = OPERATORS[operator];
-            const op_str = tuple[0];
-            order = tuple[1];
-            const vector1 = generator.valueToCode(block, 'A', order) || 'Vec3()';
-            const vector2 = generator.valueToCode(block, 'B', order) || 'Vec3()';
-            code = `${vector1}${op_str}${vector2}`;
+    pythonGenerator.forBlock['minecraft_vector_binary_op'] = function(block, generator) {
+        const OPERATORS = {
+            'ADD': [' + ', generator.ORDER_ADDITIVE],
+            'SUBTRACT': [' - ', generator.ORDER_ADDITIVE],
+            'CROSS': ['.cross(', generator.ORDER_FUNCTION_CALL],
+        };
+        const op = block.getFieldValue('OP');
+        const tuple = OPERATORS[op];
+        const operatorString = tuple[0];
+        const order = tuple[1];
+
+        const vectorA = generator.valueToCode(block, 'A', order) || 'Vec3()';
+        const vectorB = generator.valueToCode(block, 'B', order) || 'Vec3()';
+
+        let code;
+        if (op === 'CROSS') {
+            code = `${vectorA}${operatorString}${vectorB})`;
+        } else {
+            code = `${vectorA}${operatorString}${vectorB}`;
         }
 
         return [code, order];
     };
 
+    pythonGenerator.forBlock['minecraft_vector_scalar_multiply'] = function(block, generator) {
+        const vector = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
+        const scalar = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || '1';
+        const code = `${vector} * ${scalar}`;
+        return [code, generator.ORDER_MULTIPLICATIVE];
+    };
+
+    pythonGenerator.forBlock['minecraft_vector_dot_product'] = function(block, generator) {
+        const vectorA = generator.valueToCode(block, 'A', generator.ORDER_ATOMIC) || 'Vec3()';
+        const vectorB = generator.valueToCode(block, 'B', generator.ORDER_ATOMIC) || 'Vec3()';
+        const code = `${vectorA}.dot(${vectorB})`;
+        return [code, generator.ORDER_FUNCTION_CALL];
+    };
+
+    pythonGenerator.forBlock['minecraft_matrix_vector_multiply'] = function(block, generator) {
+        const matrix = generator.valueToCode(block, 'A', generator.ORDER_MULTIPLICATIVE) || 'Matrix3.identity()';
+        const vector = generator.valueToCode(block, 'B', generator.ORDER_MULTIPLICATIVE) || 'Vec3()';
+        const code = `${matrix} @ ${vector}`; // Use the @ operator for matrix multiplication
+        return [code, generator.ORDER_MULTIPLICATIVE];
+    };
     pythonGenerator.forBlock['minecraft_coloured_block_picker'] = function(block, generator) {
       const colourId = block.getFieldValue('MINECRAFT_COLOUR_ID'); // e.g., "WHITE", "RED"
       // The Python code should return a representation that your MCPlayerActions can understand.
@@ -428,16 +472,33 @@ ${indentedBlockCode}
         const normal = generator.valueToCode(block, 'NORMAL', generator.ORDER_ATOMIC) || "Vec3(0,1,0)";
         const pointOnPlane = generator.valueToCode(block, 'POINT_ON_PLANE', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
         const blockType = generator.valueToCode(block, 'BLOCK_TYPE', generator.ORDER_ATOMIC) || "'STONE'";
-        const outerRectDims = generator.valueToCode(block, 'OUTER_RECT_DIMS', generator.ORDER_ATOMIC) || "(10, 10)"; // Default tuple if not connected
         const planeThickness = generator.valueToCode(block, 'PLANE_THICKNESS', generator.ORDER_ATOMIC) || "1.0";
-        const innerRectDims = generator.valueToCode(block, 'INNER_RECT_DIMS', generator.ORDER_ATOMIC) || "None"; // Python None if not connected
-        const rectCenterOffset = generator.valueToCode(block, 'RECT_CENTER_OFFSET', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
 
+        // --- THIS IS THE FIX ---
+        const outerWidth = generator.valueToCode(block, 'OUTER_WIDTH', generator.ORDER_ATOMIC) || "10";
+        const outerLength = generator.valueToCode(block, 'OUTER_LENGTH', generator.ORDER_ATOMIC) || "10";
+        // --- END OF FIX ---
+
+        // The method call now includes the new parameters
         return `self.action_implementer.create_digital_plane(` +
                `normal_vec3=${normal}, point_on_plane_vec3=${pointOnPlane}, block_type=${blockType}, ` +
-               `outer_rect_dims_tuple=${outerRectDims}, plane_thickness=${planeThickness}, ` +
-               `inner_rect_dims_tuple=${innerRectDims}, rect_center_offset_vec3=${rectCenterOffset})\n`;
+               `outer_width=${outerWidth}, outer_length=${outerLength}, plane_thickness=${planeThickness})\n`;
     };
+
+    // pythonGenerator.forBlock['minecraft_action_create_digital_plane'] = function(block, generator) {
+    //     const normal = generator.valueToCode(block, 'NORMAL', generator.ORDER_ATOMIC) || "Vec3(0,1,0)";
+    //     const pointOnPlane = generator.valueToCode(block, 'POINT_ON_PLANE', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
+    //     const blockType = generator.valueToCode(block, 'BLOCK_TYPE', generator.ORDER_ATOMIC) || "'STONE'";
+    //     const outerRectDims = generator.valueToCode(block, 'OUTER_RECT_DIMS', generator.ORDER_ATOMIC) || "(10, 10)"; // Default tuple if not connected
+    //     const planeThickness = generator.valueToCode(block, 'PLANE_THICKNESS', generator.ORDER_ATOMIC) || "1.0";
+    //     const innerRectDims = generator.valueToCode(block, 'INNER_RECT_DIMS', generator.ORDER_ATOMIC) || "None"; // Python None if not connected
+    //     const rectCenterOffset = generator.valueToCode(block, 'RECT_CENTER_OFFSET', generator.ORDER_ATOMIC) || "Vec3(0,0,0)";
+    //
+    //     return `self.action_implementer.create_digital_plane(` +
+    //            `normal_vec3=${normal}, point_on_plane_vec3=${pointOnPlane}, block_type=${blockType}, ` +
+    //            `outer_rect_dims_tuple=${outerRectDims}, plane_thickness=${planeThickness}, ` +
+    //            `inner_rect_dims_tuple=${innerRectDims}, rect_center_offset_vec3=${rectCenterOffset})\n`;
+    // };
 
     pythonGenerator.forBlock['minecraft_action_create_digital_disc'] = function(block, generator) {
         const normal = generator.valueToCode(block, 'NORMAL', generator.ORDER_ATOMIC) || "Vec3(0,1,0)";

@@ -36,8 +36,8 @@
             <main id="main-content-panel">
 
                 <div id="controls">
-                    <button id="savePowerAsButton" @click="$dispatch('open-save-modal')">Save Power As...</button>
-
+<!--                    <button id="savePowerAsButton" @click="$dispatch('open-save-modal')">Save Power As...</button>-->
+                    <button id="savePowerAsButton" @click="prepareAndOpenSaveModal()">Save/Update Power...</button>
                     <button id="loadPowerFromFileButton">Load from File...</button>
 
                     <button id="executePowerButton">Execute (Debug)</button>
@@ -65,9 +65,19 @@
         </div>
 
         <template x-teleport="body">
+
+            <!--                     @open-save-modal.window="isOpen = true"-->
             <div>
                 <div x-data="{ isOpen: false }"
-                     @open-save-modal.window="isOpen = true"
+                     @open-save-modal.window="
+                        isOpen = true;
+                        // This logic now correctly pre-fills the form with data from the event
+                        $nextTick(() => {
+                            document.getElementById('powerName').value = $event.detail.name || '';
+                            document.getElementById('powerDescription').value = $event.detail.description || '';
+                            document.getElementById('powerCategory').value = $event.detail.category || '';
+                        });
+                    "
                      @library-changed.window="isOpen = false"
                      @keydown.escape.window="isOpen = false"
                      class="modal-root">
