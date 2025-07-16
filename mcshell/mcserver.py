@@ -174,19 +174,17 @@ def execute_power_in_thread(power_id,execution_id, python_code, player_name, ser
     This is the new, shared worker function. It runs in a background thread.
     """
     print(f"THREAD {execution_id}: Started for player '{player_name}' with params: {runtime_params}")
-        # --- Send the initial 'running' status with ALL required fields ---
+    # --- Send the initial 'running' status with ALL required fields ---
     socketio.emit('power_status', {
         'id': power_id,
         'execution_id': execution_id,
         'status': 'running',
         'message': ''
     })
-    # socketio.emit('power_status', {'id': execution_id, 'status': 'running'})
 
     try:
         # We need the app context for config
         with app.app_context():
-            #we could pass cancel to MCPlayer here and make sword hits cancelable
             mc_player = MCPlayer(player_name, **server_data,cancel_event=cancel_event)
             action_implementer = MCActions(mc_player)
 
@@ -202,8 +200,6 @@ def execute_power_in_thread(power_id,execution_id, python_code, player_name, ser
             runner = BlocklyProgramRunner(action_implementer, cancel_event=cancel_event,runtime_params=runtime_params)
 
             # --- Cancellation Check (if your MCActions methods support it) ---
-            # You could pass the cancel_event to the runner if methods can check it.
-            # runner.cancel_event = cancel_event
             try:
                 runner.run_program()
             except PowerCancelledException:
@@ -219,20 +215,6 @@ def execute_power_in_thread(power_id,execution_id, python_code, player_name, ser
                     'message': 'Cancelled by user.'
                 })
                 return
-            # if cancel_event.is_set():
-            #     print(f"Thread {execution_id}: Execution was cancelled.")
-            #     # --- Send the 'cancelled' status with ALL required fields ---
-            #     socketio.emit('power_status', {
-            #         'id': power_id,
-            #         'execution_id': execution_id,
-            #         'status': 'cancelled',
-            #         'message': 'Cancelled by user.'
-            #     })
-            #     return
-            # if cancel_event.is_set():
-            #     print(f"Thread {execution_id}: Execution was cancelled.")
-            #     socketio.emit('power_status', {'id': execution_id, 'status': 'cancelled'})
-            #     return
 
         print(f"Thread {execution_id}: Execution completed successfully.")
         # --- Send the 'finished' status with ALL required fields ---
@@ -242,14 +224,11 @@ def execute_power_in_thread(power_id,execution_id, python_code, player_name, ser
             'status': 'finished',
             'message': 'Completed successfully.'
         })
-        # print(f"Thread {execution_id}: Execution completed successfully.")
-        # socketio.emit('power_status', {'id': execution_id, 'status': 'finished'})
     except Exception as e:
         # Report any errors that occur during execution
         print(f"Thread {execution_id}: Error during execution: {e}")
         import traceback
         traceback.print_exc()
-        # socketio.emit('power_status', {'id': execution_id, 'status': 'error', 'message': str(e)})
         socketio.emit('power_status', {
             'id': power_id,
             'execution_id': execution_id,
