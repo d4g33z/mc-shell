@@ -316,22 +316,6 @@ class BlocklyProgramRunner:
 
     return jsonify({"status": "dispatched", "execution_id": execution_id})
 
-    # return "Execute"
-    # #TODO: how can I avoid returning html???
-    # running_state_html = f"""
-    # <div class="widget-main-actions" hx-swap-oob="true" id="actions-{power_id}">
-    #     <div class="power-status">Status: <span class="running">Running...</span></div>
-    #     <button class="btn-small btn-danger cancel-btn"
-    #             hx-post="/api/cancel_power"
-    #             hx-ext="json-enc"
-    #             hx-vals='{{"execution_id": "{execution_id}"}}'
-    #             hx-target="#actions-{power_id}"
-    #             hx-swap="outerHTML">
-    #         Cancel
-    #     </button>
-    # </div>
-    # """
-    # return running_state_html
 
 @app.route('/api/cancel_power', methods=['POST'])
 def cancel_power():
