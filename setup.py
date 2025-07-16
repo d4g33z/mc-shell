@@ -17,6 +17,8 @@ setup(
     packages=find_packages(include=['mcshell'],exclude=['tests','tests.*']),
     include_package_data=True,
     install_requires=[
+        'websocket-client',
+        'pyncraft',
         'rcon',
         'aio-mc-rcon',
         'flask',
