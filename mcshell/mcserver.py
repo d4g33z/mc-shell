@@ -41,8 +41,8 @@ flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WAR
 # flask_logger.handlers = [] # Remove all handlers, including console
 
 # socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_mode='threading',logger=flask_logger)
-# call socketio.init_app() in start_app_server()
-socketio = SocketIO(None, cors_allowed_origins="*", async_handlers=False, async_mode='threading',logger=flask_logger)
+socketio = SocketIO(
+    app, cors_allowed_origins="*", async_handlers=False, async_mode='threading',logger=flask_logger,engineio_logger=flask_logger)
 
 # --- State Management for Running Powers ---
 # This dictionary will hold the state of each running power
@@ -73,8 +73,6 @@ def start_app_server(server_data,mc_name,ipy_shell):
         print("Application server is already running.")
         return
 
-    socketio.init_app(app)
-
     # The target no longer needs a try/except block because socketio.stop()
     # provides a clean exit from the run() loop.
     app_server_thread = threading.Thread(
@@ -99,36 +97,42 @@ def stop_app_server():
 
     # Import the client library only when needed
     import socketio as socketio_client
-
-    print("Connecting to server to send shutdown event...")
     sio = socketio_client.Client()
     try:
+        print("CLient connecting to server to send shutdown event...")
         sio.connect('http://127.0.0.1:5001')
     except Exception as e:
         print(f"Could not connect to server to send shutdown event: {e}")
         print("The server might already be down or unresponsive.")
         return
 
-    try:
-        print("Emitting shutdown_request event.")
-        sio.emit('shutdown_request')
-        sio.disconnect()
-        print("Shutdown event sent and client disconnected.")
-    except Exception as e:
-        raise e
+    # try:
+    print("Connected. Emitting shutdown_request event.")
+    sio.emit('shutdown_request')
+    sio.disconnect()
+    print("Client disconnected.")
 
-    # Now, wait for the thread to fully terminate. This will now succeed.
-    # print(f"This function is broken and deadlocked, exit IPython to kill the server")
-    # print(f"Hit Ctrl-C")
-    # app_server_thread.join()
+    # except Exception as e:
+    #     raise e
+
 
     if app_server_thread.is_alive():
         print("Warning: Server thread did not shut down cleanly.")
+        # Now, wait for the thread to fully terminate. This will now succeed.
+        print(f"Hit Ctrl-C to stop the server.")
+        try:
+            app_server_thread.join()
+        except KeyboardInterrupt:
+            print("Application server thread stopped.")
+            return
     else:
         app_server_thread = None
         print("Application server thread has shut down successfully.")
 
+
+
 # --- Socket.io Shutdown Handler ---
+# TODO: broken
 @socketio.on('shutdown_request')
 def handle_shutdown_request():
     """
@@ -136,6 +140,7 @@ def handle_shutdown_request():
     This is the clean way to stop the socketio.run() loop.
     """
     print("Shutdown request received via Socket.IO. Stopping server.")
+    # with app.app_context():
     socketio.stop() # This gracefully exits the socketio.run() loop.
 
 
