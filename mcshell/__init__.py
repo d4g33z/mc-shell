@@ -523,8 +523,7 @@ class MCShell(Magics):
         minecraft_name = self._get_mc_name()
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
         start_app_server(self.server_data,minecraft_name,self.shell)
-
-        return f"mc-ed application server started for player '{minecraft_name}'."
+        return
 
     @line_magic
     def mc_stop_app(self, line):
