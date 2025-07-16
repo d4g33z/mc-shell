@@ -1,13 +1,10 @@
-import ast
+import logging
 import textwrap
 import threading
 from threading import Thread, Event
-from io import StringIO
 
-from flask import Flask, current_app,request, jsonify, send_from_directory, session
+from flask import Flask, current_app,request, jsonify, send_from_directory
 from flask_socketio import SocketIO
-from flask import Flask, render_template_string, make_response
-
 
 
 from mcshell.mcactions import MCActions
@@ -23,23 +20,28 @@ class ServerShutdownException(Exception):
     """Custom exception to signal a clean server shutdown."""
     pass
 
+# -- Server Control ---
+app_server_thread = None
+
 # --- Server Setup ---
 app = Flask(__name__, static_folder=str(MC_APP_DIR)) # Serve files from Parcel's build output
-socketio = SocketIO(app, cors_allowed_origins="*", async_handlers=False, async_mode='threading')
+app.secret_key = str(uuid.uuid4())
 
+# --- Register Endpoints
 app.register_blueprint(powers_bp)
 app.register_blueprint(control_bp)
 app.register_blueprint(ipython_bp)
 
-app.secret_key = str(uuid.uuid4())
 
-import logging
 # --- Suppress Flask's Default Console Logging ---
 flask_logger = logging.getLogger('werkzeug') # Get Werkzeug logger (Flask's dev server)
-#flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
 flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WARNING (or higher)
+# flask_logger.setLevel(logging.ERROR) # Set Werkzeug logger level to ERROR or WARNING (or higher)
 # Alternatively, to completely remove the default Werkzeug console handler:
 # flask_logger.handlers = [] # Remove all handlers, including console
+
+socketio = SocketIO(
+    app, cors_allowed_origins="*", async_handlers=True, async_mode='gevent',engineio_logger=flask_logger,logger=flask_logger)
 
 # --- State Management for Running Powers ---
 # This dictionary will hold the state of each running power
@@ -47,6 +49,93 @@ flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WAR
 # Value: {'thread': ThreadObject, 'cancel_event': EventObject}
 RUNNING_POWERS = {}
 
+# --- Server Control ---
+def start_app_server(server_data,mc_name,ipy_shell):
+    """Starts the main Flask-SocketIO application server in a separate thread."""
+    # Attach the server_data dict to the Flask app's config object.
+    # This makes the data available anywhere we have access to the app context.
+    # --- Inject the AUTHORITATIVE data into the Flask app config ---
+    # The Flask server will now start with the correct, non-spoofable identity.
+    app.config['MCSHELL_SERVER_DATA'] = server_data
+    app.config['MINECRAFT_PLAYER_NAME'] = mc_name
+    app.config['IPYTHON_SHELL'] = ipy_shell
+
+    # --- Instantiate the chosen repository ---
+    # You can later make this configurable (e.g., via an environment variable)
+    # to switch between JsonFileRepository, SqliteRepository, etc.
+    power_repo = JsonFileRepository(mc_name)
+    app.config['POWER_REPO'] = power_repo
+
+
+    global app_server_thread
+    if app_server_thread and app_server_thread.is_alive():
+        print("Application server is already running.")
+        return
+
+    # The target no longer needs a try/except block because socketio.stop()
+    # provides a clean exit from the run() loop.
+
+    app_server_thread = threading.Thread(
+        target=lambda: socketio.run(app, host='0.0.0.0', port=5001, debug=False, use_reloader=False, allow_unsafe_werkzeug=False),
+        daemon=True
+    )
+    app_server_thread.start()
+    time.sleep(1) # Give the server a moment to start
+    if app_server_thread.is_alive():
+        print(f"Flask-SocketIO application server started in thread: {app_server_thread.ident}")
+        print(f"mc-ed application server started for player '{mc_name}'.")
+    else:
+        print("Error: Application server thread failed to start.")
+
+
+def stop_app_server():
+    """Gracefully stops the Flask-SocketIO application server by emitting a socket.io event."""
+    global app_server_thread
+    if not app_server_thread or not app_server_thread.is_alive():
+        print("Application server is not running.")
+        return
+
+    # Import the client library only when needed
+    import socketio as socketio_client
+    sio = socketio_client.Client()
+    try:
+        print("CLient connecting to server to send shutdown event...")
+        sio.connect('http://127.0.0.1:5001')
+    except Exception as e:
+        print(f"Could not connect to server to send shutdown event: {e}")
+        print("The server might already be down or unresponsive.")
+        return
+
+    print("Connected. Emitting shutdown_request event.")
+    sio.emit('shutdown_request')
+    app_server_thread.join()
+    sio.disconnect()
+    print("Disconnected.")
+
+
+    if app_server_thread.is_alive():
+        print("Warning: Server thread did not shut down cleanly.")
+    else:
+        app_server_thread = None
+        print("Application server thread has shut down successfully.")
+
+
+
+# --- Socket.io Shutdown Handler ---
+@socketio.on('shutdown_request')
+def handle_shutdown_request():
+    """
+    Handles a shutdown request received over a Socket.IO event.
+    This is the clean way to stop the socketio.run() loop.
+    """
+    print("Shutdown request received via Socket.IO. Stopping server.")
+    print("Please wait...")
+    # with app.app_context():
+    socketio.stop() # This gracefully exits the socketio.run() loop.
+
+
+
+# --- Helpers ---
 def get_code_with_dependencies(power_repo, power_id_or_name, processed_names=None) -> dict:
     """
     Recursively loads a power and all of its dependencies by function name.
@@ -79,98 +168,6 @@ def get_code_with_dependencies(power_repo, power_id_or_name, processed_names=Non
         all_method_definitions.update(dep_methods)
 
     return all_method_definitions
-
-@app.route('/api/execute_power', methods=['POST'])
-def execute_power():
-    """Executes a saved power with runtime parameters from the control UI."""
-    data = request.get_json() if request.is_json else request.form
-    power_id = data.get('power_id')
-    runtime_params = {k: v for k, v in data.items() if k != 'power_id'}
-
-    player_name = current_app.config.get('MINECRAFT_PLAYER_NAME')
-    server_data = current_app.config.get('MCSHELL_SERVER_DATA')
-    power_repo = current_app.config.get('POWER_REPO')
-
-    if not all([power_id, player_name, server_data, power_repo]):
-        return "Error: Server or player not configured", 500
-    # 1. Load the main power to get its function name
-    main_power_data = power_repo.get_full_power(power_id)
-    if not main_power_data:
-        return jsonify({"error": "Power not found."}), 404
-
-    main_function_name = main_power_data.get("function_name")
-
-    # 2. Recursively get all required method definitions
-    all_methods_dict = get_code_with_dependencies(power_repo, main_function_name)
-    all_methods_code = "\n\n".join(all_methods_dict.values())
-
-    # 3. Dynamically build the run_program method body
-    # This creates the call with keyword arguments from the UI, e.g., height=25, material='STONE'
-    run_program_args = ", ".join([f"{key}={repr(value)}" for key, value in runtime_params.items()])
-    run_program_body = f"self.{main_function_name}({run_program_args})"
-
-    # 4. Assemble the final, complete script string
-    python_code = f"""
-import numpy as np
-import math
-from mcshell.constants import *
-
-class BlocklyProgramRunner:
-    def __init__(self, action_implementer_instance,cancel_event=None,runtime_params={{}}):
-        self.action_implementer = action_implementer_instance
-        self.cancel_event = cancel_event
-        self.runtime_params = runtime_params
-
-    # --- Injected Method Definitions ---
-{textwrap.indent(all_methods_code, '    ')}
-
-    # --- Dynamically Generated Main Execution ---
-    def run_program(self):
-        if self.cancel_event and self.cancel_event.is_set(): return
-{textwrap.indent(run_program_body, '        ')}
-"""
-
-    # --- Create a unique ID for this execution instance ---
-    execution_id = str(uuid.uuid4())
-    cancel_event = Event()
-
-    thread = Thread(target=execute_power_in_thread, args=(
-        power_id, execution_id, python_code, player_name, server_data, runtime_params, cancel_event
-    ))
-    thread.daemon = True
-    thread.start()
-    RUNNING_POWERS[execution_id] = {
-        'thread': thread,
-        'cancel_event': cancel_event,
-        'power_id': power_id  # <-- STORE THE POWER ID
-    }
-
-    # We acknowledge the request was dispatched and include the unique execution_id.
-    socketio.emit('power_status', {
-            'id': power_id,
-            'execution_id': execution_id,
-            'status': 'dispatched',
-            'message': 'Dispatched successfully.'
-        })
-
-    return jsonify({"status": "dispatched", "execution_id": execution_id})
-
-    # return "Execute"
-    # #TODO: how can I avoid returning html???
-    # running_state_html = f"""
-    # <div class="widget-main-actions" hx-swap-oob="true" id="actions-{power_id}">
-    #     <div class="power-status">Status: <span class="running">Running...</span></div>
-    #     <button class="btn-small btn-danger cancel-btn"
-    #             hx-post="/api/cancel_power"
-    #             hx-ext="json-enc"
-    #             hx-vals='{{"execution_id": "{execution_id}"}}'
-    #             hx-target="#actions-{power_id}"
-    #             hx-swap="outerHTML">
-    #         Cancel
-    #     </button>
-    # </div>
-    # """
-    # return running_state_html
 
 def execute_power_in_thread(power_id,execution_id, python_code, player_name, server_data, runtime_params, cancel_event):
     """
@@ -264,6 +261,99 @@ def execute_power_in_thread(power_id,execution_id, python_code, player_name, ser
         if execution_id in RUNNING_POWERS:
             del RUNNING_POWERS[execution_id]
 
+# --- Endpoints ---
+@app.route('/api/execute_power', methods=['POST'])
+def execute_power():
+    """Executes a saved power with runtime parameters from the control UI."""
+    data = request.get_json() if request.is_json else request.form
+    power_id = data.get('power_id')
+    runtime_params = {k: v for k, v in data.items() if k != 'power_id'}
+
+    player_name = current_app.config.get('MINECRAFT_PLAYER_NAME')
+    server_data = current_app.config.get('MCSHELL_SERVER_DATA')
+    power_repo = current_app.config.get('POWER_REPO')
+
+    if not all([power_id, player_name, server_data, power_repo]):
+        return "Error: Server or player not configured", 500
+    # 1. Load the main power to get its function name
+    main_power_data = power_repo.get_full_power(power_id)
+    if not main_power_data:
+        return jsonify({"error": "Power not found."}), 404
+
+    main_function_name = main_power_data.get("function_name")
+
+    # 2. Recursively get all required method definitions
+    all_methods_dict = get_code_with_dependencies(power_repo, main_function_name)
+    all_methods_code = "\n\n".join(all_methods_dict.values())
+
+    # 3. Dynamically build the run_program method body
+    # This creates the call with keyword arguments from the UI, e.g., height=25, material='STONE'
+    run_program_args = ", ".join([f"{key}={repr(value)}" for key, value in runtime_params.items()])
+    run_program_body = f"self.{main_function_name}({run_program_args})"
+
+    # 4. Assemble the final, complete script string
+    python_code = f"""
+import numpy as np
+import math
+from mcshell.constants import *
+
+class BlocklyProgramRunner:
+    def __init__(self, action_implementer_instance,cancel_event=None,runtime_params={{}}):
+        self.action_implementer = action_implementer_instance
+        self.cancel_event = cancel_event
+        self.runtime_params = runtime_params
+
+    # --- Injected Method Definitions ---
+{textwrap.indent(all_methods_code, '    ')}
+
+    # --- Dynamically Generated Main Execution ---
+    def run_program(self):
+        if self.cancel_event and self.cancel_event.is_set(): return
+{textwrap.indent(run_program_body, '        ')}
+"""
+
+    # --- Create a unique ID for this execution instance ---
+    execution_id = str(uuid.uuid4())
+    cancel_event = Event()
+
+    thread = Thread(target=execute_power_in_thread, args=(
+        power_id, execution_id, python_code, player_name, server_data, runtime_params, cancel_event
+    ))
+    thread.daemon = True
+    thread.start()
+    RUNNING_POWERS[execution_id] = {
+        'thread': thread,
+        'cancel_event': cancel_event,
+        'power_id': power_id  # <-- STORE THE POWER ID
+    }
+
+    # We acknowledge the request was dispatched and include the unique execution_id.
+    socketio.emit('power_status', {
+            'id': power_id,
+            'execution_id': execution_id,
+            'status': 'dispatched',
+            'message': 'Dispatched successfully.'
+        })
+
+    return jsonify({"status": "dispatched", "execution_id": execution_id})
+
+    # return "Execute"
+    # #TODO: how can I avoid returning html???
+    # running_state_html = f"""
+    # <div class="widget-main-actions" hx-swap-oob="true" id="actions-{power_id}">
+    #     <div class="power-status">Status: <span class="running">Running...</span></div>
+    #     <button class="btn-small btn-danger cancel-btn"
+    #             hx-post="/api/cancel_power"
+    #             hx-ext="json-enc"
+    #             hx-vals='{{"execution_id": "{execution_id}"}}'
+    #             hx-target="#actions-{power_id}"
+    #             hx-swap="outerHTML">
+    #         Cancel
+    #     </button>
+    # </div>
+    # """
+    # return running_state_html
+
 @app.route('/api/cancel_power', methods=['POST'])
 def cancel_power():
     """
@@ -316,8 +406,8 @@ def get_block_materials():
         return jsonify({"error": "Material data file not found."}), 404
     except Exception as e:
         return jsonify({"error": f"Could not load material data: {e}"}), 500
-# --- Static File Serving ---
 
+# --- Static File Serving ---
 @app.route('/')
 def serve_index():
     # Serve index.html from the 'dist' directory created by 'parcel build'
@@ -328,92 +418,3 @@ def serve_static(path):
     # Serve any other static files (JS, CSS) from the 'dist' directory
     return send_from_directory(current_app.static_folder, path)
 
-
-
-
-# -- Server Control ---
-app_server_thread = None
-
-# --- NEW SOCKET.IO SHUTDOWN HANDLER ---
-@socketio.on('shutdown_request')
-def handle_shutdown_request():
-    """
-    Handles a shutdown request received over a Socket.IO event.
-    This is the clean way to stop the socketio.run() loop.
-    """
-    print("Shutdown request received via Socket.IO. Stopping server.")
-    socketio.stop() # This gracefully exits the socketio.run() loop.
-
-
-# --- CORRECTED Thread Management Functions ---
-
-def start_app_server(server_data,mc_name,ipy_shell):
-    """Starts the main Flask-SocketIO application server in a separate thread."""
-    # Attach the server_data dict to the Flask app's config object.
-    # This makes the data available anywhere we have access to the app context.
-    # --- Inject the AUTHORITATIVE data into the Flask app config ---
-    # The Flask server will now start with the correct, non-spoofable identity.
-    app.config['MCSHELL_SERVER_DATA'] = server_data
-    app.config['MINECRAFT_PLAYER_NAME'] = mc_name
-    app.config['IPYTHON_SHELL'] = ipy_shell # <--- ADD THIS LINE
-
-    # --- Instantiate the chosen repository ---
-    # You can later make this configurable (e.g., via an environment variable)
-    # to switch between JsonFileRepository, SqliteRepository, etc.
-    power_repo = JsonFileRepository(mc_name)
-
-    app.config['POWER_REPO'] = power_repo
-
-
-    global app_server_thread
-    if app_server_thread and app_server_thread.is_alive():
-        print("Application server is already running.")
-        return
-
-    # The target no longer needs a try/except block because socketio.stop()
-    # provides a clean exit from the run() loop.
-    app_server_thread = threading.Thread(
-        target=lambda: socketio.run(app, host='0.0.0.0', port=5001, debug=True, use_reloader=False, allow_unsafe_werkzeug=False),
-        daemon=True
-    )
-    app_server_thread.start()
-    time.sleep(1) # Give the server a moment to start
-    if app_server_thread.is_alive():
-        print(f"Flask-SocketIO application server started in thread: {app_server_thread.ident}")
-    else:
-        print("Error: Application server thread failed to start.")
-
-
-def stop_app_server():
-    """Gracefully stops the Flask-SocketIO application server by emitting a socket.io event."""
-    global app_server_thread
-    if not app_server_thread or not app_server_thread.is_alive():
-        print("Application server is not running.")
-        return
-
-    # Import the client library only when needed
-    import socketio as socketio_client
-
-    print("Connecting to server to send shutdown event...")
-    sio = socketio_client.Client()
-    try:
-        sio.connect('http://127.0.0.1:5001')
-        print("Connected. Emitting shutdown_request event.")
-        sio.emit('shutdown_request')
-        sio.disconnect()
-        print("Shutdown event sent and client disconnected.")
-    except Exception as e:
-        print(f"Could not connect to server to send shutdown event: {e}")
-        print("The server might already be down or unresponsive.")
-
-    # Now, wait for the thread to fully terminate. This will now succeed.
-    print(f"This function is broken and deadlocked, exit IPython to kill the server")
-    print(f"Hit Ctrl-C")
-    app_server_thread.join()
-
-    if app_server_thread.is_alive():
-        print("Warning: Server thread did not shut down cleanly.")
-    else:
-        print("Application server thread has shut down successfully.")
-
-    app_server_thread = None
