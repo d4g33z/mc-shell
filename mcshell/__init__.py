@@ -60,11 +60,11 @@ class MCShell(Magics):
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
 
     @line_magic
-    def pp_start(self, line):
+    def pp_start_world(self, line):
         """
         Starts a Paper server for a given world name.
         If another server is running, it will be stopped first.
-        Usage: %pp_start <world_name>
+        Usage: %pp_start_world <world_name>
         """
         world_name = line.strip()
         if not world_name:
@@ -80,13 +80,13 @@ class MCShell(Magics):
             self.active_paper_server.stop()
 
         # Define the directory for the new world
-        world_directory = Path.home() / "mc-worlds" / world_name
+        world_directory = pathlib.Path.home() / "mc-worlds" / world_name
 
         # For now, we assume the directory exists.
         # The %pp_create magic would be responsible for actually creating it.
         if not world_directory.exists():
             print(f"Error: World directory does not exist at '{world_directory}'.")
-            print(f"Please create it first with: %pp_create {world_name}")
+            print(f"Please create it first with: %pp_create_world {world_name}")
             return
 
         print(f"--- Starting new session for world: {world_name} ---")
