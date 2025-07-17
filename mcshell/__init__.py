@@ -21,6 +21,7 @@ from mcshell.mcactions import *
 from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
 
 from mcshell.ppmanager import *
+from mcshell.ppdownloader import * # <-- Import the new class
 
 #pycraft.settings
 SHOW_DEBUG=False
@@ -59,6 +60,89 @@ class MCShell(Magics):
 
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
 
+
+    @line_magic
+    def pp_create_world(self, line):
+        """
+        Creates a new, self-contained Paper server instance in its own directory.
+        Usage: %pp_create_world <world_name> --version=<mc_version>
+        Example: %pp_create_world my_creative_world --version=1.20.4
+        """
+        args = line.split()
+        if not args:
+            print("Usage: %pp_create_world <world_name> [--version=<mc_version>]")
+            return
+
+        world_name = args[0]
+        mc_version = "1.21.4" # Default version
+
+        # Simple argument parsing for --version flag
+        for arg in args[1:]:
+            if arg.startswith("--version="):
+                mc_version = arg.split('=', 1)[1]
+
+        # Define paths
+        # worlds_base_dir = pathlib.Path.home() / "mc-worlds"
+        # world_dir = worlds_base_dir / world_name
+        # server_jars_dir = worlds_base_dir / "server_jars"
+        # worlds_base_dir = MC_WORLDS_BASE_DIR
+        MC_WORLDS_BASE_DIR = pathlib.Path('~').expanduser().joinpath('mc-worlds')
+        world_dir = MC_WORLDS_BASE_DIR.joinpath(world_name)
+        server_jars_dir = MC_WORLDS_BASE_DIR.joinpath('server-jars')
+
+        if world_dir.exists():
+            print(f"Error: A world named '{world_name}' already exists at '{world_dir}'")
+            return
+
+        print(f"Creating new world '{world_name}' for Minecraft {mc_version}...")
+
+        # 1. Download the Paper server JAR if needed
+        downloader = PaperDownloader(server_jars_dir)
+        jar_path = downloader.get_jar_path(mc_version)
+        if not jar_path:
+            return # Stop if download failed
+
+        # 2. Create the world directory structure
+        world_dir.mkdir(parents=True)
+        (world_dir / "plugins").mkdir(exist_ok=True)
+
+        # 3. Create the eula.txt file and automatically agree to it
+        try:
+            with open(world_dir / "eula.txt", "w") as f:
+                f.write("# By agreeing to the EULA you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA).\n")
+                f.write("eula=true\n")
+            print("Automatically agreed to Minecraft EULA.")
+        except IOError as e:
+            print(f"Error: Could not write eula.txt file. {e}")
+            return
+
+        # 4. Create the world_manifest.json file
+        manifest = {
+            "world_name": world_name,
+            "paper_version": mc_version,
+            "java_path": "java", # Assumes java is in the system's PATH
+            "server_jar_path": str(jar_path.relative_to(pathlib.Path.home())), # Store a relative path
+            "world_data_path": str((world_dir / "world").relative_to(world_dir)),
+            "plugins": [], # User can add plugin JAR names here later
+            "server_properties": {
+                "gamemode": "creative",
+                "motd": f"MC-ED World: {world_name}",
+                "enable-rcon": "true",
+                "rcon.port": self.server_data.get('rcon_port', 25575),
+                "rcon.password": self.server_data.get('rcon_password', 'minecraft')
+            }
+        }
+
+        try:
+            with open(world_dir / "world_manifest.json", "w") as f:
+                json.dump(manifest, f, indent=4)
+            print(f"Created world manifest at: {world_dir / 'world_manifest.json'}")
+        except IOError as e:
+            print(f"Error: Could not write world_manifest.json file. {e}")
+            return
+
+        print(f"\nWorld '{world_name}' created successfully.")
+        print(f"To start it, run: %pp_start_world {world_name}")
     @line_magic
     def pp_start_world(self, line):
         """
