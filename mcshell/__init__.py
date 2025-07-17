@@ -20,6 +20,7 @@ from mcshell.mcactions import *
 
 from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
 
+from mcshell.ppmanager import *
 
 #pycraft.settings
 SHOW_DEBUG=False
@@ -56,6 +57,54 @@ class MCShell(Magics):
 
         self.mc_login()
 
+        self.active_paper_server: Optional[PaperServerManager ,None ] = None
+
+    @line_magic
+    def pp_start(self, line):
+        """
+        Starts a Paper server for a given world name.
+        If another server is running, it will be stopped first.
+        Usage: %pp_start <world_name>
+        """
+        world_name = line.strip()
+        if not world_name:
+            print("Error: Please provide a world name. Usage: %pp_start <world_name>")
+            return
+
+        # Stop any currently active server session first
+        if self.active_paper_server and self.active_paper_server.is_alive():
+            print(f"Stopping the currently active server for world '{self.active_paper_server.world_name}'...")
+            # First, stop the mc-ed app server that's connected to it
+            stop_app_server() # Your existing function
+            # Then, stop the Paper server itself
+            self.active_paper_server.stop()
+
+        # Define the directory for the new world
+        world_directory = Path.home() / "mc-worlds" / world_name
+
+        # For now, we assume the directory exists.
+        # The %pp_create magic would be responsible for actually creating it.
+        if not world_directory.exists():
+            print(f"Error: World directory does not exist at '{world_directory}'.")
+            print(f"Please create it first with: %pp_create {world_name}")
+            return
+
+        print(f"--- Starting new session for world: {world_name} ---")
+
+        # 1. Start the Paper server
+        self.active_paper_server = PaperServerManager(world_name, world_directory)
+        self.active_paper_server.start()
+
+        if not self.active_paper_server.is_alive():
+            print("Could not start Paper server. Aborting.")
+            return
+
+        # 2. Start the mc-ed application server
+        # This assumes your %mc_start_app logic is moved into a helper
+        # that we can call here.
+        # For now, we'll just print a message.
+        print("Paper server is running. You should now start the app server.")
+        print("Example: %mc_start_app")
 
     def _send(self,kind,*args):
         assert kind in ('help','run','data')

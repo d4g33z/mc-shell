@@ -68,6 +68,8 @@ MC_APP_SRC_DIR = pathlib.Path(__file__).parent.parent.joinpath('mced/src')
 MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
 MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
 
+# Assume MC_PAPER_JAR_PATH is defined in your constants or config
+PP_JAR_PATH = os.path.expanduser("~/mc-ed/servers/paper-1.20.4.jar")
 
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS
