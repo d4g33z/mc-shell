@@ -24,7 +24,7 @@ from mcshell.ppmanager import *
 from mcshell.ppdownloader import * # <-- Import the new class
 
 from mcshell.mcserver import stop_app_server # Ensure this import is present
-
+from mcshell.mcblockly import build_app
 
 #pycraft.settings
 SHOW_DEBUG=False
@@ -34,6 +34,9 @@ SHOW_Log=False
 class MCShell(Magics):
     def __init__(self,shell):
         super(MCShell,self).__init__(shell)
+
+        # regenerate assets and web code
+        build_app()
 
         self.ip = IPython.get_ipython()
         # self.vanilla = True if os.environ['MC_VANILLIA'] == 1 else False
