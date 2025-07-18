@@ -12,9 +12,9 @@ from mcshell.mcplayer import MCPlayer
 from mcshell.constants import *
 from mcshell.mcrepo import JsonFileRepository
 
-from .blueprints.powers_api import powers_bp
-from .blueprints.ipython_api import ipython_bp
-from .blueprints.control_api import control_bp
+from mcshell.blueprints.powers_api import powers_bp
+from mcshell.blueprints.ipython_api import ipython_bp
+from mcshell.blueprints.control_api import control_bp
 
 class ServerShutdownException(Exception):
     """Custom exception to signal a clean server shutdown."""
