@@ -9,7 +9,7 @@ class MCClientException(Exception):
     pass
 
 class MCClient:
-    def __init__(self, host=MC_SERVER_HOST, port=MC_SERVER_PORT, password=None, server_type=MC_SERVER_TYPE, fruit_juice_port=FJ_SERVER_PORT):
+    def __init__(self, host=MC_SERVER_HOST, port=MC_SERVER_PORT, password='', server_type=MC_SERVER_TYPE, fruit_juice_port=FJ_SERVER_PORT):
 
         self.host = host
         self.port = port
@@ -24,9 +24,10 @@ class MCClient:
         Note: the rcon connection is stateless; it cannot be persisted and must be
         created anew with each request
         """
-        if not self.password:
-            print('A password is required!')
-            return
+        # allow blank passwords?
+        # if not self.password:
+        #     print('A password is required!')
+        #     return
 
         if not args:
             raise MCClientException("Arguments required!")
@@ -45,9 +46,9 @@ class MCClient:
         return Minecraft.create(address=self.host,port=self.fruit_juice_port,playerName=player_name)
 
     def help(self,*args):
-        if not self.password:
-            print('A password is required!')
-            return
+        # if not self.password:
+        #     print('A password is required!')
+        #     return
 
         if self.server_type == 'paper':
             _help_cmd = 'minecraft:help'
@@ -59,9 +60,9 @@ class MCClient:
         return _response
 
     def data(self, operation, *args):
-        if not self.password:
-            print('A password is required!')
-            return
+        # if not self.password:
+        #     print('A password is required!')
+        #     return
 
         _response = self.run('data', operation, *args)
         try:
@@ -74,9 +75,9 @@ class MCClient:
             return {}
 
     async def data_async(self,varname,namespace,operation,*args):
-        if not self.password:
-            print('A password is required!')
-            return
+        # if not self.password:
+        #     print('A password is required!')
+        #     return
         async with AioClient(host=self.host,port=self.port,password=self.password) as client:
             _response = await client.send_cmd(' '.join(['data',operation,*args]))
         if isinstance(_response,tuple):
