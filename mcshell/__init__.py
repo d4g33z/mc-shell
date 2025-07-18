@@ -23,6 +23,9 @@ from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import he
 from mcshell.ppmanager import *
 from mcshell.ppdownloader import * # <-- Import the new class
 
+from mcshell.mcserver import stop_app_server # Ensure this import is present
+
+
 #pycraft.settings
 SHOW_DEBUG=False
 SHOW_Log=False
@@ -52,6 +55,8 @@ class MCShell(Magics):
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
         self.ip.set_hook('complete_command',self._complete_mc_cancel_power, re_key='%mc_cancel_power')
+        self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_start_world')
+        self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_stop_world')
 
         # self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
 
@@ -200,6 +205,126 @@ class MCShell(Magics):
         # For now, we'll just print a message.
         print("Paper server is running. You should now start the app server.")
         print("Example: %mc_start_app")
+
+    @line_magic
+    def pp_stop_world(self, line):
+        """
+        Stops the currently running Paper server and its associated mc-ed app server.
+        """
+        # 1. Check if a server session is active
+        if not self.active_paper_server or not self.active_paper_server.is_alive():
+            print("No active Paper server session is currently running.")
+            return
+
+        print(f"--- Stopping session for world: {self.active_paper_server.world_name} ---")
+
+        # 2. Stop the mc-ed application server first
+        print("Stopping mc-ed application server...")
+        stop_app_server() # This is your existing function from mcserver.py
+
+        # 3. Stop the Paper server process
+        # The .stop() method in PaperServerManager handles the graceful shutdown
+        print("Stopping Paper server (this may take a moment)...")
+        self.active_paper_server.stop()
+
+        # 4. Clean up the state
+        self.active_paper_server = None
+        print("Session stopped successfully.")
+
+    def _complete_world_command(self, ipyshell, event):
+        ipyshell.user_ns.update(dict(rcon_event=event))
+        text = event.symbol
+        parts = event.line.split()
+        ipyshell.user_ns.update(dict(rcon_event=event))
+
+        worlds_base_dir = Path.home() / "mc-worlds"
+        if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
+            print(f"Worlds directory not found at: {worlds_base_dir}")
+            print("Create a world first with: %pp_create_world <world_name>")
+            return
+
+        found_worlds = []
+        # Iterate through each item in the base worlds directory
+        for world_dir in worlds_base_dir.iterdir():
+            if world_dir.is_dir():
+                manifest_path = world_dir / "world_manifest.json"
+                if manifest_path.exists():
+                    found_worlds.append(world_dir.name)
+
+        arg_matches= []
+        if len(parts) == 1: # showing commands
+            # arg_matches = [c for c in self.commands.keys()]
+            arg_matches = [c for c in found_worlds]
+            ipyshell.user_ns.update({'world_matches':arg_matches})
+        elif len(parts) == 2 and text != '':  # completing commands
+            arg_matches = [c for c in found_worlds if c.startswith(text)]
+            ipyshell.user_ns.update({'world_matches':arg_matches})
+
+        return arg_matches
+
+    @line_magic
+    def pp_list_worlds(self, line):
+        """
+        Scans the user's worlds directory and lists all available worlds,
+        their status, and Minecraft version.
+        """
+        worlds_base_dir = Path.home() / "mc-worlds"
+        if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
+            print(f"Worlds directory not found at: {worlds_base_dir}")
+            print("Create a world first with: %pp_create_world <world_name>")
+            return
+
+        print("--- Available Minecraft Worlds ---")
+
+        found_worlds = []
+        # Iterate through each item in the base worlds directory
+        for world_dir in worlds_base_dir.iterdir():
+            if world_dir.is_dir():
+                manifest_path = world_dir / "world_manifest.json"
+                if manifest_path.exists():
+                    # This is a valid world, so we'll read its manifest
+                    try:
+                        with open(manifest_path, 'r') as f:
+                            manifest = json.load(f)
+
+                        status = "RUNNING" if (
+                            self.active_paper_server and
+                            self.active_paper_server.world_name == world_dir.name and
+                            self.active_paper_server.is_alive()
+                        ) else "Stopped"
+
+                        found_worlds.append({
+                            "name": world_dir.name,
+                            "version": manifest.get("paper_version", "Unknown"),
+                            "status": status
+                        })
+                    except (json.JSONDecodeError, KeyError):
+                        # Handle corrupted or incomplete manifest files
+                        found_worlds.append({
+                            "name": world_dir.name,
+                            "version": "???",
+                            "status": "Corrupted"
+                        })
+
+        if not found_worlds:
+            print("No worlds found.")
+            return
+
+        # --- Print a formatted table ---
+        # Find the longest name for formatting
+        max_name_len = max(len(w['name']) for w in found_worlds)
+
+        # Header
+        print(f"{'World Name'.ljust(max_name_len)} | {'Version'.ljust(10)} | Status")
+        print(f"{'-' * max_name_len}-|{'-' * 12}|---------")
+
+        # Rows
+        for world in sorted(found_worlds, key=lambda x: x['name']):
+            status_line = f"{world['name'].ljust(max_name_len)} | {world['version'].ljust(10)} | {world['status']}"
+            # Add a special indicator for the running world
+            if world['status'] == "RUNNING":
+                status_line += "  <-- ACTIVE"
+            print(status_line)
 
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
