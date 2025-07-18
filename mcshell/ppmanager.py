@@ -1,3 +1,4 @@
+import subprocess
 import pexpect
 import threading
 import time
@@ -15,6 +16,90 @@ class PaperServerManager:
         self.process: Optional[pexpect.spawn , None] = None
         self.thread: Optional[threading.Thread , None] = None
 
+        self.world_manifest = json.load(self.world_directory.joinpath('world_manifest.json').open('br'))
+        self.jar_path = self.world_directory.parent.joinpath(self.world_manifest.get('server_jar_path'))
+
+    def _run_initialization(self):
+        """
+        Runs the server once with --initSettings to generate config files, then exits.
+        """
+        if (self.world_directory / "server.properties").exists():
+            print("Configuration files already exist. Skipping initialization run.")
+            return True
+
+        print("--- Running server initialization to generate config files... ---")
+        command = ['java', '-jar', str(self.jar_path), '--initSettings']
+
+        try:
+            # We use run() here because this is a short, blocking process.
+            init_process = subprocess.run(
+                command,
+                cwd=self.world_directory,
+                capture_output=True,
+                text=True,
+                check=True # Raise an exception if it fails
+            )
+            print("--- Server initialization run complete. ---")
+            return True
+        except subprocess.CalledProcessError as e:
+            print("! Error during server initialization run.")
+            print(f"  Return Code: {e.returncode}")
+            print(f"  Output:\n{e.stdout}")
+            print(f"  Error Output:\n{e.stderr}")
+            return False
+        except FileNotFoundError:
+            print("Error: 'java' command not found. Is Java installed and in your PATH?")
+            return False
+
+    def apply_manifest_settings(self):
+        """
+        Reads the world_manifest.json and applies its settings to the
+        server.properties file.
+        """
+        # First, ensure config files exist by running the init command.
+        if not self._run_initialization():
+            return # Abort if initialization fails
+
+        print("--- Applying settings from world_manifest.json to server.properties ---")
+
+        try:
+            # # 1. Load the manifest
+            # with open(self.manifest_path, 'r') as f:
+            #     manifest = json.load(f)
+
+            settings_to_apply = self.world_manifest.get("server_properties", {})
+            if not settings_to_apply:
+                print("No server_properties found in manifest. Using defaults.")
+                return
+
+            # 2. Read the existing server.properties file
+            properties_path = self.world_directory / "server.properties"
+            properties = {}
+            with open(properties_path, 'r') as f:
+                for line in f:
+                    if '=' in line and not line.startswith('#'):
+                        key, value = line.strip().split('=', 1)
+                        properties[key] = value
+
+            # 3. Update the properties with values from the manifest
+            for key, value in settings_to_apply.items():
+                print(f"  Setting '{key}' = '{value}'")
+                properties[key] = str(value)
+
+            # 4. Write the updated properties back to the file
+            with open(properties_path, 'w') as f:
+                f.write("#Minecraft server properties\n")
+                f.write(f"#(last modified by mc-shell)\n")
+                for key, value in properties.items():
+                    f.write(f"{key}={value}\n")
+
+            print("--- server.properties updated successfully. ---")
+
+        except FileNotFoundError:
+            print(f"Error: Could not find manifest or server.properties file.")
+        except Exception as e:
+            print(f"An error occurred while applying settings: {e}")
+
     def _execute_server(self):
         """
         The main execution function. Starts the Paper server and logs its
@@ -25,12 +110,11 @@ class PaperServerManager:
         # print(f"Starting Paper server for world '{self.world_name}'...")
         # print(f"  > Directory: {self.world_directory}")
 
-        world_manifest = json.load(self.world_directory.joinpath('world_manifest.json').open('br'))
         # Command to run the server from within its specific world directory
         command = ' '.join([
             'java',
             '-Xms2G', '-Xmx2G', # Example memory settings
-            '-jar', str(self.world_directory.parent.joinpath(world_manifest.get('server_jar_path'))),
+            '-jar', str(self.jar_path),
             'nogui'
         ])
 
@@ -88,6 +172,7 @@ class PaperServerManager:
             print(f"Server for world '{self.world_name}' is already running.")
             return
 
+        self.apply_manifest_settings()
         self.thread = threading.Thread(target=self._execute_server, daemon=True)
         self.thread.start()
 

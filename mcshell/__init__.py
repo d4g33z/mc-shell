@@ -56,8 +56,6 @@ class MCShell(Magics):
         self.debug_server_thread = debug_server_thread
         self.app_server_thread = app_server_thread
 
-        self.mc_login()
-
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
 
 
