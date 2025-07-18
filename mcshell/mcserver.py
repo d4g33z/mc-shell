@@ -370,6 +370,12 @@ def get_block_materials():
     except Exception as e:
         return jsonify({"error": f"Could not load material data: {e}"}), 500
 
+# --- Control Panel ---
+@app.route('/control')
+def serve_control():
+    """Serves the control panel UI (control.html)."""
+    return send_from_directory(app.static_folder, 'control.html')
+
 # --- Static File Serving ---
 @app.route('/')
 def serve_index():
