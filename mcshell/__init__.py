@@ -125,7 +125,6 @@ class MCShell(Magics):
             "server_jar_path": str(jar_path.relative_to(world_dir.parent)), # Store a path relative to the world_dir
             "world_data_path": str((world_dir / "world").relative_to(world_dir)),
             "plugins": [
-                "https://github.com/jdeast/FruitJuice/blob/master/target/FruitJuice-0.2.0.jar"
             ],
             "server_properties": {
                 "gamemode": "creative",
@@ -144,13 +143,17 @@ class MCShell(Magics):
             print(f"Error: Could not write world_manifest.json file. {e}")
             return
 
-        # 4. Install the plugins listed in the manifest
+        # 5. Always install FruitJuice
+        plugins_dir.joinpath(FJ_JAR_PATH.name).symlink_to(FJ_JAR_PATH)
+
+        # 6. Install the plugins listed in the manifest
         plugin_urls = manifest.get("plugins", [])
         if plugin_urls:
             downloader.install_plugins(plugin_urls, plugins_dir)
 
         print(f"\nWorld '{world_name}' created successfully.")
         print(f"To start it, run: %pp_start_world {world_name}")
+
     @line_magic
     def pp_start_world(self, line):
         """

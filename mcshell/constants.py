@@ -41,6 +41,7 @@ except ImportError:  # Graceful fallback if IceCream isn't installed.
     ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
 FJ_SERVER_PORT = 4711
+
 MC_SERVER_PORT = 25575
 MC_SERVER_HOST = 'localhost'
 MC_SERVER_TYPE = 'paper'
@@ -48,6 +49,8 @@ MC_SERVER_TYPE = 'paper'
 MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
 
 MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
+
+FJ_JAR_PATH = MC_DATA_DIR.joinpath('FruitJuice-0.3.0.jar')
 
 MC_DOC_URL = urlpath.URL("https://minecraft.fandom.com/wiki/Commands")
 MC_DOC_DIR = MC_DATA_DIR.joinpath('doc')
@@ -73,6 +76,7 @@ MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
 MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
 
 PP_JAR_DIR = os.path.expanduser("~/mc-worlds/server-jars/")
+
 
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS
