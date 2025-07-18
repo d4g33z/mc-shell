@@ -51,6 +51,8 @@ class MCShell(Magics):
 
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
+        self.ip.set_hook('complete_command',self._complete_mc_cancel_power, re_key='%mc_cancel_power')
+
         # self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
 
         self.debug_server_thread = debug_server_thread
@@ -596,6 +598,23 @@ class MCShell(Magics):
 
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+
+    def _complete_mc_cancel_power(self, ipyshell, event):
+        ipyshell.user_ns.update(dict(rcon_event=event))
+        text = event.symbol
+        parts = event.line.split()
+        ipyshell.user_ns.update(dict(rcon_event=event))
+
+        arg_matches= []
+        if len(parts) == 1: # showing commands
+            # arg_matches = [c for c in self.commands.keys()]
+            arg_matches = [c for c in RUNNING_POWERS]
+            ipyshell.user_ns.update({'cancel_matches':arg_matches})
+        elif len(parts) == 2 and text != '':  # completing commands
+            arg_matches = [c for c in RUNNING_POWERS if c.startswith(text)]
+            ipyshell.user_ns.update({'cancel_matches':arg_matches})
+
+        return arg_matches
 
     @line_magic
     def mc_cancel_power(self, line):
