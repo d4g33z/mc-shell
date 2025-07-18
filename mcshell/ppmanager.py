@@ -129,7 +129,6 @@ class PaperServerManager:
                 encoding='utf-8'
             )
 
-            # --- THIS IS THE FIX ---
             # This non-blocking loop continuously polls for new output.
             while self.process.isalive():
                 try:
@@ -141,6 +140,11 @@ class PaperServerManager:
                     if index == 0:
                         # self.process.before contains all the text before the match.
                         line = self.process.before
+
+                        if "Thread RCON Client" in line.strip():
+                            continue # Skip this line and do not print it
+                        elif "FruitJuice" in line.strip():
+                            continue
                         if line:
                             sys.stdout.write(f"[{self.world_name}] {line}\n")
                             sys.stdout.flush()
@@ -156,7 +160,6 @@ class PaperServerManager:
                 except Exception as e:
                     print(f"[{self.world_name}] Error reading from server process: {e}")
                     break
-            # --- END OF FIX ---
 
         except Exception as e:
             print(f"An error occurred while launching the Paper server: {e}")
