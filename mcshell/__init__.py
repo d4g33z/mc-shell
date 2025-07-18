@@ -20,6 +20,8 @@ from mcshell.mcactions import *
 
 from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
 
+from mcshell.ppmanager import *
+from mcshell.ppdownloader import * # <-- Import the new class
 
 #pycraft.settings
 SHOW_DEBUG=False
@@ -49,13 +51,155 @@ class MCShell(Magics):
 
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
+        self.ip.set_hook('complete_command',self._complete_mc_cancel_power, re_key='%mc_cancel_power')
+
         # self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
 
         self.debug_server_thread = debug_server_thread
         self.app_server_thread = app_server_thread
 
-        self.mc_login()
+        self.active_paper_server: Optional[PaperServerManager ,None ] = None
 
+
+    @line_magic
+    def pp_create_world(self, line):
+        """
+        Creates a new, self-contained Paper server instance in its own directory.
+        Usage: %pp_create_world <world_name> --version=<mc_version>
+        Example: %pp_create_world my_creative_world --version=1.20.4
+        """
+        args = line.split()
+        if not args:
+            print("Usage: %pp_create_world <world_name> [--version=<mc_version>]")
+            return
+
+        world_name = args[0]
+        mc_version = "1.21.4" # Default version
+
+        # Simple argument parsing for --version flag
+        for arg in args[1:]:
+            if arg.startswith("--version="):
+                mc_version = arg.split('=', 1)[1]
+
+        # Define paths
+        # worlds_base_dir = pathlib.Path.home() / "mc-worlds"
+        # world_dir = worlds_base_dir / world_name
+        # server_jars_dir = worlds_base_dir / "server_jars"
+        # worlds_base_dir = MC_WORLDS_BASE_DIR
+        MC_WORLDS_BASE_DIR = pathlib.Path('~').expanduser().joinpath('mc-worlds')
+        world_dir = MC_WORLDS_BASE_DIR.joinpath(world_name)
+        server_jars_dir = MC_WORLDS_BASE_DIR.joinpath('server-jars')
+
+        if world_dir.exists():
+            print(f"Error: A world named '{world_name}' already exists at '{world_dir}'")
+            return
+
+        print(f"Creating new world '{world_name}' for Minecraft {mc_version}...")
+
+        # 1. Download the Paper server JAR if needed
+        downloader = PaperDownloader(server_jars_dir)
+        jar_path = downloader.get_jar_path(mc_version)
+        if not jar_path:
+            return # Stop if download failed
+
+        # 2. Create the world directory structure
+        world_dir.mkdir(parents=True)
+        plugins_dir = (world_dir / "plugins")
+        plugins_dir.mkdir(exist_ok=True)
+
+        # 3. Create the eula.txt file and automatically agree to it
+        try:
+            with open(world_dir / "eula.txt", "w") as f:
+                f.write("# By agreeing to the EULA you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA).\n")
+                f.write("eula=true\n")
+            print("Automatically agreed to Minecraft EULA.")
+        except IOError as e:
+            print(f"Error: Could not write eula.txt file. {e}")
+            return
+
+        # 4. Create the world_manifest.json file
+        manifest = {
+            "world_name": world_name,
+            "paper_version": mc_version,
+            "java_path": "java", # Assumes java is in the system's PATH
+            "server_jar_path": str(jar_path.relative_to(world_dir.parent)), # Store a path relative to the world_dir
+            "world_data_path": str((world_dir / "world").relative_to(world_dir)),
+            "plugins": [
+            ],
+            "server_properties": {
+                "gamemode": "creative",
+                "motd": f"MC-ED World: {world_name}",
+                "enable-rcon": "true",
+                "rcon.port": self.server_data.get('rcon_port', 25575),
+                "rcon.password": self.server_data.get('rcon_password', 'minecraft')
+            }
+        }
+
+        try:
+            with open(world_dir / "world_manifest.json", "w") as f:
+                json.dump(manifest, f, indent=4)
+            print(f"Created world manifest at: {world_dir / 'world_manifest.json'}")
+        except IOError as e:
+            print(f"Error: Could not write world_manifest.json file. {e}")
+            return
+
+        # 5. Always install FruitJuice
+        plugins_dir.joinpath(FJ_JAR_PATH.name).symlink_to(FJ_JAR_PATH)
+
+        # 6. Install the plugins listed in the manifest
+        plugin_urls = manifest.get("plugins", [])
+        if plugin_urls:
+            downloader.install_plugins(plugin_urls, plugins_dir)
+
+        print(f"\nWorld '{world_name}' created successfully.")
+        print(f"To start it, run: %pp_start_world {world_name}")
+
+    @line_magic
+    def pp_start_world(self, line):
+        """
+        Starts a Paper server for a given world name.
+        If another server is running, it will be stopped first.
+        Usage: %pp_start_world <world_name>
+        """
+        world_name = line.strip()
+        if not world_name:
+            print("Error: Please provide a world name. Usage: %pp_start <world_name>")
+            return
+
+        # Stop any currently active server session first
+        if self.active_paper_server and self.active_paper_server.is_alive():
+            print(f"Stopping the currently active server for world '{self.active_paper_server.world_name}'...")
+            # First, stop the mc-ed app server that's connected to it
+            stop_app_server() # Your existing function
+            # Then, stop the Paper server itself
+            self.active_paper_server.stop()
+
+        # Define the directory for the new world
+        world_directory = pathlib.Path.home() / "mc-worlds" / world_name
+
+        # For now, we assume the directory exists.
+        # The %pp_create magic would be responsible for actually creating it.
+        if not world_directory.exists():
+            print(f"Error: World directory does not exist at '{world_directory}'.")
+            print(f"Please create it first with: %pp_create_world {world_name}")
+            return
+
+        print(f"--- Starting new session for world: {world_name} ---")
+
+        # 1. Start the Paper server
+        self.active_paper_server = PaperServerManager(world_name, world_directory)
+        self.active_paper_server.start()
+
+        if not self.active_paper_server.is_alive():
+            print("Could not start Paper server. Aborting.")
+            return
+
+        # 2. Start the mc-ed application server
+        # This assumes your %mc_start_app logic is moved into a helper
+        # that we can call here.
+        # For now, we'll just print a message.
+        print("Paper server is running. You should now start the app server.")
+        print("Example: %mc_start_app")
 
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
@@ -454,6 +598,23 @@ class MCShell(Magics):
 
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
+
+    def _complete_mc_cancel_power(self, ipyshell, event):
+        ipyshell.user_ns.update(dict(rcon_event=event))
+        text = event.symbol
+        parts = event.line.split()
+        ipyshell.user_ns.update(dict(rcon_event=event))
+
+        arg_matches= []
+        if len(parts) == 1: # showing commands
+            # arg_matches = [c for c in self.commands.keys()]
+            arg_matches = [c for c in RUNNING_POWERS]
+            ipyshell.user_ns.update({'cancel_matches':arg_matches})
+        elif len(parts) == 2 and text != '':  # completing commands
+            arg_matches = [c for c in RUNNING_POWERS if c.startswith(text)]
+            ipyshell.user_ns.update({'cancel_matches':arg_matches})
+
+        return arg_matches
 
     @line_magic
     def mc_cancel_power(self, line):
