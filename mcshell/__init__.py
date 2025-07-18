@@ -104,7 +104,8 @@ class MCShell(Magics):
 
         # 2. Create the world directory structure
         world_dir.mkdir(parents=True)
-        (world_dir / "plugins").mkdir(exist_ok=True)
+        plugins_dir = (world_dir / "plugins")
+        plugins_dir.mkdir(exist_ok=True)
 
         # 3. Create the eula.txt file and automatically agree to it
         try:
@@ -121,9 +122,11 @@ class MCShell(Magics):
             "world_name": world_name,
             "paper_version": mc_version,
             "java_path": "java", # Assumes java is in the system's PATH
-            "server_jar_path": str(jar_path.relative_to(pathlib.Path.home())), # Store a relative path
+            "server_jar_path": str(jar_path.relative_to(world_dir.parent)), # Store a path relative to the world_dir
             "world_data_path": str((world_dir / "world").relative_to(world_dir)),
-            "plugins": [], # User can add plugin JAR names here later
+            "plugins": [
+                "https://github.com/jdeast/FruitJuice/blob/master/target/FruitJuice-0.2.0.jar"
+            ],
             "server_properties": {
                 "gamemode": "creative",
                 "motd": f"MC-ED World: {world_name}",
@@ -140,6 +143,11 @@ class MCShell(Magics):
         except IOError as e:
             print(f"Error: Could not write world_manifest.json file. {e}")
             return
+
+        # 4. Install the plugins listed in the manifest
+        plugin_urls = manifest.get("plugins", [])
+        if plugin_urls:
+            downloader.install_plugins(plugin_urls, plugins_dir)
 
         print(f"\nWorld '{world_name}' created successfully.")
         print(f"To start it, run: %pp_start_world {world_name}")

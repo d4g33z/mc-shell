@@ -5,9 +5,6 @@ from pathlib import Path
 
 from mcshell.constants import *
 
-import requests
-import os
-from pathlib import Path
 
 class PaperDownloader:
     """Handles downloading Paper server JARs from the official PaperMC v3 API."""
@@ -90,4 +87,93 @@ class PaperDownloader:
             # Clean up partial downloads on failure
             if jar_path.exists():
                 os.remove(jar_path)
+            return None
+
+    def install_plugins(self, plugin_urls: list[str], world_plugins_dir: Path) -> list[str]:
+        """
+        Downloads and installs a list of plugins from their URLs into the
+        specified plugins directory. Handles both .jar and .zip files.
+
+        Args:
+            plugin_urls: A list of direct download URLs for the plugins.
+            world_plugins_dir: The Path object for the world's 'plugins' folder.
+
+        Returns:
+            A list of the filenames of successfully installed plugins.
+        """
+        if not plugin_urls:
+            return []
+
+        world_plugins_dir.mkdir(exist_ok=True)
+        successful_installs = []
+
+        print("\n--- Installing Plugins ---")
+        for url in plugin_urls:
+            filename = url.split('/')[-1]
+            destination_path = world_plugins_dir / filename
+
+            print(f"Processing plugin: {filename}")
+
+            try:
+                if filename.endswith(".jar"):
+                    if self._download_file(url, destination_path):
+                        successful_installs.append(filename)
+                elif filename.endswith(".zip"):
+                    extracted_jar_name = self._download_and_extract_zip(url, world_plugins_dir)
+                    if extracted_jar_name:
+                        successful_installs.append(extracted_jar_name)
+                else:
+                    print(f"Warning: Skipping file with unknown extension: {filename}")
+            except Exception as e:
+                print(f"Error processing plugin from {url}: {e}")
+
+        print("--- Plugin Installation Finished ---")
+        return successful_installs
+
+    def _download_file(self, url: str, destination: Path) -> bool:
+        """Helper to download a single file to a destination."""
+        print(f"  Downloading to {destination}...")
+        try:
+            with requests.get(url, stream=True, timeout=30) as r:
+                r.raise_for_status()
+                with open(destination, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            print("  Download successful.")
+            return True
+        except requests.exceptions.RequestException as e:
+            print(f"  Error: Failed to download file. {e}")
+            return False
+
+    def _download_and_extract_zip(self, url: str, destination_dir: Path) -> Optional[str]:
+        """Downloads a ZIP file in memory, finds the correct JAR, and extracts it."""
+        print("  Detected .zip file. Attempting to find and extract plugin JAR...")
+        try:
+            response = requests.get(url, timeout=30)
+            response.raise_for_status()
+
+            # Use io.BytesIO to treat the downloaded bytes as an in-memory file
+            with zipfile.ZipFile(io.BytesIO(response.content)) as thezip:
+                for member_name in thezip.namelist():
+                    # Heuristic to find the correct JAR file
+                    if member_name.endswith('.jar') and ('paper' in member_name.lower() or 'bukkit' in member_name.lower()):
+                        print(f"  Found potential plugin JAR in archive: {member_name}")
+                        # Extract the single JAR file to the plugins directory
+                        thezip.extract(member_name, path=destination_dir)
+                        # We need to rename the file if it was in a subfolder
+                        extracted_path = destination_dir / member_name
+                        final_path = destination_dir / Path(member_name).name
+                        if extracted_path != final_path:
+                           os.rename(extracted_path, final_path)
+                           # Clean up empty directories if any
+                           if os.path.dirname(extracted_path) != destination_dir:
+                               os.removedirs(os.path.dirname(extracted_path))
+
+                        print(f"  Successfully extracted and installed: {final_path.name}")
+                        return final_path.name
+
+            print("  Error: Could not find a suitable .jar file in the ZIP archive.")
+            return None
+        except Exception as e:
+            print(f"  Error: Failed to download or extract ZIP file. {e}")
             return None

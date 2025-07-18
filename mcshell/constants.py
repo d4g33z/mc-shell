@@ -11,8 +11,11 @@ import copy
 import math
 import random
 import asyncio
+import requests
 import pathlib
 import urlpath
+import zipfile
+import io
 import pickle
 import time
 import sys
@@ -26,6 +29,7 @@ from rich.pretty import pprint
 
 from mcshell.Matrix3 import Matrix3
 from mcshell.Vec3 import Vec3
+
 
 class PowerCancelledException(Exception):
     pass
@@ -68,8 +72,7 @@ MC_APP_SRC_DIR = pathlib.Path(__file__).parent.parent.joinpath('mced/src')
 MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
 MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
 
-# Assume MC_PAPER_JAR_PATH is defined in your constants or config
-PP_JAR_PATH = os.path.expanduser("~/mc-ed/servers/paper-1.20.4.jar")
+PP_JAR_DIR = os.path.expanduser("~/mc-worlds/server-jars/")
 
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS

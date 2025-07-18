@@ -17,11 +17,12 @@ class PaperServerManager:
         The target function for the server thread. It starts the Paper server
         and waits for it to complete.
         """
+        world_manifest = json.load(self.world_directory.joinpath('world_manifest.json').open('br'))
         # Command to run the server from within its specific world directory
         command = [
             'java',
             '-Xms2G', '-Xmx2G', # Example memory settings
-            '-jar', PP_JAR_PATH,
+            '-jar', str(self.world_directory.parent.joinpath(world_manifest.get('server_jar_path'))),
             'nogui'
         ]
 
