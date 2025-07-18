@@ -57,6 +57,7 @@ class MCShell(Magics):
         self.ip.set_hook('complete_command',self._complete_mc_cancel_power, re_key='%mc_cancel_power')
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_start_world')
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_stop_world')
+        self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_delete_world')
 
         # self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
 
@@ -159,6 +160,41 @@ class MCShell(Magics):
         print(f"\nWorld '{world_name}' created successfully.")
         print(f"To start it, run: %pp_start_world {world_name}")
 
+    def _complete_world_command(self, ipyshell, event):
+        ipyshell.user_ns.update(dict(rcon_event=event))
+        text = event.symbol
+        parts = event.line.split()
+        ipyshell.user_ns.update(dict(rcon_event=event))
+
+        # TODO: make constants!!! see %pp_create_world
+        #MC_WORLDS_BASE_DIR = pathlib.Path('~').expanduser().joinpath('mc-worlds')
+        #world_dir = MC_WORLDS_BASE_DIR.joinpath(world_name)
+
+        worlds_base_dir = Path.home() / "mc-worlds"
+        if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
+            print(f"Worlds directory not found at: {worlds_base_dir}")
+            print("Create a world first with: %pp_create_world <world_name>")
+            return
+
+        found_worlds = []
+        # Iterate through each item in the base worlds directory
+        for world_dir in worlds_base_dir.iterdir():
+            if world_dir.is_dir():
+                manifest_path = world_dir / "world_manifest.json"
+                if manifest_path.exists():
+                    found_worlds.append(world_dir.name)
+
+        arg_matches= []
+        if len(parts) == 1: # showing commands
+            # arg_matches = [c for c in self.commands.keys()]
+            arg_matches = [c for c in found_worlds]
+            ipyshell.user_ns.update({'world_matches':arg_matches})
+        elif len(parts) == 2 and text != '':  # completing commands
+            arg_matches = [c for c in found_worlds if c.startswith(text)]
+            ipyshell.user_ns.update({'world_matches':arg_matches})
+
+        return arg_matches
+
     @line_magic
     def pp_start_world(self, line):
         """
@@ -231,37 +267,6 @@ class MCShell(Magics):
         self.active_paper_server = None
         print("Session stopped successfully.")
 
-    def _complete_world_command(self, ipyshell, event):
-        ipyshell.user_ns.update(dict(rcon_event=event))
-        text = event.symbol
-        parts = event.line.split()
-        ipyshell.user_ns.update(dict(rcon_event=event))
-
-        worlds_base_dir = Path.home() / "mc-worlds"
-        if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
-            print(f"Worlds directory not found at: {worlds_base_dir}")
-            print("Create a world first with: %pp_create_world <world_name>")
-            return
-
-        found_worlds = []
-        # Iterate through each item in the base worlds directory
-        for world_dir in worlds_base_dir.iterdir():
-            if world_dir.is_dir():
-                manifest_path = world_dir / "world_manifest.json"
-                if manifest_path.exists():
-                    found_worlds.append(world_dir.name)
-
-        arg_matches= []
-        if len(parts) == 1: # showing commands
-            # arg_matches = [c for c in self.commands.keys()]
-            arg_matches = [c for c in found_worlds]
-            ipyshell.user_ns.update({'world_matches':arg_matches})
-        elif len(parts) == 2 and text != '':  # completing commands
-            arg_matches = [c for c in found_worlds if c.startswith(text)]
-            ipyshell.user_ns.update({'world_matches':arg_matches})
-
-        return arg_matches
-
     @line_magic
     def pp_list_worlds(self, line):
         """
@@ -326,6 +331,56 @@ class MCShell(Magics):
                 status_line += "  <-- ACTIVE"
             print(status_line)
 
+    @line_magic
+    def pp_delete_world(self, line):
+        """
+        Permanently deletes a world directory and all its contents.
+        Includes multiple safety checks to prevent accidental deletion.
+        Usage: %pp_delete_world <world_name>
+        """
+        world_name = line.strip()
+        if not world_name:
+            print("Usage: %pp_delete_world <world_name>")
+            return
+
+        # 1. Define the path to the world directory
+        world_dir = Path.home() / "mc-worlds" / world_name
+
+        # 2. Safety Check: Does the world exist?
+        if not world_dir.exists() or not world_dir.is_dir():
+            print(f"Error: No world named '{world_name}' found at '{world_dir}'.")
+            return
+
+        # 3. Safety Check: Is this world currently running?
+        if self.active_paper_server and self.active_paper_server.world_name == world_name and self.active_paper_server.is_alive():
+            print(f"Error: Cannot delete the world '{world_name}' because it is currently running.")
+            print("Please stop the server first with: %pp_stop_world")
+            return
+
+        # 4. Final Confirmation: Get explicit confirmation from the user.
+        print("-----------------------------------------------------------------")
+        print(f"WARNING: You are about to permanently delete the world '{world_name}'")
+        print("and all of its contents. This action cannot be undone.")
+        print(f"Directory to be deleted: {world_dir}")
+        print("-----------------------------------------------------------------")
+
+        try:
+            confirm = input("Type 'yes' to confirm deletion: ")
+        except KeyboardInterrupt:
+            print("\nDeletion cancelled by user.")
+            return
+
+        if confirm.lower() != 'yes':
+            print("Deletion cancelled.")
+            return
+
+        # 5. Perform the Deletion
+        try:
+            print(f"Deleting world '{world_name}'...")
+            shutil.rmtree(world_dir)
+            print("World deleted successfully.")
+        except Exception as e:
+            print(f"An error occurred while deleting the world directory: {e}")
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
 

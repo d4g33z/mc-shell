@@ -12,6 +12,7 @@ import math
 import random
 import asyncio
 import requests
+import shutil
 import pathlib
 import urlpath
 import zipfile
