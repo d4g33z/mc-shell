@@ -12,9 +12,9 @@ from mcshell.mcplayer import MCPlayer
 from mcshell.constants import *
 from mcshell.mcrepo import JsonFileRepository
 
-from .blueprints.powers_api import powers_bp
-from .blueprints.ipython_api import ipython_bp
-from .blueprints.control_api import control_bp
+from mcshell.blueprints.powers_api import powers_bp
+from mcshell.blueprints.ipython_api import ipython_bp
+from mcshell.blueprints.control_api import control_bp
 
 class ServerShutdownException(Exception):
     """Custom exception to signal a clean server shutdown."""
@@ -369,6 +369,12 @@ def get_block_materials():
         return jsonify({"error": "Material data file not found."}), 404
     except Exception as e:
         return jsonify({"error": f"Could not load material data: {e}"}), 500
+
+# --- Control Panel ---
+@app.route('/control')
+def serve_control():
+    """Serves the control panel UI (control.html)."""
+    return send_from_directory(app.static_folder, 'control.html')
 
 # --- Static File Serving ---
 @app.route('/')
