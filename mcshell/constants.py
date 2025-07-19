@@ -51,7 +51,7 @@ MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
 
 MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
 
-FJ_JAR_PATH = MC_DATA_DIR.joinpath('FruitJuice-0.3.0.jar')
+FJ_JAR_PATH = MC_DATA_DIR.joinpath('FruitJuice-0.4.0.jar')
 
 MC_DOC_URL = urlpath.URL("https://minecraft.fandom.com/wiki/Commands")
 MC_DOC_DIR = MC_DATA_DIR.joinpath('doc')
