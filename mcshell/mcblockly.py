@@ -265,25 +265,27 @@ def build_final_toolbox(final_toolbox_path):
         print(f"Error writing final toolbox file: {e}")
 
 
-def update_app():
+def build_app():
+
     process_materials()
     _out = os.system(f"node {MC_DATA_DIR.joinpath('materials/generate_material_blocks.mjs')}")
 
     process_entities()
     os.system(f"node {MC_DATA_DIR.joinpath('entities/generate_entity_blocks.mjs')}")
-    build_final_toolbox(MC_APP_STATIC_DIR.joinpath('toolbox.xml'))
+
+    build_final_toolbox(MC_APP_SRC_DIR.joinpath('toolbox.xml'))
 
 
-    os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_STATIC_DIR.joinpath('blocks')}")
+    os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
     os.system(f"cp {MC_DATA_DIR.joinpath('materials/python/materials.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
 
     os.system(f"cp {MC_DATA_DIR.joinpath('entities/blocks/entities.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
     os.system(f"cp {MC_DATA_DIR.joinpath('entities/python/entities.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
 
-def build_app():
+    os.system(f"cd {MC_APP_SRC_DIR}; npm install")
     os.system(f"cd {MC_APP_SRC_DIR}; npm run build")
 
 if __name__ == '__main__':
-    update_app()
+    build_app()
 
 

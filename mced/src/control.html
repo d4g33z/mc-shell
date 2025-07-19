@@ -83,16 +83,16 @@
 
                                         <div class="picker-dropdown" x-show="isOpen" x-transition x-cloak>
                                             <input type="text" x-model="filter" placeholder="Filter blocks..." class="picker-filter">
-                                            <div class="picker-options">
-                                                <template x-for="category in Object.keys($store.materials.groups)">
-                                                    <div class="picker-category">
+                                           <div class="picker-options">
+                                                <template x-for="category in Object.keys($store.materials.groups)" :key="category">
+                                                    <div class="picker-category"
+                                                         x-show="!filter || $store.materials.groups[category].some(b => b.toLowerCase().includes(filter.toLowerCase()))">
+
                                                         <strong x-text="category.replace(/_/g, ' ')"></strong>
                                                         <ul>
                                                             <template x-for="block in $store.materials.groups[category]">
                                                                 <li x-show="!filter || block.toLowerCase().includes(filter.toLowerCase())">
-                                                                    <button type="button"
-                                                                            @click="selected = block; isOpen = false;"
-                                                                            x-text="block.replace(/_/g, ' ')"></button>
+                                                                    <button type="button" @click="selected = block; isOpen = false;" x-text="block.replace(/_/g, ' ')"></button>
                                                                 </li>
                                                             </template>
                                                         </ul>
@@ -105,76 +105,6 @@
                                 </div>
                         </template>
                     </form>
-<!--                    <form class="power-params" :id="`form-${power.power_id}`" x-ref="paramsForm">-->
-<!--                        <template x-for="param in power.parameters" :key="param.name">-->
-<!--                            <div class="param-control">-->
-<!--                                <label x-text="param.name + ':'"></label>-->
-
-<!--                                <template x-if="param.type === 'Number'">-->
-<!--                                    <div class="param-slider">-->
-<!--                                        <input type="range" :name="param.name" x-model="formValues[param.name]" min="1" max="100">-->
-<!--                                        <output x-text="formValues[param.name]"></output>-->
-<!--                                    </div>-->
-<!--                                </template>-->
-
-<!--                                <template x-if="param.type === 'Block'">-->
-<!--                                    <div class="custom-picker" x-data="{-->
-<!--                                        isOpen: false,-->
-<!--                                        selected: '{{ param.default or 'STONE' }}',-->
-<!--                                        materialGroups: $root.__x.data.materialGroups,-->
-<!--                                        filter: ''-->
-<!--                                        }" @click.outside="isOpen = false">-->
-
-<!--                                        <input type="hidden" :name="param.name" x-model="selected">-->
-
-<!--                                        <button type="button" class="picker-trigger" @click="isOpen = !isOpen">-->
-<!--                                            <span x-text="selected"></span>-->
-<!--                                            <span>▼</span>-->
-<!--                                        </button>-->
-
-<!--                                        <div class="picker-dropdown" x-show="isOpen" x-transition>-->
-<!--                                            <input type="text" x-model="filter" placeholder="Filter blocks..." class="picker-filter">-->
-
-<!--                                            <div class="picker-dropdown" x-show="isOpen" x-transition x-cloak>-->
-<!--                                                <input type="text" x-model="filter" placeholder="Filter blocks..." class="picker-filter">-->
-<!--                                                <div class="picker-options">-->
-<!--                                                    <template x-for="category in Object.keys($store.materials.groups)">-->
-<!--                                                        <div class="picker-category">-->
-<!--                                                            <strong x-text="category.replace(/_/g, ' ')"></strong>-->
-<!--                                                            <ul>-->
-<!--                                                                <template x-for="block in $store.materials.groups[category]">-->
-<!--                                                                    <li x-show="!filter || block.toLowerCase().includes(filter.toLowerCase())">-->
-<!--                                                                        <button type="button"-->
-<!--                                                                                @click="selected = block; isOpen = false;"-->
-<!--                                                                                x-text="block.replace(/_/g, ' ')"></button>-->
-<!--                                                                    </li>-->
-<!--                                                                </template>-->
-<!--                                                            </ul>-->
-<!--                                                        </div>-->
-<!--                                                    </template>-->
-<!--                                                </div>-->
-
-<!--&lt;!&ndash;                                            <div class="picker-options">&ndash;&gt;-->
-<!--&lt;!&ndash;                                                <template x-for="category in Object.keys(materialGroups)">&ndash;&gt;-->
-<!--&lt;!&ndash;                                                    <div class="picker-category">&ndash;&gt;-->
-<!--&lt;!&ndash;                                                        <strong x-text="category.replace(/_/g, ' ')"></strong>&ndash;&gt;-->
-<!--&lt;!&ndash;                                                        <ul>&ndash;&gt;-->
-<!--&lt;!&ndash;                                                            <template x-for="block in materialGroups[category]">&ndash;&gt;-->
-<!--&lt;!&ndash;                                                                <li x-show="!filter || block.toLowerCase().includes(filter.toLowerCase())">&ndash;&gt;-->
-<!--&lt;!&ndash;                                                                    <button type="button" @click="selected = block; isOpen = false;" x-text="block"></button>&ndash;&gt;-->
-<!--&lt;!&ndash;                                                                </li>&ndash;&gt;-->
-<!--&lt;!&ndash;                                                            </template>&ndash;&gt;-->
-<!--&lt;!&ndash;                                                        </ul>&ndash;&gt;-->
-<!--&lt;!&ndash;                                                    </div>&ndash;&gt;-->
-<!--&lt;!&ndash;                                                </template>&ndash;&gt;-->
-<!--&lt;!&ndash;                                            </div>&ndash;&gt;-->
-<!--&lt;!&ndash;                                        </div>&ndash;&gt;-->
-<!--                                    </div>-->
-
-<!--                                </template>-->
-<!--                            </div>-->
-<!--                        </template>-->
-<!--                    </form>-->
 
                     <div class="power-status"
                          x-text="getStatusForWidget(widget.power_id).status === 'error' ?

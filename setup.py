@@ -17,6 +17,10 @@ setup(
     packages=find_packages(include=['mcshell'],exclude=['tests','tests.*']),
     include_package_data=True,
     install_requires=[
+        'pexpect',
+        'websocket-client',
+        'gevent',
+        'pyncraft',
         'rcon',
         'aio-mc-rcon',
         'flask',
