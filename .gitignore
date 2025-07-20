@@ -18,3 +18,10 @@ python-minecraft-data
 old-powers
 old_index.*
 mcshell/data/powers/*
+
+# generated files
+mced/src/blocks/materials.mjs
+mcshell/data/materials/blocks/materials.mjs
+mcshell/data/materials/colourables.json
+mcshell/data/materials/pickers.json
+
