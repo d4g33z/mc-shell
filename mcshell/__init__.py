@@ -450,7 +450,7 @@ class MCShell(Magics):
 
         server_data['host'] = Prompt.ask('Server Address:',default=self.server_data['host'])
         server_data['port'] = int(Prompt.ask('Server Port:',default=str(self.server_data['port'])))
-        server_data['server_type'] = Prompt.ask('Server Type:',default=self.server_data['server_type'])
+        # server_data['server_type'] = Prompt.ask('Server Type:',default=self.server_data['server_type'])
         server_data['password'] = Prompt.ask('Server Password:',password=True)
 
         pickle.dump(server_data,MC_CREDS_PATH.open('wb'))
