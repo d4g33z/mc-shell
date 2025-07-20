@@ -382,6 +382,7 @@
         <block type="minecraft_position_player"></block>
         <block type="minecraft_position_get_direction"></block>
         <block type="minecraft_position_here"></block>
+        <block type="minecraft_position_get_compass_direction"></block>
     </category>
     <category name="Digital Geometry" colour="#4a90e2">
         <block type="minecraft_action_create_digital_line"></block>
