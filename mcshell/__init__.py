@@ -1,6 +1,7 @@
 from threading import Thread,Event
 
 import IPython
+import getpass
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
 
 from rich.prompt import Prompt
@@ -41,10 +42,13 @@ class MCShell(Magics):
         self.mc_cmd_docs = _mc_cmd_docs
         self.rcon_commands = {}
 
-        if not MC_CREDS_PATH.exists():
-            pickle.dump(SERVER_DATA,MC_CREDS_PATH.open('wb'))
+        self.server_data = {}
 
-        self.server_data = pickle.load(MC_CREDS_PATH.open('rb'))
+        # do this with data from world directory
+        # if not MC_CREDS_PATH.exists():
+        #     pickle.dump(SERVER_DATA,MC_CREDS_PATH.open('wb'))
+        #
+        # self.server_data = pickle.load(MC_CREDS_PATH.open('rb'))
 
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
@@ -57,7 +61,6 @@ class MCShell(Magics):
         self.app_server_thread = app_server_thread
 
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
-
 
     @line_magic
     def pp_create_world(self, line):
@@ -83,11 +86,38 @@ class MCShell(Magics):
         world_dir = MC_WORLDS_BASE_DIR.joinpath(world_name)
         server_jars_dir = MC_WORLDS_BASE_DIR.joinpath('server-jars')
 
+
         if world_dir.exists():
             print(f"Error: A world named '{world_name}' already exists at '{world_dir}'")
             return
 
         print(f"Creating new world '{world_name}' for Minecraft {mc_version}...")
+
+        # Create the world directory structure
+        world_dir.mkdir(parents=True)
+        plugins_dir = (world_dir / "plugins")
+        plugins_dir.mkdir(exist_ok=True)
+        server_jars_dir.mkdir(exist_ok=True)
+
+        # Prompt for a password
+        try:
+            password = getpass.getpass(prompt=f"Create a password for world '{world_name}': ")
+            if not password:
+                print("Password cannot be empty.")
+                return
+        except (EOFError, KeyboardInterrupt):
+            print("\nWorld creation cancelled.")
+            return
+
+        self.server_data = {"host": "127.0.0.1", "port": 25575, "password": password} # Port can be dynamic if needed
+        creds_path = world_dir / '.mc_creds.json'
+
+        with creds_path.open('w') as f:
+            json.dump(self.server_data, f)
+
+        # Set file permissions to be readable/writable by owner only
+        creds_path.chmod(0o600)
+        # os.chmod(creds_path, 0o600)
 
         #  Download the Paper server JAR if needed
         downloader = PaperDownloader(server_jars_dir)
@@ -95,10 +125,6 @@ class MCShell(Magics):
         if not jar_path:
             return # Stop if download failed
 
-        # Create the world directory structure
-        world_dir.mkdir(parents=True)
-        plugins_dir = (world_dir / "plugins")
-        plugins_dir.mkdir(exist_ok=True)
 
         # Create the eula.txt file and automatically agree to it
         try:
@@ -123,8 +149,8 @@ class MCShell(Magics):
                 "gamemode": "creative",
                 "motd": f"MC-ED World: {world_name}",
                 "enable-rcon": "true",
-                "rcon.port": self.server_data.get('rcon_port', 25575),
-                "rcon.password": self.server_data.get('rcon_password', 'minecraft')
+                "rcon.port": self.server_data.get('port', 25575),
+                "rcon.password": self.server_data.get('password', 'minecraft')
             }
         }
 
@@ -218,6 +244,11 @@ class MCShell(Magics):
         if not self.active_paper_server.is_alive():
             print("Could not start Paper server. Aborting.")
             return
+
+        creds_path = world_directory / '.mc_creds.json'
+
+        with creds_path.open('r') as f:
+            self.server_data = json.load(f)
 
         # Start the mc-ed application server
         # This assumes your %mc_start_app logic is moved into a helper
@@ -372,6 +403,10 @@ class MCShell(Magics):
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
 
+        if not self.active_paper_server:
+            print("No server running. Use %pp_start_world to start one.")
+            return
+
         _rcon_client = self.get_client()
         try:
             if kind == 'run':
@@ -446,16 +481,11 @@ class MCShell(Magics):
         %mc_login
         '''
 
-        server_data = {}
-
-        server_data['host'] = Prompt.ask('Server Address:',default=self.server_data['host'])
-        server_data['port'] = int(Prompt.ask('Server Port:',default=str(self.server_data['port'])))
-        server_data['server_type'] = Prompt.ask('Server Type:',default=self.server_data['server_type'])
-        server_data['password'] = Prompt.ask('Server Password:',password=True)
-
-        pickle.dump(server_data,MC_CREDS_PATH.open('wb'))
-
-        self.server_data = server_data
+        self.server_data = {
+            'host': Prompt.ask('Server Address:', default=self.server_data['host']),
+            'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+            'password': Prompt.ask('Server Password:', password=True)
+        }
 
         try:
             self.get_client().help()
@@ -495,6 +525,9 @@ class MCShell(Magics):
                 print(_doc_code_line)
         else:
             _help_text = self.help(*_cmd)
+            if not _help_text:
+                print("No help available!")
+                return
             for _help_line in _help_text.split('/')[1:]:
                 _help_parts = _help_line.split()
                 _help_parts[0] = _help_parts[0].replace('-','_')

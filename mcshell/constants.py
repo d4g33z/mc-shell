@@ -45,9 +45,9 @@ FJ_SERVER_PORT = 4711
 
 MC_SERVER_PORT = 25575
 MC_SERVER_HOST = 'localhost'
-MC_SERVER_TYPE = 'paper'
+# MC_SERVER_TYPE = 'paper'
 
-MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
+# MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
 
 MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
 
@@ -88,7 +88,7 @@ PP_JAR_DIR = os.path.expanduser("~/mc-worlds/server-jars/")
 SERVER_DATA = {
     'host': MC_SERVER_HOST,
     'port': MC_SERVER_PORT,
-    'server_type': MC_SERVER_TYPE
+    # 'server_type': MC_SERVER_TYPE
 }
 
 RE_NON_JSON_VALUE = r"(?<!\")\b(?:[0-9]+[a-zA-Z]+|[0-9]+(?:\.[0-9]+)?[a-zA-Z]+|true|false|null)\b(?!\")"
