@@ -75,9 +75,10 @@ MC_APP_SRC_DIR = pathlib.Path(__file__).parent.parent.joinpath('mced/src')
 
 MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
 MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
+MC_WORLDS_BASE_DIR = pathlib.Path('~').expanduser().joinpath('mc-worlds')
+MC_CENTRAL_CONFIG_FILE = pathlib.Path("/etc/mc-shell/user_map.json")
 
 PP_JAR_DIR = os.path.expanduser("~/mc-worlds/server-jars/")
-
 
 #No, we scrape the actual paper sources to get EntityTypes
 # this is a pure html source of entity  names without IDS
