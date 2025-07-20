@@ -47,7 +47,7 @@ MC_SERVER_PORT = 25575
 MC_SERVER_HOST = 'localhost'
 # MC_SERVER_TYPE = 'paper'
 
-MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
+# MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
 
 MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
 
