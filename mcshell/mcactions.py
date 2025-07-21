@@ -65,7 +65,8 @@ class MCActionBase:
 
 
     def _initialize_entity_id_map(self):
-        self.bukkit_to_entity_id_map = pickle.load(MC_ENTITY_ID_MAP_PATH.open('rb'))
+        with MC_ENTITY_ID_MAP_PATH.open('rb') as f:
+            self.bukkit_to_entity_id_map = pickle.load(f)
 
     def _get_entity_id_from_bukkit_name(self, bukkit_enum_string: str) -> Optional[int]:
         """
