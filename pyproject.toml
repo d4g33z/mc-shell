@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "mc-shell"
+version = "0.1.0"
+description = "An interactive shell and editor for controlling Minecraft servers and creating powers."
+authors = ["geez6a@gmail.com"]
+readme = "README.md"
+packages = [{include = "mcshell"}]
+
+# This section explicitly includes all necessary data files,
+# replacing the need for the custom package_files function in setup.py.
+include = ["mcshell/data/**/*"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+# Core Application Dependencies
+pexpect = "*"
+gevent = "*"
+flask = "*"
+flask-cors = "*"
+flask-socketio = "*"
+python-socketio = {version = "*", extras = ["client"]}
+requests = "*"
+numpy = "*"
+urlpath = "*"
+
+# IPython Shell Dependencies
+ipython = "*"
+pickleshare = "*" # For %store magic
+rich = "*"
+click = "*" # For the mcshell CLI entry point
+
+# Minecraft-specific Libraries
+rcon = "*"
+aio-mc-rcon = "*"
+pyncraft = {git = "https://github.com/d4g33z/pyncraft.git"}
+
+
+[tool.poetry.scripts]
+# This defines the console script entry point, replacing 'entry_points'.
+mcshell = "mcshell.mcshell:cli"
