@@ -713,26 +713,39 @@ export function defineMineCraftBlocks(Blockly) {
       }
     };
 
-    // In src/blocks/mc.mjs
+    Blockly.Blocks['minecraft_action_create_explosion'] = {
+      init: function() {
+        this.appendValueInput("POSITION")
+            .setCheck("3DVector")
+            .appendField("create explosion at");
+        this.appendValueInput("POWER")
+            .setCheck("Number")
+            .setAlign(Blockly.ALIGN_RIGHT)
+            .appendField("with power");
+        this.setPreviousStatement(true, null);
+        this.setNextStatement(true, null);
+        this.setColour(65); // The "action" color
+        this.setTooltip("Creates an explosion of a specified power at a location. TNT is power 4.");
+        this.setInputsInline(true);
 
-Blockly.Blocks['minecraft_action_create_explosion'] = {
-  init: function() {
-    this.appendValueInput("POSITION")
-        .setCheck("3DVector")
-        .appendField("create explosion at");
-    this.appendValueInput("POWER")
-        .setCheck("Number")
-        .setAlign(Blockly.ALIGN_RIGHT)
-        .appendField("with power");
-    this.setPreviousStatement(true, null);
-    this.setNextStatement(true, null);
-    this.setColour(65); // The "action" color
-    this.setTooltip("Creates an explosion of a specified power at a location. TNT is power 4.");
-    this.setInputsInline(true);
+          MCED.BlocklyUtils.configureShadow(this,"POSITION");
+          MCED.BlocklyUtils.configureShadow(this,"POWER");
+      }
+    };
 
-      MCED.BlocklyUtils.configureShadow(this,"POSITION");
-      MCED.BlocklyUtils.configureShadow(this,"POWER");
-  }
-};
+    Blockly.Blocks['time_sleep'] = {
+        init: function() {
+            this.appendValueInput("SECONDS")
+                .setCheck("Number")
+                .appendField("wait for");
+            this.appendDummyInput()
+                .appendField("seconds");
+            this.setPreviousStatement(true, null);
+            this.setNextStatement(true, null);
+            this.setColour(120); // A color often used for timing/flow control
+            this.setTooltip("Pauses the program for a specified number of seconds.");
+            this.setInputsInline(true);
+        }
+    };
 }
 

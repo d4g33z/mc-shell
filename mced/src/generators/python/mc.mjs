@@ -599,4 +599,14 @@ ${indentedBlockCode}
 
         return code;
     };
+
+    pythonGenerator.forBlock['time_sleep'] = function(block, generator) {
+        // Ensure that 'import time' is included in the generated script.
+        // generator.addImport('time');
+
+        const seconds = generator.valueToCode(block, 'SECONDS', generator.ORDER_ATOMIC) || '1';
+
+        const code = `time.sleep(${seconds})\n`;
+        return code;
+    };
 }
