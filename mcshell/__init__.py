@@ -111,7 +111,7 @@ class MCShell(Magics):
             print("\nWorld creation cancelled.")
             return
 
-        self.server_data = {"host": "127.0.0.1", "port": 25575, "password": password} # Port can be dynamic if needed
+        self.server_data = {"host": MC_SERVER_HOST, "port": MC_SERVER_PORT, "password": password, "fj_port":FJ_PLUGIN_PORT} # Port can be dynamic if needed
         creds_path = world_dir / '.mc_creds.json'
 
         with creds_path.open('w') as f:
@@ -828,17 +828,19 @@ class MCShell(Magics):
         Starts the mc-ed application server, getting the authorized Minecraft user
         name from the central configuration file.
         """
-        self.server_data = {
-            'host': Prompt.ask('Server Address:', default=self.server_data['host']),
-            'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
-            'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
-        }
+        # if we started a world, self.server_data should be set
+        if not self.active_paper_server:
+            self.server_data = {
+                'host': Prompt.ask('Server Address:', default=self.server_data['host']),
+                'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
+            }
 
-        login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'])
-        if login_to_server.lower() == 'yes':
-            self.server_data.update({
-                'password': Prompt.ask('Server Password:', password=True)
-            })
+            login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'])
+            if login_to_server.lower() == 'yes':
+                self.server_data.update({
+                    'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+                    'password': Prompt.ask('Server Password:', password=True)
+                })
 
         minecraft_name = self._get_mc_name()
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
@@ -861,6 +863,56 @@ class MCShell(Magics):
             print("The debugging server is running")
         else:
             print("The debugging server is not running")
+
+    @line_magic
+    def mc_invite_player(self, line):
+        """
+        Sends your current server connection details to another player.
+        Usage: %mc_invite_player <recipient_app_url>
+        Example: %mc_invite_player http://192.168.1.102:5000
+        """
+        args = line.split()
+        if len(args) != 1:
+            print("Usage: %mc_invite_player <recipient_app_url>")
+            return
+
+        recipient_url = args[0]
+        sender_name = self._get_mc_name()
+
+        # Ensure the user has an active server session
+        if not self.active_paper_server or not self.active_paper_server.is_alive():
+            print("Error: You must have an active world running to send an invitation.")
+            return
+        invitation_data = {
+            "sender_name": sender_name,
+            "world_name": self.active_paper_server.world_name,
+            "host": self.server_data.get('host'),
+            "fj_port": self.server_data.get('fj_port'),
+            "port":None,
+            "password":None
+        }
+
+        invite_as_server_op = Prompt.ask('Do you want to make the player a server op?',choices=['yes','no'],default='no')
+        if invite_as_server_op.lower() == 'yes':
+            # Construct the payload with your connection details
+            invitation_data.update({
+                "port": self.server_data.get('port'),
+                "password": self.server_data.get('password')
+            })
+
+        # The endpoint on the recipient's server we will send to
+        invite_endpoint = f"{recipient_url.rstrip('/')}/api/receive_invite"
+
+        print(f"Sending invitation to {recipient_url}...")
+        try:
+            response = requests.post(invite_endpoint, json=invitation_data, timeout=10)
+            if response.ok:
+                print("Invitation sent successfully!")
+            else:
+                print(f"Failed to send invitation. Server responded with: {response.status_code}")
+                print(f"Message: {response.text}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error: Could not connect to the other player's application server. {e}")
 
 def load_ipython_extension(ip):
     ip.register_magics(MCShell)
