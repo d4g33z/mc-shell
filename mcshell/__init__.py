@@ -42,7 +42,12 @@ class MCShell(Magics):
         self.mc_cmd_docs = _mc_cmd_docs
         self.rcon_commands = {}
 
-        self.server_data = {}
+        self.server_data = {
+            "host":'',
+            "port":None,
+            "password":'',
+
+        }
 
         # do this with data from world directory
         # if not MC_CREDS_PATH.exists():
