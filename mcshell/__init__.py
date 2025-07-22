@@ -42,12 +42,7 @@ class MCShell(Magics):
         self.mc_cmd_docs = _mc_cmd_docs
         self.rcon_commands = {}
 
-        self.server_data = {
-            "host":'',
-            "port":None,
-            "password":'',
-
-        }
+        self.server_data = MC_SERVER_DATA
 
         # do this with data from world directory
         # if not MC_CREDS_PATH.exists():
@@ -67,12 +62,13 @@ class MCShell(Magics):
 
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
 
+
     @line_magic
     def pp_create_world(self, line):
         """
         Creates a new, self-contained Paper server instance in its own directory.
-        Usage: %pp_create_world <world_name> --version=<mc_version>
-        Example: %pp_create_world my_creative_world --version=1.20.4
+        Usage: % pp_create_world < world_name >
+        Example: %pp_create_world my_creative_world
         """
         args = line.split()
         if not args:
@@ -80,9 +76,10 @@ class MCShell(Magics):
             return
 
         world_name = args[0]
-        mc_version = "1.21.4" # Default version
+        mc_version = MC_VERSION
 
-        # Simple argument parsing for --version flag
+        # Simple argument parsing for --version flag if we use it
+        # Usage: % pp_create_world < world_name > --version = < mc_version >
         for arg in args[1:]:
             if arg.startswith("--version="):
                 mc_version = arg.split('=', 1)[1]
@@ -408,9 +405,9 @@ class MCShell(Magics):
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
 
-        if not self.active_paper_server:
-            print("No server running. Use %pp_start_world to start one.")
-            return
+        # if not self.active_paper_server:
+        #     print("Error???")
+        #     return
 
         _rcon_client = self.get_client()
         try:
@@ -431,13 +428,9 @@ class MCShell(Magics):
             raise e
 
     def get_client(self):
-        if self.server_data is None:
-            self.mc_login()
         return MCClient(**self.server_data)
 
     def get_player(self,name):
-        if self.server_data is None:
-            self.mc_login()
         return MCPlayer(name, **self.server_data)
 
     def help(self,*args):
@@ -485,6 +478,7 @@ class MCShell(Magics):
         '''
         %mc_login
         '''
+
 
         self.server_data = {
             'host': Prompt.ask('Server Address:', default=self.server_data['host']),
@@ -562,7 +556,7 @@ class MCShell(Magics):
 
         _arg_list = line.split(' ')
         _arg_list[0] = _arg_list[0].replace('_','-')
-        print(f"Send: {' '.join(_arg_list)}")
+        # print(f"Send: {' '.join(_arg_list)}")
         try:
             response = self.run(*_arg_list)
             if response == '':
@@ -834,6 +828,18 @@ class MCShell(Magics):
         Starts the mc-ed application server, getting the authorized Minecraft user
         name from the central configuration file.
         """
+        self.server_data = {
+            'host': Prompt.ask('Server Address:', default=self.server_data['host']),
+            'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+            'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
+        }
+
+        login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'])
+        if login_to_server.lower() == 'yes':
+            self.server_data.update({
+                'password': Prompt.ask('Server Password:', password=True)
+            })
+
         minecraft_name = self._get_mc_name()
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
         start_app_server(self.server_data,minecraft_name,self.shell)
