@@ -385,8 +385,8 @@ def receive_invite():
         password = data.get('password')
         fj_port = data.get('fj_port')
 
-        if not host or not port:
-            return jsonify({"error": "Invitation was missing host or port."}), 400
+        # if not host or not port:
+        #     return jsonify({"error": "Invitation was missing host or port."}), 400
 
         # --- Print the formatted invitation to the user's console ---
         print("\n\n--- You have received a Minecraft world invitation! ---")

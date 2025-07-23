@@ -480,11 +480,12 @@ class MCShell(Magics):
         '''
 
 
-        self.server_data = {
+        self.server_data.update({
             'host': Prompt.ask('Server Address:', default=self.server_data['host']),
             'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+            'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
             'password': Prompt.ask('Server Password:', password=True)
-        }
+        })
 
         try:
             self.get_client().help()
@@ -833,6 +834,8 @@ class MCShell(Magics):
             self.server_data = {
                 'host': Prompt.ask('Server Address:', default=self.server_data['host']),
                 'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
+                'port':MC_SERVER_PORT,
+                'password':None,
             }
 
             login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'])
