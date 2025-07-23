@@ -23,6 +23,8 @@ python-socketio = {version = "*", extras = ["client"]}
 requests = "*"
 numpy = "*"
 urlpath = "*"
+beautifulsoup4 = "*"
+
 
 # IPython Shell Dependencies
 ipython = "*"
