@@ -9,13 +9,12 @@ class MCClientException(Exception):
     pass
 
 class MCClient:
-    def __init__(self, host=MC_SERVER_HOST, port=MC_SERVER_PORT, password='', server_type=MC_SERVER_TYPE, fruit_juice_port=FJ_SERVER_PORT):
+    def __init__(self, host=MC_SERVER_HOST, port=MC_SERVER_PORT, password='', fj_port=FJ_PLUGIN_PORT):
 
         self.host = host
         self.port = port
         self.password = password
-        self.server_type = server_type
-        self.fruit_juice_port  = fruit_juice_port
+        self.fruit_juice_port  = fj_port
 
 
 
@@ -38,9 +37,9 @@ class MCClient:
 
     @lru_cache(maxsize=1)
     def py_client(self,player_name=None):
-        if self.server_type != 'paper':
-            print('pyncraft client is only available on paper type servers')
-            return None
+        # if self.server_type != 'paper':
+        #     print('pyncraft client is only available on paper type servers')
+        #     return None
         player_name = '' if player_name is None else player_name
         return Minecraft.create(address=self.host,port=self.fruit_juice_port,playerName=player_name)
 
@@ -49,12 +48,12 @@ class MCClient:
             print('A password is required!')
             return
 
-        if self.server_type == 'paper':
-            _help_cmd = 'minecraft:help'
-        elif self.server_type == 'vanilla':
-            _help_cmd = 'help'
-        else:
-            raise MCClientException("unknown server_type")
+        # if self.server_type == 'paper':
+        _help_cmd = 'minecraft:help'
+        # elif self.server_type == 'vanilla':
+        #     _help_cmd = 'help'
+        # else:
+        #     raise MCClientException("unknown server_type")
         _response = self.run(_help_cmd,*args)
         return _response
 

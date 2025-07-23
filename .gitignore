@@ -18,3 +18,21 @@ python-minecraft-data
 old-powers
 old_index.*
 mcshell/data/powers/*
+poetry.lock
+
+# generated files
+mced/src/blocks/materials.mjs
+mced/src/generators/python/materials.mjs
+
+mced/src/blocks/entities.mjs
+mced/src/generators/python/entities.mjs
+
+mcshell/data/materials/blocks/materials.mjs
+mcshell/data/materials/colourables.json
+mcshell/data/materials/pickers.json
+
+mcshell/data/entities/blocks/entities.mjs
+mcshell/data/entities/pickers.json
+mcshell/data/entities/python/entities.mjs
+
+
