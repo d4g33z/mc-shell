@@ -44,17 +44,10 @@ class MCShell(Magics):
 
         self.server_data = MC_SERVER_DATA
 
-        # do this with data from world directory
-        # if not MC_CREDS_PATH.exists():
-        #     pickle.dump(SERVER_DATA,MC_CREDS_PATH.open('wb'))
-        #
-        # self.server_data = pickle.load(MC_CREDS_PATH.open('rb'))
-
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
         self.ip.set_hook('complete_command',self._complete_mc_cancel_power, re_key='%mc_cancel_power')
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_start_world')
-        self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_stop_world')
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_delete_world')
 
         self.debug_server_thread = debug_server_thread
@@ -62,6 +55,36 @@ class MCShell(Magics):
 
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
 
+    def _complete_world_command(self, ipyshell, event):
+        ipyshell.user_ns.update(dict(rcon_event=event))
+        text = event.symbol
+        parts = event.line.split()
+        ipyshell.user_ns.update(dict(rcon_event=event))
+
+        worlds_base_dir = MC_WORLDS_BASE_DIR
+
+        if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
+            print(f"Worlds directory not found at: {worlds_base_dir}")
+            print("Create a world first with: %pp_create_world <world_name>")
+            return
+
+        found_worlds = []
+        # Iterate through each item in the base worlds directory
+        for world_dir in worlds_base_dir.iterdir():
+            if world_dir.is_dir():
+                manifest_path = world_dir / "world_manifest.json"
+                if manifest_path.exists():
+                    found_worlds.append(world_dir.name)
+
+        arg_matches= []
+        if len(parts) == 1:
+            arg_matches = [c for c in found_worlds]
+            ipyshell.user_ns.update({'world_matches':arg_matches})
+        elif len(parts) == 2 and text != '':
+            arg_matches = [c for c in found_worlds if c.startswith(text)]
+            ipyshell.user_ns.update({'world_matches':arg_matches})
+
+        return arg_matches
 
     @line_magic
     def pp_create_world(self, line):
@@ -119,7 +142,6 @@ class MCShell(Magics):
 
         # Set file permissions to be readable/writable by owner only
         creds_path.chmod(0o600)
-        # os.chmod(creds_path, 0o600)
 
         #  Download the Paper server JAR if needed
         downloader = PaperDownloader(server_jars_dir)
@@ -175,36 +197,6 @@ class MCShell(Magics):
         print(f"\nWorld '{world_name}' created successfully.")
         print(f"To start it, run: %pp_start_world {world_name}")
 
-    def _complete_world_command(self, ipyshell, event):
-        ipyshell.user_ns.update(dict(rcon_event=event))
-        text = event.symbol
-        parts = event.line.split()
-        ipyshell.user_ns.update(dict(rcon_event=event))
-
-        worlds_base_dir = MC_WORLDS_BASE_DIR
-
-        if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
-            print(f"Worlds directory not found at: {worlds_base_dir}")
-            print("Create a world first with: %pp_create_world <world_name>")
-            return
-
-        found_worlds = []
-        # Iterate through each item in the base worlds directory
-        for world_dir in worlds_base_dir.iterdir():
-            if world_dir.is_dir():
-                manifest_path = world_dir / "world_manifest.json"
-                if manifest_path.exists():
-                    found_worlds.append(world_dir.name)
-
-        arg_matches= []
-        if len(parts) == 1:
-            arg_matches = [c for c in found_worlds]
-            ipyshell.user_ns.update({'world_matches':arg_matches})
-        elif len(parts) == 2 and text != '':
-            arg_matches = [c for c in found_worlds if c.startswith(text)]
-            ipyshell.user_ns.update({'world_matches':arg_matches})
-
-        return arg_matches
 
     @line_magic
     def pp_start_world(self, line):
@@ -405,11 +397,7 @@ class MCShell(Magics):
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
 
-        # if not self.active_paper_server:
-        #     print("Error???")
-        #     return
-
-        _rcon_client = self.get_client()
+        _rcon_client = self._get_client()
         try:
             if kind == 'run':
                 _response = _rcon_client.run(*args)
@@ -427,17 +415,17 @@ class MCShell(Magics):
             print("[red bold]The password is wrong. Use %mc_login reset[/]")
             raise e
 
-    def get_client(self):
+    def _get_client(self):
         return MCClient(**self.server_data)
 
-    def get_player(self,name):
+    def _get_player(self, name):
         return MCPlayer(name, **self.server_data)
 
-    def help(self,*args):
+    def _help(self, *args):
         return self._send('help', *args)
-    def run(self,*args):
+    def _run(self, *args):
         return self._send('run',*args)
-    def data(self,*args,**server_data):
+    def _data(self, *args, **server_data):
         return self._send('data',*args)
 
     @property
@@ -445,7 +433,7 @@ class MCShell(Magics):
         _rcon_commands = {}
         if not self.rcon_commands:
             try:
-                _help_text = self.help()
+                _help_text = self._help()
             except:
                 return _rcon_commands
 
@@ -455,7 +443,7 @@ class MCShell(Magics):
                 if 'minecraft:' in _cmd:
                     _cmd = _cmd.split(':')[1]
                 try:
-                    _cmd_data = self.help(_cmd)
+                    _cmd_data = self._help(_cmd)
                 except:
                     return
                 if not _cmd_data:
@@ -488,13 +476,13 @@ class MCShell(Magics):
         })
 
         try:
-            self.get_client().help()
+            self._get_client().help()
         except Exception as e:
             print("[red bold]login failed[/]")
 
     @line_magic
     def mc_server_info(self,line):
-        _mcc = self.get_client()
+        _mcc = self._get_client()
         pprint(self.server_data)
 
     @line_magic
@@ -524,7 +512,7 @@ class MCShell(Magics):
             for _doc_code_line in _doc_code_lines:
                 print(_doc_code_line)
         else:
-            _help_text = self.help(*_cmd)
+            _help_text = self._help(*_cmd)
             if not _help_text:
                 print("No help available!")
                 return
@@ -559,7 +547,7 @@ class MCShell(Magics):
         _arg_list[0] = _arg_list[0].replace('_','-')
         # print(f"Send: {' '.join(_arg_list)}")
         try:
-            response = self.run(*_arg_list)
+            response = self._run(*_arg_list)
             if response == '':
                 return
         except:
@@ -648,7 +636,7 @@ class MCShell(Magics):
         _uuid = str(uuid.uuid1())[:4]
         _var_name = f"data_{_arg_list[0]}_{_uuid}"
         print(f"requested data will be available as {_var_name} locally")
-        _data = self.data(*_arg_list)
+        _data = self._data(*_arg_list)
         local_ns.update({_var_name:_data})
 
     @needs_local_scope
@@ -657,7 +645,7 @@ class MCShell(Magics):
         _uuid = str(uuid.uuid1())[:4]
         _var_name = f"mcc_{_uuid}"
         print(f"requested client will be available as {_var_name} locally")
-        local_ns[_var_name] = self.get_client()
+        local_ns[_var_name] = self._get_client()
 
     @needs_local_scope
     @line_magic
@@ -668,7 +656,7 @@ class MCShell(Magics):
         else:
             _player_name = _line_parts.pop()
         print(f"requested player will be available as the variable {_player_name} locally")
-        local_ns[_player_name] = self.get_player(_player_name)
+        local_ns[_player_name] = self._get_player(_player_name)
 
     @line_magic
     def mc_create_script(self, line):
