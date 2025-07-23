@@ -63,10 +63,6 @@ class PaperServerManager:
         print("--- Applying settings from world_manifest.json to server.properties ---")
 
         try:
-            # # 1. Load the manifest
-            # with open(self.manifest_path, 'r') as f:
-            #     manifest = json.load(f)
-
             settings_to_apply = self.world_manifest.get("server_properties", {})
             if not settings_to_apply:
                 print("No server_properties found in manifest. Using defaults.")
@@ -83,6 +79,7 @@ class PaperServerManager:
 
             # 3. Update the properties with values from the manifest
             for key, value in settings_to_apply.items():
+                if 'password' in key: continue
                 print(f"  Setting '{key}' = '{value}'")
                 properties[key] = str(value)
 
@@ -105,11 +102,6 @@ class PaperServerManager:
         The main execution function. Starts the Paper server and logs its
         output in real-time without blocking the parent thread.
         """
-        # command = f"java -Xms2G -Xmx2G -jar {self.jar_path} nogui"
-        #
-        # print(f"Starting Paper server for world '{self.world_name}'...")
-        # print(f"  > Directory: {self.world_directory}")
-
         # Command to run the server from within its specific world directory
         command = ' '.join([
             'java',

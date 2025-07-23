@@ -370,6 +370,45 @@ def get_block_materials():
     except Exception as e:
         return jsonify({"error": f"Could not load material data: {e}"}), 500
 
+@app.route('/api/receive_invite', methods=['POST'])
+def receive_invite():
+    """
+    Receives an invitation from another player and prints it to the
+    local IPython console.
+    """
+    try:
+        data = request.get_json()
+        sender = data.get('sender_name', 'Another player')
+        world = data.get('world_name', 'their world')
+        host = data.get('host')
+        port = data.get('port')
+        password = data.get('password')
+        fj_port = data.get('fj_port')
+
+        # if not host or not port:
+        #     return jsonify({"error": "Invitation was missing host or port."}), 400
+
+        # --- Print the formatted invitation to the user's console ---
+        print("\n\n--- You have received a Minecraft world invitation! ---")
+        print(f"From: {sender}")
+        print(f"World: {world}")
+        print("\nTo join their world, run the %mc_login command and input the following data:")
+        print(f"Server Address: {host} ")
+        print(f"Plugin Port: {fj_port} ")
+        if password and port:
+            print("\nTo join as an operator (admin), use:")
+            print("\nIf you want to get server operator status, use the following data:")
+            print(f"Server Port: {port}")
+            print(f"Server Password: {password}")
+
+        print("------------------------------------------------------\n")
+
+        return jsonify({"success": True, "message": "Invitation displayed."})
+
+    except Exception as e:
+        print(f"Error processing invitation: {e}")
+        return jsonify({"error": "Invalid invitation format."}), 400
+
 # --- Control Panel ---
 @app.route('/control')
 def serve_control():

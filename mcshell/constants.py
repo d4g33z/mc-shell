@@ -9,6 +9,7 @@ import re
 import json
 import copy
 import math
+import time
 import random
 import asyncio
 import requests
@@ -41,13 +42,20 @@ try:
 except ImportError:  # Graceful fallback if IceCream isn't installed.
     ic = lambda *a: None if not a else (a[0] if len(a) == 1 else a)  # noqa
 
-FJ_SERVER_PORT = 4711
+# default server data
 
-MC_SERVER_PORT = 25575
+MC_VERSION = '1.21.4' # this must match the client version
+
 MC_SERVER_HOST = 'localhost'
-MC_SERVER_TYPE = 'paper'
+MC_SERVER_PORT = 25575
+FJ_PLUGIN_PORT = 4711
 
-MC_CREDS_PATH = pathlib.Path('~').expanduser().joinpath('.mcshell.pkl')
+MC_SERVER_DATA = {
+    'host':MC_SERVER_HOST,
+    'port':MC_SERVER_PORT,
+    'password': None,
+    'fj_port': FJ_PLUGIN_PORT,
+}
 
 MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')
 
@@ -75,20 +83,10 @@ MC_APP_SRC_DIR = pathlib.Path(__file__).parent.parent.joinpath('mced/src')
 
 MC_POWER_LIBRARY_DIR = MC_DATA_DIR.joinpath('powers')
 MC_CONTROL_LAYOUT_PATH = MC_DATA_DIR.joinpath('control_layout.json')
+MC_WORLDS_BASE_DIR = pathlib.Path('~').expanduser().joinpath('mc-worlds')
+MC_CENTRAL_CONFIG_FILE = pathlib.Path("/etc/mc-shell/user_map.json")
 
 PP_JAR_DIR = os.path.expanduser("~/mc-worlds/server-jars/")
-
-
-#No, we scrape the actual paper sources to get EntityTypes
-# this is a pure html source of entity  names without IDS
-#MC_ENTITY_URL = urlpath.URL('https://hub.spigotmc.org/javadocs/spigot/org/bukkit/entity/EntityType.html')
-#MC_ENTITIES_PATH = MC_DATA_DIR.joinpath('entities/entities.pkl')
-
-SERVER_DATA = {
-    'host': MC_SERVER_HOST,
-    'port': MC_SERVER_PORT,
-    'server_type': MC_SERVER_TYPE
-}
 
 RE_NON_JSON_VALUE = r"(?<!\")\b(?:[0-9]+[a-zA-Z]+|[0-9]+(?:\.[0-9]+)?[a-zA-Z]+|true|false|null)\b(?!\")"
 RE_NON_JSON_ARRAY = r"\[[BISL];\s*[^\]]+\]"

@@ -1,0 +1,72 @@
+# .github/workflows/python-ci.yml
+
+# Name of the workflow as it will appear in the "Actions" tab on GitHub.
+name: Python CI
+
+# --- Triggers ---
+# This workflow will run on any push to the 'main' or 'develop' branches.
+# It will also run on any pull request targeting these branches.
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+# --- Jobs ---
+# A workflow is made up of one or more jobs that run in parallel or sequentially.
+jobs:
+  # Define a job with the ID 'build-and-test'.
+  build-and-test:
+    # Specify the runner environment. 'ubuntu-latest' is a reliable, fast choice.
+    runs-on: ubuntu-latest
+    
+    # Define the matrix of Python versions to test against.
+    # This example tests against 3.9 and 3.10. You can add or remove versions.
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10"]
+
+    # --- Steps ---
+    # A job is made up of a sequence of steps.
+    steps:
+      # Step 1: Check out the repository's code.
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the specific Python version for this job run.
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Step 3: Install Poetry.
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      # Step 4: Cache dependencies to speed up future runs.
+      # It creates a cache key based on the poetry.lock file. If the lock file
+      # hasn't changed, it restores the dependencies from the cache.
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+      # Step 5: Install dependencies if the cache wasn't found.
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      # Step 6: Install the project itself (mc-shell) into the venv.
+      - name: Install project
+        run: poetry install --no-interaction
+
+      # Step 7: Run the unit tests.
+      # This is the command you requested. 'poetry run' executes the command
+      # inside the virtual environment that Poetry manages.
+      - name: Run tests
+        run: poetry run python -m unittest discover

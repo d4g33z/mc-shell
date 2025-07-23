@@ -1,29 +1,21 @@
-import os
-import pathlib
-from io import StringIO
 from threading import Thread,Event
 
 import IPython
+import getpass
 from IPython.core.magic import Magics, magics_class, line_magic,needs_local_scope
-from IPython.utils.capture import capture_output
-from IPython.core.completer import IPCompleter,Completer
 
 from rich.prompt import Prompt
 
 from mcshell.mcrepo import JsonFileRepository
 from mcshell.mcclient import MCClient
-from mcshell.constants import *
-from mcshell.mcplayer import MCPlayer
 from mcshell.mcdebugger import start_debug_server,stop_debug_server,debug_server_thread
-from mcshell.mcserver import start_app_server,stop_app_server,app_server_thread
+from mcshell.mcserver import start_app_server,app_server_thread
 from mcshell.mcactions import *
-
 from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
-
 from mcshell.ppmanager import *
-from mcshell.ppdownloader import * # <-- Import the new class
+from mcshell.ppdownloader import *
 
-from mcshell.mcserver import stop_app_server # Ensure this import is present
+from mcshell.mcserver import stop_app_server
 from mcshell.mcblockly import build_app
 
 #pycraft.settings
@@ -50,118 +42,18 @@ class MCShell(Magics):
         self.mc_cmd_docs = _mc_cmd_docs
         self.rcon_commands = {}
 
-        if not MC_CREDS_PATH.exists():
-            pickle.dump(SERVER_DATA,MC_CREDS_PATH.open('wb'))
-
-        self.server_data = pickle.load(MC_CREDS_PATH.open('rb'))
+        self.server_data = MC_SERVER_DATA
 
         self.ip.set_hook('complete_command', self._complete_mc_run, re_key='%mc_run')
         self.ip.set_hook('complete_command', self._complete_mc_help, re_key='%mc_help')
         self.ip.set_hook('complete_command',self._complete_mc_cancel_power, re_key='%mc_cancel_power')
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_start_world')
-        self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_stop_world')
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_delete_world')
-
-        # self.ip.set_hook('complete_command', self._complete_mc_use_power, re_key='%mc_use_power')
 
         self.debug_server_thread = debug_server_thread
         self.app_server_thread = app_server_thread
 
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
-
-
-    @line_magic
-    def pp_create_world(self, line):
-        """
-        Creates a new, self-contained Paper server instance in its own directory.
-        Usage: %pp_create_world <world_name> --version=<mc_version>
-        Example: %pp_create_world my_creative_world --version=1.20.4
-        """
-        args = line.split()
-        if not args:
-            print("Usage: %pp_create_world <world_name> [--version=<mc_version>]")
-            return
-
-        world_name = args[0]
-        mc_version = "1.21.4" # Default version
-
-        # Simple argument parsing for --version flag
-        for arg in args[1:]:
-            if arg.startswith("--version="):
-                mc_version = arg.split('=', 1)[1]
-
-        # Define paths
-        # worlds_base_dir = pathlib.Path.home() / "mc-worlds"
-        # world_dir = worlds_base_dir / world_name
-        # server_jars_dir = worlds_base_dir / "server_jars"
-        # worlds_base_dir = MC_WORLDS_BASE_DIR
-        MC_WORLDS_BASE_DIR = pathlib.Path('~').expanduser().joinpath('mc-worlds')
-        world_dir = MC_WORLDS_BASE_DIR.joinpath(world_name)
-        server_jars_dir = MC_WORLDS_BASE_DIR.joinpath('server-jars')
-
-        if world_dir.exists():
-            print(f"Error: A world named '{world_name}' already exists at '{world_dir}'")
-            return
-
-        print(f"Creating new world '{world_name}' for Minecraft {mc_version}...")
-
-        # 1. Download the Paper server JAR if needed
-        downloader = PaperDownloader(server_jars_dir)
-        jar_path = downloader.get_jar_path(mc_version)
-        if not jar_path:
-            return # Stop if download failed
-
-        # 2. Create the world directory structure
-        world_dir.mkdir(parents=True)
-        plugins_dir = (world_dir / "plugins")
-        plugins_dir.mkdir(exist_ok=True)
-
-        # 3. Create the eula.txt file and automatically agree to it
-        try:
-            with open(world_dir / "eula.txt", "w") as f:
-                f.write("# By agreeing to the EULA you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA).\n")
-                f.write("eula=true\n")
-            print("Automatically agreed to Minecraft EULA.")
-        except IOError as e:
-            print(f"Error: Could not write eula.txt file. {e}")
-            return
-
-        # 4. Create the world_manifest.json file
-        manifest = {
-            "world_name": world_name,
-            "paper_version": mc_version,
-            "java_path": "java", # Assumes java is in the system's PATH
-            "server_jar_path": str(jar_path.relative_to(world_dir.parent)), # Store a path relative to the world_dir
-            "world_data_path": str((world_dir / "world").relative_to(world_dir)),
-            "plugins": [
-            ],
-            "server_properties": {
-                "gamemode": "creative",
-                "motd": f"MC-ED World: {world_name}",
-                "enable-rcon": "true",
-                "rcon.port": self.server_data.get('rcon_port', 25575),
-                "rcon.password": self.server_data.get('rcon_password', 'minecraft')
-            }
-        }
-
-        try:
-            with open(world_dir / "world_manifest.json", "w") as f:
-                json.dump(manifest, f, indent=4)
-            print(f"Created world manifest at: {world_dir / 'world_manifest.json'}")
-        except IOError as e:
-            print(f"Error: Could not write world_manifest.json file. {e}")
-            return
-
-        # 5. Always install FruitJuice
-        plugins_dir.joinpath(FJ_JAR_PATH.name).symlink_to(FJ_JAR_PATH)
-
-        # 6. Install the plugins listed in the manifest
-        plugin_urls = manifest.get("plugins", [])
-        if plugin_urls:
-            downloader.install_plugins(plugin_urls, plugins_dir)
-
-        print(f"\nWorld '{world_name}' created successfully.")
-        print(f"To start it, run: %pp_start_world {world_name}")
 
     def _complete_world_command(self, ipyshell, event):
         ipyshell.user_ns.update(dict(rcon_event=event))
@@ -169,11 +61,8 @@ class MCShell(Magics):
         parts = event.line.split()
         ipyshell.user_ns.update(dict(rcon_event=event))
 
-        # TODO: make constants!!! see %pp_create_world
-        #MC_WORLDS_BASE_DIR = pathlib.Path('~').expanduser().joinpath('mc-worlds')
-        #world_dir = MC_WORLDS_BASE_DIR.joinpath(world_name)
+        worlds_base_dir = MC_WORLDS_BASE_DIR
 
-        worlds_base_dir = Path.home() / "mc-worlds"
         if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
             print(f"Worlds directory not found at: {worlds_base_dir}")
             print("Create a world first with: %pp_create_world <world_name>")
@@ -188,15 +77,126 @@ class MCShell(Magics):
                     found_worlds.append(world_dir.name)
 
         arg_matches= []
-        if len(parts) == 1: # showing commands
-            # arg_matches = [c for c in self.commands.keys()]
+        if len(parts) == 1:
             arg_matches = [c for c in found_worlds]
             ipyshell.user_ns.update({'world_matches':arg_matches})
-        elif len(parts) == 2 and text != '':  # completing commands
+        elif len(parts) == 2 and text != '':
             arg_matches = [c for c in found_worlds if c.startswith(text)]
             ipyshell.user_ns.update({'world_matches':arg_matches})
 
         return arg_matches
+
+    @line_magic
+    def pp_create_world(self, line):
+        """
+        Creates a new, self-contained Paper server instance in its own directory.
+        Usage: % pp_create_world < world_name >
+        Example: %pp_create_world my_creative_world
+        """
+        args = line.split()
+        if not args:
+            print("Usage: %pp_create_world <world_name> [--version=<mc_version>]")
+            return
+
+        world_name = args[0]
+        mc_version = MC_VERSION
+
+        # Simple argument parsing for --version flag if we use it
+        # Usage: % pp_create_world < world_name > --version = < mc_version >
+        for arg in args[1:]:
+            if arg.startswith("--version="):
+                mc_version = arg.split('=', 1)[1]
+
+        # Define paths
+        world_dir = MC_WORLDS_BASE_DIR.joinpath(world_name)
+        server_jars_dir = MC_WORLDS_BASE_DIR.joinpath('server-jars')
+
+
+        if world_dir.exists():
+            print(f"Error: A world named '{world_name}' already exists at '{world_dir}'")
+            return
+
+        print(f"Creating new world '{world_name}' for Minecraft {mc_version}...")
+
+        # Create the world directory structure
+        world_dir.mkdir(parents=True)
+        plugins_dir = (world_dir / "plugins")
+        plugins_dir.mkdir(exist_ok=True)
+        server_jars_dir.mkdir(exist_ok=True)
+
+        # Prompt for a password
+        try:
+            password = getpass.getpass(prompt=f"Create a password for world '{world_name}': ")
+            if not password:
+                print("Password cannot be empty.")
+                return
+        except (EOFError, KeyboardInterrupt):
+            print("\nWorld creation cancelled.")
+            return
+
+        self.server_data = {"host": MC_SERVER_HOST, "port": MC_SERVER_PORT, "password": password, "fj_port":FJ_PLUGIN_PORT} # Port can be dynamic if needed
+        creds_path = world_dir / '.mc_creds.json'
+
+        with creds_path.open('w') as f:
+            json.dump(self.server_data, f)
+
+        # Set file permissions to be readable/writable by owner only
+        creds_path.chmod(0o600)
+
+        #  Download the Paper server JAR if needed
+        downloader = PaperDownloader(server_jars_dir)
+        jar_path = downloader.get_jar_path(mc_version)
+        if not jar_path:
+            return # Stop if download failed
+
+
+        # Create the eula.txt file and automatically agree to it
+        try:
+            with open(world_dir / "eula.txt", "w") as f:
+                f.write("# By agreeing to the EULA you are indicating your agreement to our EULA (https://aka.ms/MinecraftEULA).\n")
+                f.write("eula=true\n")
+            print("Automatically agreed to Minecraft EULA.")
+        except IOError as e:
+            print(f"Error: Could not write eula.txt file. {e}")
+            return
+
+        # Create the world_manifest.json file
+        manifest = {
+            "world_name": world_name,
+            "paper_version": mc_version,
+            "java_path": "java", # Assumes java is in the system's PATH
+            "server_jar_path": str(jar_path.relative_to(world_dir.parent)), # Store a path relative to the world_dir
+            "world_data_path": str((world_dir / "world").relative_to(world_dir)),
+            "plugins": [
+            ],
+            "server_properties": {
+                "gamemode": "creative",
+                "motd": f"MC-ED World: {world_name}",
+                "enable-rcon": "true",
+                "rcon.port": self.server_data.get('port', 25575),
+                "rcon.password": self.server_data.get('password', 'minecraft')
+            }
+        }
+
+        try:
+            with open(world_dir / "world_manifest.json", "w") as f:
+                json.dump(manifest, f, indent=4)
+            print(f"Created world manifest at: {world_dir / 'world_manifest.json'}")
+        except IOError as e:
+            print(f"Error: Could not write world_manifest.json file. {e}")
+            return
+
+        # Always install FruitJuice from bundled version
+        plugins_dir.joinpath(FJ_JAR_PATH.name).symlink_to(FJ_JAR_PATH)
+
+        # Install the plugins listed in the manifest
+        plugin_urls = manifest.get("plugins", [])
+        if plugin_urls:
+            downloader.install_plugins(plugin_urls, plugins_dir)
+
+        print(f"\nWorld '{world_name}' created successfully.")
+        print(f"To start it, run: %pp_start_world {world_name}")
+
 
     @line_magic
     def pp_start_world(self, line):
@@ -214,12 +214,13 @@ class MCShell(Magics):
         if self.active_paper_server and self.active_paper_server.is_alive():
             print(f"Stopping the currently active server for world '{self.active_paper_server.world_name}'...")
             # First, stop the mc-ed app server that's connected to it
-            stop_app_server() # Your existing function
+            # TODO: this is too slow!
+            # stop_app_server() # Your existing function
             # Then, stop the Paper server itself
             self.active_paper_server.stop()
 
         # Define the directory for the new world
-        world_directory = pathlib.Path.home() / "mc-worlds" / world_name
+        world_directory = MC_WORLDS_BASE_DIR / world_name
 
         # For now, we assume the directory exists.
         # The %pp_create magic would be responsible for actually creating it.
@@ -230,7 +231,7 @@ class MCShell(Magics):
 
         print(f"--- Starting new session for world: {world_name} ---")
 
-        # 1. Start the Paper server
+        # Start the Paper server
         self.active_paper_server = PaperServerManager(world_name, world_directory)
         self.active_paper_server.start()
 
@@ -238,10 +239,16 @@ class MCShell(Magics):
             print("Could not start Paper server. Aborting.")
             return
 
-        # 2. Start the mc-ed application server
+        creds_path = world_directory / '.mc_creds.json'
+
+        with creds_path.open('r') as f:
+            self.server_data = json.load(f)
+
+        # Start the mc-ed application server
         # This assumes your %mc_start_app logic is moved into a helper
         # that we can call here.
         # For now, we'll just print a message.
+
         print("Paper server is running. You should now start the app server.")
         print("Example: %mc_start_app")
 
@@ -250,23 +257,24 @@ class MCShell(Magics):
         """
         Stops the currently running Paper server and its associated mc-ed app server.
         """
-        # 1. Check if a server session is active
+        # Check if a server session is active
         if not self.active_paper_server or not self.active_paper_server.is_alive():
             print("No active Paper server session is currently running.")
             return
 
         print(f"--- Stopping session for world: {self.active_paper_server.world_name} ---")
 
-        # 2. Stop the mc-ed application server first
-        print("Stopping mc-ed application server...")
-        stop_app_server() # This is your existing function from mcserver.py
+        # Stop the mc-ed application server first
+        # TODO: this is too slow!
+        # print("Stopping mc-ed application server...")
+        # stop_app_server() # This is your existing function from mcserver.py
 
-        # 3. Stop the Paper server process
+        # Stop the Paper server process
         # The .stop() method in PaperServerManager handles the graceful shutdown
         print("Stopping Paper server (this may take a moment)...")
         self.active_paper_server.stop()
 
-        # 4. Clean up the state
+        # Clean up the state
         self.active_paper_server = None
         print("Session stopped successfully.")
 
@@ -276,7 +284,8 @@ class MCShell(Magics):
         Scans the user's worlds directory and lists all available worlds,
         their status, and Minecraft version.
         """
-        worlds_base_dir = Path.home() / "mc-worlds"
+        worlds_base_dir = MC_WORLDS_BASE_DIR
+
         if not worlds_base_dir.exists() or not worlds_base_dir.is_dir():
             print(f"Worlds directory not found at: {worlds_base_dir}")
             print("Create a world first with: %pp_create_world <world_name>")
@@ -346,21 +355,21 @@ class MCShell(Magics):
             print("Usage: %pp_delete_world <world_name>")
             return
 
-        # 1. Define the path to the world directory
-        world_dir = Path.home() / "mc-worlds" / world_name
+        # Define the path to the world directory
+        world_dir = MC_WORLDS_BASE_DIR / world_name
 
-        # 2. Safety Check: Does the world exist?
+        # Safety Check: Does the world exist?
         if not world_dir.exists() or not world_dir.is_dir():
             print(f"Error: No world named '{world_name}' found at '{world_dir}'.")
             return
 
-        # 3. Safety Check: Is this world currently running?
+        # Safety Check: Is this world currently running?
         if self.active_paper_server and self.active_paper_server.world_name == world_name and self.active_paper_server.is_alive():
             print(f"Error: Cannot delete the world '{world_name}' because it is currently running.")
             print("Please stop the server first with: %pp_stop_world")
             return
 
-        # 4. Final Confirmation: Get explicit confirmation from the user.
+        # Final Confirmation: Get explicit confirmation from the user.
         print("-----------------------------------------------------------------")
         print(f"WARNING: You are about to permanently delete the world '{world_name}'")
         print("and all of its contents. This action cannot be undone.")
@@ -377,17 +386,18 @@ class MCShell(Magics):
             print("Deletion cancelled.")
             return
 
-        # 5. Perform the Deletion
+        # Perform the Deletion
         try:
             print(f"Deleting world '{world_name}'...")
             shutil.rmtree(world_dir)
             print("World deleted successfully.")
         except Exception as e:
             print(f"An error occurred while deleting the world directory: {e}")
+
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
 
-        _rcon_client = self.get_client()
+        _rcon_client = self._get_client()
         try:
             if kind == 'run':
                 _response = _rcon_client.run(*args)
@@ -405,21 +415,17 @@ class MCShell(Magics):
             print("[red bold]The password is wrong. Use %mc_login reset[/]")
             raise e
 
-    def get_client(self):
-        if self.server_data is None:
-            self.mc_login()
+    def _get_client(self):
         return MCClient(**self.server_data)
 
-    def get_player(self,name):
-        if self.server_data is None:
-            self.mc_login()
+    def _get_player(self, name):
         return MCPlayer(name, **self.server_data)
 
-    def help(self,*args):
+    def _help(self, *args):
         return self._send('help', *args)
-    def run(self,*args):
+    def _run(self, *args):
         return self._send('run',*args)
-    def data(self,*args,**server_data):
+    def _data(self, *args, **server_data):
         return self._send('data',*args)
 
     @property
@@ -427,10 +433,7 @@ class MCShell(Magics):
         _rcon_commands = {}
         if not self.rcon_commands:
             try:
-                # TODO: see self.mc_help
-                # _help_text = self.run('minecraft:help')
-                # _help_text = self.run('help')
-                _help_text = self.help()
+                _help_text = self._help()
             except:
                 return _rcon_commands
 
@@ -440,8 +443,7 @@ class MCShell(Magics):
                 if 'minecraft:' in _cmd:
                     _cmd = _cmd.split(':')[1]
                 try:
-                    # _cmd_data = self.run(*['help',_cmd])
-                    _cmd_data = self.help(_cmd)
+                    _cmd_data = self._help(_cmd)
                 except:
                     return
                 if not _cmd_data:
@@ -465,25 +467,22 @@ class MCShell(Magics):
         %mc_login
         '''
 
-        server_data = {}
 
-        server_data['host'] = Prompt.ask('Server Address:',default=self.server_data['host'])
-        server_data['port'] = int(Prompt.ask('Server Port:',default=str(self.server_data['port'])))
-        server_data['server_type'] = Prompt.ask('Server Type:',default=self.server_data['server_type'])
-        server_data['password'] = Prompt.ask('Server Password:',password=True)
-
-        pickle.dump(server_data,MC_CREDS_PATH.open('wb'))
-
-        self.server_data = server_data
+        self.server_data.update({
+            'host': Prompt.ask('Server Address:', default=self.server_data['host']),
+            'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+            'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
+            'password': Prompt.ask('Server Password:', password=True)
+        })
 
         try:
-            self.get_client().help()
+            self._get_client().help()
         except Exception as e:
             print("[red bold]login failed[/]")
 
     @line_magic
     def mc_server_info(self,line):
-        _mcc = self.get_client()
+        _mcc = self._get_client()
         pprint(self.server_data)
 
     @line_magic
@@ -492,11 +491,6 @@ class MCShell(Magics):
         %mc_help [COMMAND]
         '''
 
-        # TODO:
-        # for paper
-        # _cmd = ['minecraft:help']
-        # for vanilla
-        # _cmd = ['help']
         _cmd = []
         _doc_line = ''
         _doc_url = ''
@@ -518,12 +512,10 @@ class MCShell(Magics):
             for _doc_code_line in _doc_code_lines:
                 print(_doc_code_line)
         else:
-            # try:
-                # _help_text = self.run(*_cmd)
-            _help_text = self.help(*_cmd)
-            # except:
-            #     print('hwat happend?')
-            #     return
+            _help_text = self._help(*_cmd)
+            if not _help_text:
+                print("No help available!")
+                return
             for _help_line in _help_text.split('/')[1:]:
                 _help_parts = _help_line.split()
                 _help_parts[0] = _help_parts[0].replace('-','_')
@@ -553,9 +545,9 @@ class MCShell(Magics):
 
         _arg_list = line.split(' ')
         _arg_list[0] = _arg_list[0].replace('_','-')
-        print(f"Send: {' '.join(_arg_list)}")
+        # print(f"Send: {' '.join(_arg_list)}")
         try:
-            response = self.run(*_arg_list)
+            response = self._run(*_arg_list)
             if response == '':
                 return
         except:
@@ -603,20 +595,16 @@ class MCShell(Magics):
         elif len(parts) == 2 and text_to_complete != '':  # completing commands
             arg_matches = [c for c in self.commands.keys() if c.startswith(text_to_complete)]
         elif len(parts) == 2 and text_to_complete == '':  # showing subcommands
-            # command = parts[1]
             sub_commands = list(self.commands[command].keys())
             arg_matches = [sub_command for sub_command in sub_commands]
         elif len(parts) == 3 and text_to_complete != '':  # completing subcommands
-            # command = parts[1]
             sub_commands = list(self.commands[command].keys())
             arg_matches = [sub_command for sub_command in sub_commands if sub_command.startswith(text_to_complete)]
         elif len(parts) == 3 and text_to_complete == '':  # showing arguments
-            # command = parts[1]
             sub_command = parts[2]
             sub_command_args = self.commands[command][sub_command]
             arg_matches = [sub_command_arg for sub_command_arg in sub_command_args]
         elif len(parts) > 3: # completing arguments
-            # command = parts[1]
             sub_command = parts[2]
             sub_command_args = self.commands[command][sub_command]
             current_arg_index = len(parts) - 3# Index of current argument
@@ -639,7 +627,6 @@ class MCShell(Magics):
         '''
 
         _arg_list = line.split(' ')
-        # supported data ops
         try:
             assert _arg_list[0] in ('get','modify','merge','remove')
         except AssertionError:
@@ -649,12 +636,7 @@ class MCShell(Magics):
         _uuid = str(uuid.uuid1())[:4]
         _var_name = f"data_{_arg_list[0]}_{_uuid}"
         print(f"requested data will be available as {_var_name} locally")
-        # async is broken due to truncated server output
-        # asyncio.run(self.rcon_client.data(_var_name,local_ns,*_arg_list))
-        #try:
-        _data = self.data(*_arg_list)
-        #except:
-        #    return
+        _data = self._data(*_arg_list)
         local_ns.update({_var_name:_data})
 
     @needs_local_scope
@@ -663,32 +645,18 @@ class MCShell(Magics):
         _uuid = str(uuid.uuid1())[:4]
         _var_name = f"mcc_{_uuid}"
         print(f"requested client will be available as {_var_name} locally")
-        local_ns[_var_name] = self.get_client()
+        local_ns[_var_name] = self._get_client()
 
     @needs_local_scope
     @line_magic
     def mc_player(self, line, local_ns):
-
         _line_parts = line.strip().split()
-        assert len(_line_parts) == 1
-        _player_name = _line_parts.pop()
+        if not len(_line_parts) == 1:
+            _player_name = self._get_mc_name()
+        else:
+            _player_name = _line_parts.pop()
         print(f"requested player will be available as the variable {_player_name} locally")
-        local_ns[_player_name] = MCPlayer(_player_name,**self.server_data).build()
-
-    # @needs_local_scope
-    # @line_magic
-    # def mc_create_script(self,line,local_ns):
-    #     _uuid = str(uuid.uuid1())[:4]
-    #     _var_name = f"power_{_uuid}"
-    #     _script_dir = pathlib.Path('.').absolute().joinpath('powers')
-    #     print(_script_dir)
-    #     if not _script_dir.exists():
-    #         print(f"Creating a directory {_script_dir} to hold powers for debugging")
-    #         _script_dir.mkdir(exist_ok=True)
-    #     _script_path = pathlib.Path('./powers').joinpath(f'{_var_name}.py')
-    #     print(f"Saving your new power as {_script_path}")
-    #     _script_path.write_text(line)
-    #     # local_ns.update({_var_name: line})
+        local_ns[_player_name] = self._get_player(_player_name)
 
     @line_magic
     def mc_create_script(self, line):
@@ -720,8 +688,6 @@ class MCShell(Magics):
         except Exception as e:
             print(f"Error saving script: {e}")
 
-# ... inside your MCShell class ...
-
     @line_magic
     def mc_debug_and_define(self, line):
         """
@@ -752,8 +718,6 @@ class MCShell(Magics):
             except Exception as e:
                 print(f"Error saving script: {e}")
 
-            # ... (check if payload is valid) ...
-
             player_name = self._get_mc_name()
             server_data = self.server_data
 
@@ -770,11 +734,9 @@ class MCShell(Magics):
             RUNNING_POWERS[execution_id] = {'thread': thread, 'cancel_event': cancel_event}
 
             # --- Save Metadata (This part remains synchronous) ---
-            # power_repo = app.config.get('POWER_REPO')
             power_repo = JsonFileRepository(player_name)
 
             if power_repo:
-                # You would likely call power_repo.save_power(metadata) here
                 print(f"--- Power '{metadata.get('function_name')}' metadata defined/updated. ---")
                 print(f"--- Started debug execution with ID: {execution_id} ---")
                 print("--- To stop it, run: %mc_cancel_power " + execution_id + " ---")
@@ -783,10 +745,8 @@ class MCShell(Magics):
             print(f"An unexpected error occurred: {e}")
 
     def _complete_mc_cancel_power(self, ipyshell, event):
-        ipyshell.user_ns.update(dict(rcon_event=event))
         text = event.symbol
         parts = event.line.split()
-        ipyshell.user_ns.update(dict(rcon_event=event))
 
         arg_matches= []
         if len(parts) == 1: # showing commands
@@ -826,9 +786,6 @@ class MCShell(Magics):
             stop_debug_server()
 
     def _get_mc_name(self):
-        # Define the central, system-wide configuration file path
-        CENTRAL_CONFIG_FILE = pathlib.Path("/etc/mc-shell/user_map.json")
-
         try:
             linux_user = os.getlogin()
         except OSError:
@@ -837,11 +794,11 @@ class MCShell(Magics):
         if not linux_user:
             return "Fatal Error: Could not determine Linux username."
 
-        if not CENTRAL_CONFIG_FILE.exists():
-            return f"Fatal Error: Server configuration file not found at {CENTRAL_CONFIG_FILE}. Please contact your administrator."
+        if not MC_CENTRAL_CONFIG_FILE.exists():
+            return f"Fatal Error: Server configuration file not found at {MC_CENTRAL_CONFIG_FILE}. Please contact your administrator."
 
         try:
-            with open(CENTRAL_CONFIG_FILE, 'r') as f:
+            with open(MC_CENTRAL_CONFIG_FILE, 'r') as f:
                 user_map = json.load(f)
         except (IOError, json.JSONDecodeError) as e:
             raise f"Fatal Error: Could not read or parse server configuration file: {e}"
@@ -854,16 +811,28 @@ class MCShell(Magics):
 
         return minecraft_name
 
-    # @line_magic
-    # def mc_start_app(self, line):
-    #     """Starts the app mcserver in a separate thread."""
-    #     start_app_server(self.server_data)
     @line_magic
     def mc_start_app(self, line):
         """
         Starts the mc-ed application server, getting the authorized Minecraft user
         name from the central configuration file.
         """
+        # if we started a world, self.server_data should be set
+        if not self.active_paper_server:
+            self.server_data = {
+                'host': Prompt.ask('Server Address:', default=self.server_data['host']),
+                'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
+                'port':MC_SERVER_PORT,
+                'password':None,
+            }
+
+            login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'])
+            if login_to_server.lower() == 'yes':
+                self.server_data.update({
+                    'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+                    'password': Prompt.ask('Server Password:', password=True)
+                })
+
         minecraft_name = self._get_mc_name()
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
         start_app_server(self.server_data,minecraft_name,self.shell)
@@ -886,8 +855,55 @@ class MCShell(Magics):
         else:
             print("The debugging server is not running")
 
-print("The editor application is running")
+    @line_magic
+    def mc_invite_player(self, line):
+        """
+        Sends your current server connection details to another player.
+        Usage: %mc_invite_player <recipient_app_url>
+        Example: %mc_invite_player http://192.168.1.102:5000
+        """
+        args = line.split()
+        if len(args) != 1:
+            print("Usage: %mc_invite_player <recipient_app_url>")
+            return
 
+        recipient_url = args[0]
+        sender_name = self._get_mc_name()
+
+        # Ensure the user has an active server session
+        if not self.active_paper_server or not self.active_paper_server.is_alive():
+            print("Error: You must have an active world running to send an invitation.")
+            return
+        invitation_data = {
+            "sender_name": sender_name,
+            "world_name": self.active_paper_server.world_name,
+            "host": self.server_data.get('host'),
+            "fj_port": self.server_data.get('fj_port'),
+            "port":None,
+            "password":None
+        }
+
+        invite_as_server_op = Prompt.ask('Do you want to make the player a server op?',choices=['yes','no'],default='no')
+        if invite_as_server_op.lower() == 'yes':
+            # Construct the payload with your connection details
+            invitation_data.update({
+                "port": self.server_data.get('port'),
+                "password": self.server_data.get('password')
+            })
+
+        # The endpoint on the recipient's server we will send to
+        invite_endpoint = f"{recipient_url.rstrip('/')}/api/receive_invite"
+
+        print(f"Sending invitation to {recipient_url}...")
+        try:
+            response = requests.post(invite_endpoint, json=invitation_data, timeout=10)
+            if response.ok:
+                print("Invitation sent successfully!")
+            else:
+                print(f"Failed to send invitation. Server responded with: {response.status_code}")
+                print(f"Message: {response.text}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error: Could not connect to the other player's application server. {e}")
 
 def load_ipython_extension(ip):
     ip.register_magics(MCShell)

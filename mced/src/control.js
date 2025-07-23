@@ -6,7 +6,8 @@ import htmx from 'htmx.org'
 import { io } from "socket.io-client"; // <-- Import the io function
 
 // --- 1. Establish the connection to your Flask-SocketIO server ---
-const socket = io("http://localhost:5001"); // Use the address of your Python server
+// const socket = io("http://localhost:5001"); // Use the address of your Python server
+const socket = io(); // Use the address of your Python server
 
 socket.on('connect', () => {
     console.log('Control UI connected to backend server with Socket.IO:', socket.id);
