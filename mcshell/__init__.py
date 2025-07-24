@@ -1,3 +1,4 @@
+import socket
 from threading import Thread,Event
 
 import IPython
@@ -8,7 +9,7 @@ from rich.prompt import Prompt
 
 from mcshell.mcrepo import JsonFileRepository
 from mcshell.mcclient import MCClient
-from mcshell.mcdebugger import start_debug_server,stop_debug_server,debug_server_thread
+from mcshell.mcdebugger import debug_server_thread
 from mcshell.mcserver import start_app_server,app_server_thread
 from mcshell.mcactions import *
 from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
@@ -878,6 +879,7 @@ class MCShell(Magics):
 
         recipient_url = args[0]
         sender_name = self._get_mc_name()
+        host_name = socket.gethostname()
 
         # Ensure the user has an active server session
         if not self.active_paper_server or not self.active_paper_server.is_alive():
@@ -886,7 +888,7 @@ class MCShell(Magics):
         invitation_data = {
             "sender_name": sender_name,
             "world_name": self.active_paper_server.world_name,
-            "host": self.server_data.get('host'),
+            "host": f"{host_name}.local",
             "fj_port": self.server_data.get('fj_port'),
             "port":None,
             "password":None
