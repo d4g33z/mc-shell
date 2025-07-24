@@ -249,8 +249,9 @@ class MCShell(Magics):
         # that we can call here.
         # For now, we'll just print a message.
 
-        print("Paper server is running. You should now start the app server.")
-        print("Example: %mc_start_app")
+        # print("Paper server is running. You should now start the app server.")
+        # print("Example: %mc_start_app")
+        self.ip.run_line_magic('mc_start_app','')
 
     @line_magic
     def pp_stop_world(self, line):
@@ -265,9 +266,8 @@ class MCShell(Magics):
         print(f"--- Stopping session for world: {self.active_paper_server.world_name} ---")
 
         # Stop the mc-ed application server first
-        # TODO: this is too slow!
-        # print("Stopping mc-ed application server...")
-        # stop_app_server() # This is your existing function from mcserver.py
+        print("Stopping application server...")
+        stop_app_server() # This is your existing function from mcserver.py
 
         # Stop the Paper server process
         # The .stop() method in PaperServerManager handles the graceful shutdown
@@ -410,10 +410,8 @@ class MCShell(Magics):
         except ConnectionRefusedError as e:
             print("[red bold]Unable to send command. Is the server running?[/]")
             pprint(self.server_data)
-            raise e
         except (WrongPassword, IncorrectPasswordError) as e:
             print("[red bold]The password is wrong. Use %mc_login reset[/]")
-            raise e
 
     def _get_client(self):
         return MCClient(**self.server_data)
@@ -775,15 +773,15 @@ class MCShell(Magics):
         else:
             print(f"Error: No running power found with ID: {execution_id}")
 
-        @line_magic
-        def mc_start_debug(self, line):
-            """Starts the debug mcserver in a separate thread."""
-            start_debug_server()
-
-        @line_magic
-        def mc_stop_debug(self, line):
-            """Stops the debug mcserver thread."""
-            stop_debug_server()
+        # @line_magic
+        # def mc_start_debug(self, line):
+        #     """Starts the debug mcserver in a separate thread."""
+        #     start_debug_server()
+        #
+        # @line_magic
+        # def mc_stop_debug(self, line):
+        #     """Stops the debug mcserver thread."""
+        #     stop_debug_server()
 
     def _get_mc_name(self):
         try:
@@ -826,7 +824,7 @@ class MCShell(Magics):
                 'password':None,
             }
 
-            login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'])
+            login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'],default='no')
             if login_to_server.lower() == 'yes':
                 self.server_data.update({
                     'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
