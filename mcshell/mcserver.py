@@ -1,3 +1,4 @@
+
 import logging
 import textwrap
 import threading
@@ -41,7 +42,7 @@ flask_logger.setLevel(logging.DEBUG) # Set Werkzeug logger level to ERROR or WAR
 # flask_logger.handlers = [] # Remove all handlers, including console
 
 socketio = SocketIO(
-    app, cors_allowed_origins="*", async_handlers=True, async_mode='gevent',engineio_logger=flask_logger,logger=flask_logger)
+    app, cors_allowed_origins="*", async_handlers=True, async_mode='eventlet',engineio_logger=flask_logger,logger=flask_logger)
 
 # --- State Management for Running Powers ---
 # This dictionary will hold the state of each running power
@@ -106,18 +107,7 @@ def stop_app_server():
         print("The server might already be down or unresponsive.")
         return
 
-    print("Connected. Emitting shutdown_request event.")
     sio.emit('shutdown_request')
-    app_server_thread.join()
-    sio.disconnect()
-    print("Disconnected.")
-
-
-    if app_server_thread.is_alive():
-        print("Warning: Server thread did not shut down cleanly.")
-    else:
-        app_server_thread = None
-        print("Application server thread has shut down successfully.")
 
 
 
@@ -129,9 +119,8 @@ def handle_shutdown_request():
     This is the clean way to stop the socketio.run() loop.
     """
     print("Shutdown request received via Socket.IO. Stopping server.")
-    print("Please wait...")
-    # with app.app_context():
-    socketio.stop() # This gracefully exits the socketio.run() loop.
+    with app.app_context():
+        socketio.stop() # This gracefully exits the socketio.run() loop.
 
 
 
@@ -326,9 +315,6 @@ def cancel_power():
     data = request.get_json() if request.is_json else request.form.to_dict()
     execution_id = data.get('execution_id')
 
-    # --- THIS IS THE FIX ---
-    # We need to find the original power_id to rebuild the 'Execute' button.
-    # This requires a small change to how we store running powers.
     power_id = None
     if execution_id and execution_id in RUNNING_POWERS:
         power_to_cancel = RUNNING_POWERS[execution_id]
@@ -338,23 +324,6 @@ def cancel_power():
         return jsonify({"status": "cancellation_requested"})
     if not power_id:
         return jsonify({"error": "Invalid or unknown execution_id"}), 404
-        # return "<div class='power-status has-error'>Error: Could not find power to cancel.</div>"
-    #
-    # # Rebuild the original "Execute" button state as an HTML fragment.
-    # idle_state_html = f"""
-    # <div class="widget-main-actions" id="actions-{power_id}">
-    #     <div class="power-status">Status: Cancelled</div>
-    #     <button class="execute-btn"
-    #             hx-post="/api/execute_power"
-    #             hx-include="#form-{power_id}"
-    #             hx-vals='{{"power_id": "{power_id}"}}'
-    #             hx-target="#actions-{power_id}"
-    #             hx-swap="outerHTML">
-    #         Execute
-    #     </button>
-    # </div>
-    # """
-    # return idle_state_html
 
 @app.route('/api/block_materials')
 def get_block_materials():
@@ -384,9 +353,6 @@ def receive_invite():
         port = data.get('port')
         password = data.get('password')
         fj_port = data.get('fj_port')
-
-        # if not host or not port:
-        #     return jsonify({"error": "Invitation was missing host or port."}), 400
 
         # --- Print the formatted invitation to the user's console ---
         print("\n\n--- You have received a Minecraft world invitation! ---")
