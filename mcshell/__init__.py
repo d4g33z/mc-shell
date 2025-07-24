@@ -916,6 +916,24 @@ class MCShell(Magics):
         except requests.exceptions.RequestException as e:
             print(f"Error: Could not connect to the other player's application server. {e}")
 
-def load_ipython_extension(ip):
-    ip.register_magics(MCShell)
+import atexit # <-- Import the standard library module
 
+def load_ipython_extension(ip):
+    """
+    Called by IPython when the extension is loaded.
+    This is where we register the magics and the shutdown hook.
+    """
+    # Register the main magic class
+    mcshell_instance = MCShell(ip)
+    ip.register_magics(mcshell_instance)
+
+    # Define the cleanup function that will be called on exit.
+    def shutdown_hook():
+        print("\nIPython is shutting down. Stopping active mc-shell session...")
+        # We can access the magic instance to call its methods.
+        if mcshell_instance.active_paper_server and mcshell_instance.active_paper_server.is_alive():
+            mcshell_instance.pp_stop_world('') # Pass an empty line argument
+        print("Cleanup complete.")
+
+    # Register the shutdown_hook to run when the Python interpreter exits.
+    atexit.register(shutdown_hook)

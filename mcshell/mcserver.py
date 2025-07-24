@@ -94,6 +94,7 @@ def stop_app_server():
     global app_server_thread
     if not app_server_thread or not app_server_thread.is_alive():
         print("There is no application server running.")
+        app_server_thread = None
         return
 
     # Import the client library only when needed
@@ -108,7 +109,7 @@ def stop_app_server():
         return
 
     sio.emit('shutdown_request')
-
+    app_server_thread = None
 
 
 # --- Socket.io Shutdown Handler ---
