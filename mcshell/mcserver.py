@@ -93,7 +93,7 @@ def stop_app_server():
     """Gracefully stops the Flask-SocketIO application server by emitting a socket.io event."""
     global app_server_thread
     if not app_server_thread or not app_server_thread.is_alive():
-        print("Application server is not running.")
+        print("There is no application server running.")
         return
 
     # Import the client library only when needed

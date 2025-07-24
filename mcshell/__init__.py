@@ -394,6 +394,15 @@ class MCShell(Magics):
         except Exception as e:
             print(f"An error occurred while deleting the world directory: {e}")
 
+    @line_magic
+    def pp_join_world(self,line):
+        """Join an existing world using and start an app server"""
+        # Safety Check: Is this world currently running?
+        if self.active_paper_server and self.active_paper_server.is_alive():
+            print("Please stop the currently running world first with: %pp_stop_world")
+            return
+        self.ip.run_line_magic('mc_start_app','')
+
     def _send(self,kind,*args):
         assert kind in ('help','run','data')
 
@@ -832,6 +841,8 @@ class MCShell(Magics):
                 })
 
         minecraft_name = self._get_mc_name()
+        print("Stopping any running application servers.")
+        stop_app_server()
         print(f"Starting application server for authorized Minecraft player: {minecraft_name}")
         start_app_server(self.server_data,minecraft_name,self.shell)
         return
