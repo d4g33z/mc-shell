@@ -6,9 +6,9 @@ name: CI Build and Test
 # Runs on pushes and pull requests to the main and develop branches.
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "devel" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "devel" ]
 
 # --- Jobs ---
 jobs:
