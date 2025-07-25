@@ -61,7 +61,7 @@ def test_data_size(player_name,**server_data):
 class TestMCPLayer(unittest.TestCase):
     def setUp(self):
         """Setup method to create MCPlayer and MCActionBase instances for each test."""
-        self.mcp = MCPlayer(TEST_PLAYER_NAME, MC_SERVER_HOST, MC_SERVER_PORT, FJ_PLUGIN_PORT)
+        self.mcp = MCPlayer(TEST_PLAYER_NAME, MC_SERVER_HOST, MC_RCON_PORT, FJ_PLUGIN_PORT)
         # You can add more common mappings to self.mca.block_id_map here if needed for extensive testing,
         # or ensure _initialize_block_id_maps is comprehensive enough.
 
