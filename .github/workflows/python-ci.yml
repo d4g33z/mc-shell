@@ -36,6 +36,7 @@ jobs:
         with:
           node-version: '20' # Use a Long-Term Support (LTS) version of Node.js
           cache: 'npm' # This will cache your npm dependencies
+          cache-dependency-path: mced/package-lock.json
 
       # Step 4: Install Poetry
       - name: Install Poetry
@@ -64,12 +65,14 @@ jobs:
       # --- NEW: Step 8: Install Node.js dependencies ---
       # This reads package-lock.json and installs packages like Parcel, htmx, etc.
       - name: Install npm dependencies
+        working-directory: ./mced
         run: npm ci
 
       # --- NEW: Step 9: Build Frontend Assets ---
       # This runs your "build" script from package.json, which generates blocks,
       # the toolbox, and bundles the final app into mcshell/data/app/.
       - name: Build frontend application
+        working-directory: ./mced
         run: npm run build
 
       # Step 10: Run the unit tests
