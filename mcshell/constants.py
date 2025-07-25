@@ -6,6 +6,7 @@ from aiomcrcon.errors import IncorrectPasswordError
 
 import os
 import re
+import yaml
 import json
 import copy
 import math
@@ -47,14 +48,17 @@ except ImportError:  # Graceful fallback if IceCream isn't installed.
 MC_VERSION = '1.21.4' # this must match the client version
 
 MC_SERVER_HOST = 'localhost'
-MC_SERVER_PORT = 25575
+MC_RCON_PORT = 25575
+MC_SERVER_PORT = 25565
 FJ_PLUGIN_PORT = 4711
+
 
 MC_SERVER_DATA = {
     'host':MC_SERVER_HOST,
     'port':MC_SERVER_PORT,
-    'password': None,
+    'rcon_port':MC_RCON_PORT,
     'fj_port': FJ_PLUGIN_PORT,
+    'password': None,
 }
 
 MC_DATA_DIR = pathlib.Path(__file__).parent.joinpath('data')

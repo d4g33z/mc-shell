@@ -1,11 +1,9 @@
 import subprocess
 import pexpect
 import threading
-import time
 from pathlib import Path
-import sys # Needed for logging
-from typing import Optional
-import json
+
+from mcshell.constants import *
 
 class PaperServerManager:
     """Manages the lifecycle of a single Paper server subprocess using pexpect."""
@@ -54,7 +52,7 @@ class PaperServerManager:
     def apply_manifest_settings(self):
         """
         Reads the world_manifest.json and applies its settings to the
-        server.properties file.
+        server.properties file and to plugins/FruitJuice/config.yml
         """
         # First, ensure config files exist by running the init command.
         if not self._run_initialization():
@@ -79,8 +77,8 @@ class PaperServerManager:
 
             # 3. Update the properties with values from the manifest
             for key, value in settings_to_apply.items():
-                if 'password' in key: continue
-                print(f"  Setting '{key}' = '{value}'")
+                if 'password' not in key:
+                    print(f"  Setting '{key}' = '{value}'")
                 properties[key] = str(value)
 
             # 4. Write the updated properties back to the file
@@ -91,6 +89,19 @@ class PaperServerManager:
                     f.write(f"{key}={value}\n")
 
             print("--- server.properties updated successfully. ---")
+            #
+            print("--- Applying settings from world_manifest.json to FruitJuice/config.yml ---")
+
+            fj_config_path = self.world_directory / "plugins" / "FruitJuice" / "config.yml"
+            fj_config_path.parent.mkdir(parents=True,exist_ok=True)
+
+
+            fj_data = self.world_manifest['FruitJuice']
+
+            with fj_config_path.open('w') as file:
+                yaml.dump(fj_data, file, sort_keys=False)
+
+            print("--- config.yml updated successfully. ---")
 
         except FileNotFoundError:
             print(f"Error: Could not find manifest or server.properties file.")

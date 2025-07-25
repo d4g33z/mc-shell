@@ -9,10 +9,11 @@ class MCClientException(Exception):
     pass
 
 class MCClient:
-    def __init__(self, host=MC_SERVER_HOST, port=MC_SERVER_PORT, password='', fj_port=FJ_PLUGIN_PORT):
+    def __init__(self, host=MC_SERVER_HOST, port=MC_SERVER_PORT,rcon_port=MC_RCON_PORT, fj_port=FJ_PLUGIN_PORT, password='' ):
 
         self.host = host
         self.port = port
+        self.rcon_port = rcon_port
         self.password = password
         self.fruit_juice_port  = fj_port
 
@@ -30,7 +31,7 @@ class MCClient:
         if not args:
             raise MCClientException("Arguments required!")
 
-        with Client(self.host,self.port,passwd=self.password) as client:
+        with Client(self.host, self.rcon_port, passwd=self.password) as client:
             _response = client.run(*args)
 
         return _response
@@ -76,7 +77,7 @@ class MCClient:
         if not self.password:
             print('A password is required!')
             return
-        async with AioClient(host=self.host,port=self.port,password=self.password) as client:
+        async with AioClient(host=self.host, port=self.rcon_port, password=self.password) as client:
             _response = await client.send_cmd(' '.join(['data',operation,*args]))
         if isinstance(_response,tuple):
             _response = _response[0]
