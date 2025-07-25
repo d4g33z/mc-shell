@@ -1,10 +1,10 @@
-# MC-Shell: A Minecraft Power Development Environment
+# MC-Shell: A Minecraft Power Development Environment 
 
 Welcome to `mc-shell`! This project provides an interactive environment for creating, debugging, and using "powers" in Minecraft. It combines a powerful command-line shell with a visual block-based editor and a touch-friendly control panel.
 
 This guide will walk you through installing the software, managing your own Minecraft worlds, and using the tools to bring your creations to life.
 
-## :horse_racing: Quick Start
+## Quick Start
 
 This guide will get you running in just a few minutes. Each step is linked to a more detailed section below.
 
@@ -16,7 +16,7 @@ This guide will get you running in just a few minutes. Each step is linked to a 
     ```
 2.  **[Enter the Shell](#entering-the-shell)**:
     ```bash
-    poetry run python run_mcshell.py
+    poetry run mcshell start
     ```
 3.  **[Create Your First World](#creating-and-listing-worlds)**:
     ```bash
@@ -27,7 +27,7 @@ This guide will get you running in just a few minutes. Each step is linked to a 
     %pp_start_world my_first_world
     ```
 5.  **[Use the Editor](#using-the-editor)**: Open a browser and go to `http://localhost:5001`.
-6.  **[Exit Cleanly](#exiting-the-shell)**: Type `exit()` in the shell to stop your world and the application server.
+6.  **[Exit Cleanly](#exiting-the-shell)**: Type `exit` or hit `Ctrl-D` in the shell to stop your world and the application server.
 
 ---
 
@@ -53,7 +53,7 @@ poetry install
 To run the application, use the following command from the `mc-shell` directory:
 
 ```bash
-poetry run python run_mcshell.py
+poetry run mcshell start
 ```
 
 To update the software to the latest version in the future, you can use `git` to pull the latest changes and then have Poetry sync your dependencies:
@@ -63,22 +63,22 @@ git pull
 poetry install
 ```
 
+If Poetry complains about the lock file, do what it says and remove it. Then run `poetry install` again 
 ### Entering the Shell
 
 Running the application will drop you into `mc-shell`, an enhanced IPython terminal. From here, you can manage your Minecraft worlds and the `mc-ed` application using special "magic commands" that start with a `%` symbol.
 
 -----
 
-##  Managing Your Worlds (The "Multi-verse")
+##  Managing Your Worlds (The "Atomic Multi-verse")
 
 This section covers all the `%pp_` commands for managing your personal Paper server instances.
 
 ### Creating and Listing Worlds
 
-To create a new, self-contained world, use the `%pp_create_world` command. This will create a new folder in your home directory (`~/mc-worlds`), download the appropriate Paper server, and set up all the necessary configuration files.
-
+To create a new, self-contained world, use the `%pp_create_world` command. This will create a new folder in your home directory (`~/mc-worlds`), download the appropriate Paper server, and set up all the necessary configuration files. The current default version (which the client must match) is `1.21.4`.
 ```ipython
-%pp_create_world my_creative_build --version=1.20.4
+%pp_create_world my_creative_build --version=1.21.4
 ```
 
 To see a list of all the worlds you have created, use the `%pp_list_worlds` command.
@@ -138,3 +138,4 @@ The interface has two modes:
 
   * **Run Mode:** The main grid displays your power "widgets." If a power has parameters, the widget will have interactive controls like sliders or pickers. Simply set the parameters and click "Execute."
   * **Edit Mode:** Click "Edit Layout" to customize your grid. You can open a library of all your saved powers, add them as new widgets to your grid, and drag-and-drop them to arrange your layout.
+:canada:
