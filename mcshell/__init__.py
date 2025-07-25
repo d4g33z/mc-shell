@@ -91,7 +91,7 @@ class MCShell(Magics):
     def pp_create_world(self, line):
         """
         Creates a new, self-contained Paper server instance in its own directory.
-        Usage: % pp_create_world < world_name >
+        Usage: % pp_create_world < world_name > --version=<mc_version>
         Example: %pp_create_world my_creative_world
         """
         args = line.split()
@@ -100,7 +100,7 @@ class MCShell(Magics):
             return
 
         world_name = args[0]
-        mc_version = MC_VERSION
+        mc_version = MC_VERSION # default
 
         # Simple argument parsing for --version flag if we use it
         # Usage: % pp_create_world < world_name > --version = < mc_version >
@@ -135,7 +135,15 @@ class MCShell(Magics):
             print("\nWorld creation cancelled.")
             return
 
-        self.server_data = {"host": MC_SERVER_HOST, "port": MC_SERVER_PORT, "password": password, "fj_port":FJ_PLUGIN_PORT} # Port can be dynamic if needed
+
+        self.server_data = {"host": '127.0.0.1','port':MC_SERVER_PORT, "rcon_port": MC_RCON_PORT, "password": password, "fj_port":FJ_PLUGIN_PORT} # Port can be dynamic if needed
+        print("Input the ports for the server, rcon and plugin. These only need to be changed if you are running more than one mc-shell!")
+        self.server_data.update({
+            'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+            'rcon_port': int(Prompt.ask('RCon Port:', default=str(self.server_data['rcon_port']))),
+            'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
+        })
+
         creds_path = world_dir / '.mc_creds.json'
 
         with creds_path.open('w') as f:
@@ -174,8 +182,15 @@ class MCShell(Magics):
                 "gamemode": "creative",
                 "motd": f"MC-ED World: {world_name}",
                 "enable-rcon": "true",
-                "rcon.port": self.server_data.get('port', 25575),
+                "server-port": self.server_data.get('port', MC_SERVER_PORT),
+                "rcon.port": self.server_data.get('rcon_port', MC_RCON_PORT),
                 "rcon.password": self.server_data.get('password', 'minecraft')
+            },
+            "FruitJuice" : {
+                "hostname": "0.0.0.0",
+                "port": self.server_data.get('fj_port',FJ_PLUGIN_PORT),
+                "location": "ABSOLUTE",
+                "hitclick": "LEFT",
             }
         }
 
@@ -433,7 +448,7 @@ class MCShell(Magics):
         return self._send('help', *args)
     def _run(self, *args):
         return self._send('run',*args)
-    def _data(self, *args, **server_data):
+    def _data(self, *args):
         return self._send('data',*args)
 
     @property
@@ -478,7 +493,7 @@ class MCShell(Magics):
 
         self.server_data.update({
             'host': Prompt.ask('Server Address:', default=self.server_data['host']),
-            'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+            'rcon_port': int(Prompt.ask('Server Port:', default=str(self.server_data['rcon_port']))),
             'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
             'password': Prompt.ask('Server Password:', password=True)
         })
@@ -830,14 +845,14 @@ class MCShell(Magics):
             self.server_data = {
                 'host': Prompt.ask('Server Address:', default=self.server_data['host']),
                 'fj_port': int(Prompt.ask('Plugin Port:', default=str(self.server_data['fj_port']))),
-                'port':MC_SERVER_PORT,
+                'rcon_port':MC_RCON_PORT,
                 'password':None,
             }
 
             login_to_server = Prompt.ask('Do you want to be a server op?',choices=['yes','no'],default='no')
             if login_to_server.lower() == 'yes':
                 self.server_data.update({
-                    'port': int(Prompt.ask('Server Port:', default=str(self.server_data['port']))),
+                    'rcon_port': int(Prompt.ask('Server Port:', default=str(self.server_data['rcon_port']))),
                     'password': Prompt.ask('Server Password:', password=True)
                 })
 
@@ -890,7 +905,7 @@ class MCShell(Magics):
             "world_name": self.active_paper_server.world_name,
             "host": f"{host_name}.local",
             "fj_port": self.server_data.get('fj_port'),
-            "port":None,
+            "rcon_port":None,
             "password":None
         }
 
@@ -898,7 +913,7 @@ class MCShell(Magics):
         if invite_as_server_op.lower() == 'yes':
             # Construct the payload with your connection details
             invitation_data.update({
-                "port": self.server_data.get('port'),
+                "rcon_port": self.server_data.get('rcon_port'),
                 "password": self.server_data.get('password')
             })
 
