@@ -280,7 +280,7 @@ def build_app():
     os.system(f"cp {MC_DATA_DIR.joinpath('entities/blocks/entities.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
     os.system(f"cp {MC_DATA_DIR.joinpath('entities/python/entities.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
 
-    os.system(f"cd {MC_APP_SRC_DIR}; npm install")
-    os.system(f"cd {MC_APP_SRC_DIR}; npm run build")
+    # os.system(f"cd {MC_APP_SRC_DIR}; npm install")
+    # os.system(f"cd {MC_APP_SRC_DIR}; npm run build")
 
 
