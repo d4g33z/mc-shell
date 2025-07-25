@@ -1,11 +1,9 @@
 # .github/workflows/python-ci.yml
 
-# Name of the workflow as it will appear in the "Actions" tab on GitHub.
-name: Python CI
+name: CI Build and Test
 
 # --- Triggers ---
-# This workflow will run on any push to the 'main' or 'develop' branches.
-# It will also run on any pull request targeting these branches.
+# Runs on pushes and pull requests to the main and develop branches.
 on:
   push:
     branches: [ "main", "develop" ]
@@ -13,60 +11,68 @@ on:
     branches: [ "main", "develop" ]
 
 # --- Jobs ---
-# A workflow is made up of one or more jobs that run in parallel or sequentially.
 jobs:
-  # Define a job with the ID 'build-and-test'.
   build-and-test:
-    # Specify the runner environment. 'ubuntu-latest' is a reliable, fast choice.
     runs-on: ubuntu-latest
-    
-    # Define the matrix of Python versions to test against.
-    # This example tests against 3.9 and 3.10. You can add or remove versions.
     strategy:
       matrix:
-        python-version: ["3.9", "3.10","3.11"]
+        python-version: ["3.9", "3.10", "3.11"]
 
-    # --- Steps ---
-    # A job is made up of a sequence of steps.
     steps:
-      # Step 1: Check out the repository's code.
+      # Step 1: Check out the repository's code
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up the specific Python version for this job run.
+      # Step 2: Set up the specific Python version
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Step 3: Install Poetry.
+      # --- NEW: Step 3: Set up Node.js ---
+      # This step is required to run npm commands.
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Use a Long-Term Support (LTS) version of Node.js
+          cache: 'npm' # This will cache your npm dependencies
+
+      # Step 4: Install Poetry
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
-      # Step 4: Cache dependencies to speed up future runs.
-      # It creates a cache key based on the poetry.lock file. If the lock file
-      # hasn't changed, it restores the dependencies from the cache.
-      - name: Load cached venv
+      # Step 5: Cache Python dependencies
+      - name: Load cached Python venv
         id: cached-poetry-dependencies
         uses: actions/cache@v4
         with:
           path: .venv
           key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
-      # Step 5: Install dependencies if the cache wasn't found.
-      - name: Install dependencies
+      # Step 6: Install Python dependencies if cache wasn't found
+      - name: Install Python dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
 
-      # Step 6: Install the project itself (mc-shell) into the venv.
+      # Step 7: Install the project itself (mc-shell)
       - name: Install project
         run: poetry install --no-interaction
 
-      # Step 7: Run the unit tests.
-      # This is the command you requested. 'poetry run' executes the command
-      # inside the virtual environment that Poetry manages.
+      # --- NEW: Step 8: Install Node.js dependencies ---
+      # This reads package-lock.json and installs packages like Parcel, htmx, etc.
+      - name: Install npm dependencies
+        run: npm ci
+
+      # --- NEW: Step 9: Build Frontend Assets ---
+      # This runs your "build" script from package.json, which generates blocks,
+      # the toolbox, and bundles the final app into mcshell/data/app/.
+      - name: Build frontend application
+        run: npm run build
+
+      # Step 10: Run the unit tests
+      # This now runs AFTER the frontend has been built.
       - name: Run tests
         run: poetry run python -m unittest discover
