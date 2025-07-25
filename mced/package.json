@@ -4,9 +4,10 @@
   "description": "Minecraft Blockly Editor",
   "source": "src/index.html",
   "scripts": {
-    "start": "parcel",
+    "start": "parcel src/index.html",
     "start:control": "parcel src/control.html",
-    "build": "parcel build src/index.html src/control.html"
+    "build:blocks": "poetry run mcshell build",
+    "build": "npm run build:blocks && parcel build --dist-dir ../mcshell/data/app src/index.html src/control.html "
   },
   "dependencies": {
     "alpinejs": "^3.14.9",

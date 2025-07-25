@@ -28,11 +28,7 @@ class MCShell(Magics):
     def __init__(self,shell):
         super(MCShell,self).__init__(shell)
 
-        # regenerate assets and web code
-        build_app()
-
         self.ip = IPython.get_ipython()
-        # self.vanilla = True if os.environ['MC_VANILLIA'] == 1 else False
 
         try:
             _mc_cmd_docs = pickle.load(MC_DOC_PATH.open('rb'))
