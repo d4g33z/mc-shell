@@ -1,11 +1,9 @@
 import subprocess
 import pexpect
 import threading
-import time
 from pathlib import Path
-import sys # Needed for logging
-from typing import Optional
-import json
+
+from mcshell.constants import *
 
 class PaperServerManager:
     """Manages the lifecycle of a single Paper server subprocess using pexpect."""
@@ -91,6 +89,19 @@ class PaperServerManager:
                     f.write(f"{key}={value}\n")
 
             print("--- server.properties updated successfully. ---")
+            #
+            print("--- Applying settings from world_manifest.json to FruitJuice/config.yml ---")
+
+            fj_config_path = self.world_directory / "plugins" / "FruitJuice" / "config.yml"
+            fj_config_path.parent.mkdir(parents=True,exist_ok=True)
+
+
+            fj_data = self.world_manifest['FruitJuice']
+
+            with fj_config_path.open('w') as file:
+                yaml.dump(fj_data, file, sort_keys=False)
+
+            print("--- config.yml updated successfully. ---")
 
         except FileNotFoundError:
             print(f"Error: Could not find manifest or server.properties file.")
