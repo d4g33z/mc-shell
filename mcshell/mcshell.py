@@ -1,7 +1,8 @@
+from mcshell.mcblockly import process_entities,process_materials, build_final_toolbox
+
 import click
 class SpecialHelpOrderBase(click.Group):
     pass
-
 
 # see https://stackoverflow.com/questions/47972638/how-can-i-define-the-order-of-click-sub-commands-in-help
 class SpecialHelpOrder(SpecialHelpOrderBase):
@@ -78,12 +79,16 @@ def start():
         'mcshell',
     ]
 
-    # try:
     import IPython
     IPython.start_ipython(config=c, argv=[])
-    # except ModuleNotFoundError as e:
-    #     # not interactive IPython shell
-    #     print(e)
-    # except:
-    #     sys.exit(1)
 
+@cli.command(
+    help_priority=25,
+    cls=click.Command,
+    help="""
+build the application server
+""")
+def build():
+    process_entities()
+    process_materials()
+    build_final_toolbox()
