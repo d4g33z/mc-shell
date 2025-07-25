@@ -24,7 +24,7 @@ jobs:
     # This example tests against 3.9 and 3.10. You can add or remove versions.
     strategy:
       matrix:
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9", "3.10","3.11"]
 
     # --- Steps ---
     # A job is made up of a sequence of steps.

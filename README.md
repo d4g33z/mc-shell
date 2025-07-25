@@ -11,15 +11,27 @@ git clone https://github.com/d4g33z/mc-shell.git
 ### Install into a Virtual Environment
 ```commandline
 # cd mc-shell
-# python3 -m venv --clear --prompt mcshell env
-# . env/bin/activate
-# pip install .
+# poetry install
 ```
 
 ## Usage ##
+Start the shell
+```commandline
+# cd mc-shell
+# poetry run mcshell start
+```
+Create a world
+```commandline
+[ins] In [7]: %pp_create_world a_test_world
+```
+List available worlds
+```commandline
+[ins] In [9]: %pp_list_worlds
+```
+Run server commands on currently running world
 
 ```commandline
-# mcshell start
+
 [ins] In [1]: %mc_help
 advancement (grant|revoke)
 attribute <target> <attribute> (base|get|modifier)

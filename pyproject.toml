@@ -15,7 +15,6 @@ python = "^3.9"
 
 # Core Application Dependencies
 pexpect = "*"
-gevent = "*"
 flask = "*"
 flask-cors = "*"
 flask-socketio = "*"
@@ -23,6 +22,8 @@ python-socketio = {version = "*", extras = ["client"]}
 requests = "*"
 numpy = "*"
 urlpath = "*"
+beautifulsoup4 = "*"
+
 
 # IPython Shell Dependencies
 ipython = "*"
@@ -34,6 +35,7 @@ click = "*" # For the mcshell CLI entry point
 rcon = "*"
 aio-mc-rcon = "*"
 pyncraft = {git = "https://github.com/d4g33z/pyncraft.git"}
+eventlet = "^0.40.2"
 
 
 [tool.poetry.scripts]
