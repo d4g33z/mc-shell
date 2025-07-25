@@ -1,160 +1,141 @@
-# mc-shell
+# MC-Shell: A Minecraft Power Development Environment 
 
-A simple IPython shell using magic functions and tab completion.
+Welcome to `mc-shell`! This project provides an interactive environment for creating, debugging, and using "powers" in Minecraft. It combines a powerful command-line shell with a visual block-based editor and a touch-friendly control panel.
 
-## Setup and Configuration ##
+This guide will walk you through installing the software, managing your own Minecraft worlds, and using the tools to bring your creations to life.
 
-### Clone it ###
-```commandline
-git clone https://github.com/d4g33z/mc-shell.git
-```
-### Install into a Virtual Environment
-```commandline
-# cd mc-shell
-# poetry install
-```
+## Quick Start
 
-## Usage ##
-Start the shell
-```commandline
-# cd mc-shell
-# poetry run mcshell start
-```
-Create a world
-```commandline
-[ins] In [7]: %pp_create_world a_test_world
-```
-List available worlds
-```commandline
-[ins] In [9]: %pp_list_worlds
-```
-Run server commands on currently running world
+This guide will get you running in just a few minutes. Each step is linked to a more detailed section below.
 
-```commandline
+1.  **[Install the Software](#installation)**:
+    ```bash
+    git clone [https://github.com/d4g33z/mc-shell.git](https://github.com/d4g33z/mc-shell.git)
+    cd mc-shell
+    poetry install
+    ```
+2.  **[Enter the Shell](#entering-the-shell)**:
+    ```bash
+    poetry run mcshell start
+    ```
+3.  **[Create Your First World](#creating-and-listing-worlds)**:
+    ```bash
+    %pp_create_world my_first_world
+    ```
+4.  **[Start Your World](#starting-and-stopping-worlds)**:
+    ```bash
+    %pp_start_world my_first_world
+    ```
+5.  **[Use the Editor](#using-the-editor)**: Open a browser and go to `http://localhost:5001`.
+6.  **[Exit Cleanly](#exiting-the-shell)**: Type `exit` or hit `Ctrl-D` in the shell to stop your world and the application server.
 
-[ins] In [1]: %mc_help
-advancement (grant|revoke)
-attribute <target> <attribute> (base|get|modifier)
-ban <targets> [<reason>]
-ban_ip <target> [<reason>]
-banlist 
-bossbar (add|get|list|remove|set)
-clear [<targets>]
-clone <begin> <end> <destination> 
-data (get|merge|modify|remove)
-datapack (disable|enable|list)
-debug (report|start|stop)
-defaultgamemode (adventure|creative|spectator|survival)
-deop <targets>
-difficulty 
-effect (clear|give)
-enchant <targets> <enchantment> [<level>]
-execute (align|anchored|as|at|facing|if|in|positioned|rotated|run|store|unless)
-experience (add|query|set)
-fill <from> <to> <block> 
-forceload (add|query|remove)
-function <name>
-gamemode (adventure|creative|spectator|survival)
-gamerule 
-(announceAdvancements|commandBlockOutput|disableElytraMovementCheck|disableRaids|doDaylightCycle|doEntityDrops|doFireTick|doImmediateRespawn|doIn
-somnia|doLimitedCrafting|doMobLoot|doMobSpawning|doPatrolSpawning|doTileDrops|doTraderSpawning|doWeatherCycle|drowningDamage|fallDamage|fireDamag
-e|forgiveDeadPlayers|keepInventory|logAdminCommands|maxCommandChainLength|maxEntityCramming|mobGriefing|naturalRegeneration|randomTickSpeed|reduc
-edDebugInfo|sendCommandFeedback|showDeathMessages|spawnRadius|spectatorsGenerateChunks|universalAnger)
-give <targets> <item> [<count>]
-help [<command>]
-kick <targets> [<reason>]
-kill [<targets>]
-list 
-locate 
-(bastion_remnant|buried_treasure|desert_pyramid|endcity|fortress|igloo|jungle_pyramid|mansion|mineshaft|monument|nether_fossil|ocean_ruin|pillage
-r_outpost|ruined_portal|shipwreck|stronghold|swamp_hut|village)
-locatebiome <biome>
-loot (give|insert|replace|spawn)
-me <action>
-msg <targets> <message>
-op <targets>
-pardon <targets>
-pardon_ip <target>
-particle <name> [<pos>]
-playsound <sound> (ambient|block|hostile|master|music|neutral|player|record|voice|weather)
-recipe (give|take)
-reload
-replaceitem (block|entity)
-save_all 
-save_off
-save_on
-say <message>
-schedule (clear|function)
-scoreboard (objectives|players)
-seed
-setblock <pos> <block> 
-setidletimeout <minutes>
-setworldspawn [<pos>]
-spawnpoint [<targets>]
-spectate [<target>]
-spreadplayers <center> <spreadDistance> <maxRange> (under|<respectTeams>)
-stop
-stopsound <targets> [*|ambient|block|hostile|master|music|neutral|player|record|voice|weather]
-summon <entity> [<pos>]
-tag <targets> (add|list|remove)
-team (add|empty|join|leave|list|modify|remove)
-teammsg <message>
-teleport (<destination>|<location>|<targets>)
-tell -> msg
-tellraw <targets> <message>
-time (add|query|set)
-title <targets> (actionbar|clear|reset|subtitle|times|title)
-tm -> teammsg
-tp -> teleport
-trigger <objective> 
-w -> msg
-weather (clear|rain|thunder)
-whitelist (add|list|off|on|reload|remove)
-worldborder (add|center|damage|get|set|warning)
-xp -> experience
-```
-```commandline
-[ins] In [2]: %mc_help <TAB>
-ban             clear           debug           effect          fill            gamerule         
-ban_ip          clone           defaultgamemode enchant         forceload       give             
-advancement     banlist         data            deop            execute         function        help            >
-attribute       bossbar         datapack        difficulty      experience      gamemode        kick  
-[ins] In [3]: %mc_help advancement
-Gives, removes, or checks player advancements.
-https://minecraft.fandom.com/wiki/Commands/advancement
+---
 
-advancement (grant|revoke) <targets> everything
-advancement (grant|revoke) <targets> only <advancement> [<criterion>]
-advancement (grant|revoke) <targets> from <advancement>
-advancement (grant|revoke) <targets> through <advancement>
-advancement (grant|revoke) <targets> until <advancement>
+## Getting Started
+
+### Installation
+
+Before you begin, you will need a few things installed on your system (Linux, macOS, or Windows Subsystem for Linux):
+* **Python** (version 3.9 or higher)
+* **Poetry** (a Python packaging tool)
+* **Node.js** and **npm** (for building the user interface)
+
+Once the prerequisites are met, run the following commands in your terminal to download and install the project and all its dependencies. The `poetry install` command will automatically create a virtual environment to keep your project's libraries separate.
+
+```bash
+git clone [https://github.com/d4g33z/mc-shell.git](https://github.com/d4g33z/mc-shell.git)
+cd mc-shell
+poetry install
+````
+
+### Running and Updating
+
+To run the application, use the following command from the `mc-shell` directory:
+
+```bash
+poetry run mcshell start
 ```
 
-```commandline
-[ins] In [3]: %mc_run weather
-Send: weather
-Response:
-----------------------------------------------------------------------------------------------------
-Error in usage:
-Sets the weather.
-https://minecraft.fandom.com/wiki/Commands/weather
+To update the software to the latest version in the future, you can use `git` to pull the latest changes and then have Poetry sync your dependencies:
 
-weather (clear|rain|thunder) [<duration>]
-----------------------------------------------------------------------------------------------------
+```bash
+git pull
+poetry install
 ```
 
-```commandline
-[ins] In [4]: %mc_run weather <TAB>
-clear  
-rain   
-thunder
+If Poetry complains about the lock file, do what it says and remove it. Then run `poetry install` again 
+### Entering the Shell
+
+Running the application will drop you into `mc-shell`, an enhanced IPython terminal. From here, you can manage your Minecraft worlds and the `mc-ed` application using special "magic commands" that start with a `%` symbol.
+
+-----
+
+##  Managing Your Worlds (The "Atomic Multi-verse")
+
+This section covers all the `%pp_` commands for managing your personal Paper server instances.
+
+### Creating and Listing Worlds
+
+To create a new, self-contained world, use the `%pp_create_world` command. This will create a new folder in your home directory (`~/mc-worlds`), download the appropriate Paper server, and set up all the necessary configuration files. The current default version (which the client must match) is `1.21.4`.
+```ipython
+%pp_create_world my_creative_build --version=1.21.4
 ```
 
-```commandline
-[ins] In [5]: %mc_run weather clear
-Send: weather clear
-Response:
-----------------------------------------------------------------------------------------------------
-Set the weather to clear
-----------------------------------------------------------------------------------------------------
+To see a list of all the worlds you have created, use the `%pp_list_worlds` command.
+
+### Starting and Stopping Worlds
+
+The main command to start a session is `%pp_start_world`. This launches the specified Paper server in the background and starts the `mc-ed` application server, which provides the Editor and Control Panel UIs.
+
+This command ensures only one world is active at a time. If you start a new world, it will automatically stop your previous session.
+
+```ipython
+%pp_start_world my_creative_build
 ```
+
+To manually stop the current session (both the Paper server and the app server), use `%pp_stop_world`.
+
+### Deleting Worlds
+
+To permanently delete a world and all its files, use the `%pp_delete_world` command. You will be asked for confirmation before any files are removed.
+
+```ipython
+%pp_delete_world my_old_world
+```
+
+### Joining Worlds
+
+This section covers how to connect to a running server. The `%mc_login` magic configures your shell to talk to a specific server, while `%mc_invite_player` allows you to send your connection details to a friend so they can join you.
+
+### Exiting the Shell
+
+When you are finished, you can exit the shell by typing `exit()` or pressing `Ctrl+D`. This will automatically trigger a clean shutdown of any running world and the application server.
+
+-----
+
+## Using the Tools
+
+This section focuses on the two main graphical interfaces, which are available in your browser once a world is started.
+
+### Using the Editor
+
+The Editor is a powerful visual environment for creating "powers." You can access it at `http://localhost:5001`.
+
+The interface consists of two main panels: the **Power Library** on the left, which lists your saved powers, and the main **Workspace** on the right. The workspace contains the **Blockly editor** for visually composing programs and a **live Python code preview** that updates as you work.
+
+To create a functional power, you must follow the "Debug-to-Define" workflow:
+
+1.  Create a **function definition** block (e.g., `def BuildTower(height)`).
+2.  Create a **function call** block as a "test harness" and connect blocks with the correct types to its inputs (e.g., a `math_number` block for `height`).
+3.  Click the **"Execute (Debug)"** button. This runs the code in-game and "type-stamps" your power's parameters with the correct types.
+4.  Click **"Save Power As..."** to save this newly defined power to your library, ready to be used by the Control Panel.
+
+### Using the Control
+
+The Control Panel is a touch-friendly UI for executing your saved powers in-game. Access it at `http://localhost:5001/control`.
+
+The interface has two modes:
+
+  * **Run Mode:** The main grid displays your power "widgets." If a power has parameters, the widget will have interactive controls like sliders or pickers. Simply set the parameters and click "Execute."
+  * **Edit Mode:** Click "Edit Layout" to customize your grid. You can open a library of all your saved powers, add them as new widgets to your grid, and drag-and-drop them to arrange your layout.
+:canada:
