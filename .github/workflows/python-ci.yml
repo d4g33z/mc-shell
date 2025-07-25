@@ -36,6 +36,7 @@ jobs:
         with:
           node-version: '20' # Use a Long-Term Support (LTS) version of Node.js
           cache: 'npm' # This will cache your npm dependencies
+          cache-dependency-path: mced/package-lock.json
 
       # Step 4: Install Poetry
       - name: Install Poetry
