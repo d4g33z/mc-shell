@@ -8,7 +8,7 @@ packages = [{include = "mcshell"}]
 
 # This section explicitly includes all necessary data files,
 # replacing the need for the custom package_files function in setup.py.
-include = ["mcshell/data/**/*"]
+include = ["mcshell/data/**/*","mcshell/data/app/**/*"]
 
 [tool.poetry.dependencies]
 python = "^3.9"

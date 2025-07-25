@@ -1,5 +1,4 @@
 import xml.etree.ElementTree as ET
-import os
 
 from mcshell.constants import *
 
@@ -201,12 +200,12 @@ def process_entities(filepath="entity-list.txt"):
         print(f"An error occurred: {e}")
 
 
-def build_final_toolbox(final_toolbox_path):
+def build_final_toolbox():
     """
     Loads a toolbox template, injects generated XML category fragments,
     and writes the final toolbox.xml file.
     """
-
+    final_toolbox_path = MC_APP_SRC_DIR.joinpath('toolbox.xml')
     # Define paths to the input and output files
     template_path = MC_DATA_DIR.joinpath('toolbox_template.xml')
     materials_toolbox_path = MC_DATA_DIR.joinpath('materials/toolbox.xml')
@@ -264,7 +263,6 @@ def build_final_toolbox(final_toolbox_path):
     except Exception as e:
         print(f"Error writing final toolbox file: {e}")
 
-
 def build_app():
 
     process_materials()
@@ -273,8 +271,8 @@ def build_app():
     process_entities()
     os.system(f"node {MC_DATA_DIR.joinpath('entities/generate_entity_blocks.mjs')}")
 
-    build_final_toolbox(MC_APP_SRC_DIR.joinpath('toolbox.xml'))
 
+    build_final_toolbox()
 
     os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
     os.system(f"cp {MC_DATA_DIR.joinpath('materials/python/materials.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
@@ -284,8 +282,5 @@ def build_app():
 
     os.system(f"cd {MC_APP_SRC_DIR}; npm install")
     os.system(f"cd {MC_APP_SRC_DIR}; npm run build")
-
-if __name__ == '__main__':
-    build_app()
 
 
