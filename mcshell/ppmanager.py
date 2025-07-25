@@ -79,8 +79,8 @@ class PaperServerManager:
 
             # 3. Update the properties with values from the manifest
             for key, value in settings_to_apply.items():
-                if 'password' in key: continue
-                print(f"  Setting '{key}' = '{value}'")
+                if 'password' not in key:
+                    print(f"  Setting '{key}' = '{value}'")
                 properties[key] = str(value)
 
             # 4. Write the updated properties back to the file
