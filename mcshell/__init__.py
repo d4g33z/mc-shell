@@ -91,7 +91,7 @@ class MCShell(Magics):
     def pp_create_world(self, line):
         """
         Creates a new, self-contained Paper server instance in its own directory.
-        Usage: % pp_create_world < world_name >
+        Usage: % pp_create_world < world_name > --version=<mc_version>
         Example: %pp_create_world my_creative_world
         """
         args = line.split()
@@ -100,7 +100,7 @@ class MCShell(Magics):
             return
 
         world_name = args[0]
-        mc_version = MC_VERSION
+        mc_version = MC_VERSION # default
 
         # Simple argument parsing for --version flag if we use it
         # Usage: % pp_create_world < world_name > --version = < mc_version >
