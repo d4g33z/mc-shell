@@ -38,7 +38,6 @@ This guide will get you running in just a few minutes. Each step is linked to a 
 Before you begin, you will need a few things installed on your system (Linux, macOS, or Windows Subsystem for Linux):
 * **Python** (version 3.9 or higher)
 * **Poetry** (a Python packaging tool)
-* **Node.js** and **npm** (for building the user interface)
 
 Once the prerequisites are met, run the following commands in your terminal to download and install the project and all its dependencies. The `poetry install` command will automatically create a virtual environment to keep your project's libraries separate.
 
