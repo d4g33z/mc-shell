@@ -5,8 +5,8 @@ from mcshell.constants import *
 DEFAULT_TOLERANCE = 1e-9
 
 class MCPlayer(MCClient):
-    def __init__(self, name, host=MC_SERVER_HOST, port=MC_SERVER_PORT, password=None, fj_port=FJ_PLUGIN_PORT, cancel_event=None):
-        super().__init__(host, port, password, fj_port)
+    def __init__(self, name, host=MC_SERVER_HOST, port=MC_SERVER_PORT,rcon_port=MC_RCON_PORT, fj_port=FJ_PLUGIN_PORT, password=None,  cancel_event=None):
+        super().__init__(host, port, rcon_port, fj_port,password)
         self.name = name
         self.state = {}
         self.cancel_event = cancel_event

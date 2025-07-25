@@ -54,7 +54,7 @@ class PaperServerManager:
     def apply_manifest_settings(self):
         """
         Reads the world_manifest.json and applies its settings to the
-        server.properties file.
+        server.properties file and to plugins/FruitJuice/config.yml
         """
         # First, ensure config files exist by running the init command.
         if not self._run_initialization():
