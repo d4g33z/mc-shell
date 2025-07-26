@@ -9,7 +9,6 @@ from rich.prompt import Prompt
 
 from mcshell.mcrepo import JsonFileRepository
 from mcshell.mcclient import MCClient
-from mcshell.mcdebugger import debug_server_thread
 from mcshell.mcserver import start_app_server,app_server_thread
 from mcshell.mcactions import *
 from mcshell.mcserver import execute_power_in_thread, RUNNING_POWERS # Import helpers
@@ -46,7 +45,6 @@ class MCShell(Magics):
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_start_world')
         self.ip.set_hook('complete_command',self._complete_world_command, re_key='%pp_delete_world')
 
-        self.debug_server_thread = debug_server_thread
         self.app_server_thread = app_server_thread
 
         self.active_paper_server: Optional[PaperServerManager ,None ] = None
@@ -870,10 +868,6 @@ class MCShell(Magics):
             print("The application server is running")
         else:
             print("The application server is not running")
-        if self.debug_server_thread and self.debug_server_thread.is_alive():
-            print("The debugging server is running")
-        else:
-            print("The debugging server is not running")
 
     @line_magic
     def mc_invite_player(self, line):
