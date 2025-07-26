@@ -321,7 +321,6 @@ async function init() {
             powerFunctionName = funcDefBlock.getFieldValue('NAME');
             console.log(`Found functional power definition: '${powerFunctionName}'.`);
 
-            // --- THIS IS THE FIX ---
             // Manually construct the Python code for the function definition.
             const funcNameForCode = pythonGenerator.nameDB_.getName(powerFunctionName, MCED.BlocklyNameTypes.PROCEDURE);
             const argNames = funcDefBlock.getVars();
@@ -335,7 +334,6 @@ async function init() {
             }
 
             codeToSave = `def ${funcNameForCode}(self, ${argsForDef.join(', ')}):\n${funcBody}`;
-            // --- END OF FIX ---
 
             // 4. Find the corresponding call block. It is now mandatory.
             const funcCallBlock = topBlocks.find(b =>
@@ -485,7 +483,6 @@ async function init() {
     // ------
 
     // --- 3. Define the complete Toolbox ---
-     // --- NEW: Fetch the toolbox from the external file ---
 
     // 1. Create a URL object pointing to your static asset.
     //    `import.meta.url` is a standard way to get the current module's location.
@@ -605,13 +602,6 @@ async function init() {
     // Trigger an initial generation to populate the view on load
     debouncedCodeUpdate();
 
-    // --- Wire up the "Delete" button inside the modal ---
-    // const confirmDeleteButton = document.getElementById('confirmDeleteButton');
-    // if (confirmDeleteButton) {
-    //     console.log("inside confirmDeleteButton");
-    //     confirmDeleteButton.addEventListener('click', handleDeletePower);
-    // }
-
     // --- Wire up the "Save to Library" button inside the modal ---
     const confirmSaveButton = document.getElementById('confirmSaveButton');
     if (confirmSaveButton) {
@@ -726,8 +716,6 @@ async function init() {
         }
     }
     // --- Wire up the "Execute (Debug)" Button ---
-    // In src/index.js, inside init()
-
     const executeButton = document.getElementById('executePowerButton');
     if (executeButton) {
         executeButton.addEventListener('click', async () => {
@@ -787,8 +775,6 @@ async function init() {
                 console.log("Appending power to workspace...");
                 const incomingJson = powerData.blockly_json;
 
-                // --- THIS IS THE COMPLETE, CORRECT LOGIC ---
-
                 // 1. Manually create/merge variables and create an ID remap dictionary.
                 const variableMap = workspace.getVariableMap();
                 const idRemap = {};
@@ -844,75 +830,6 @@ async function init() {
             alert("Could not load the power. The file may be corrupted.");
         }
     });
-    // document.body.addEventListener('loadPower', function(event) {
-    //     if (!event.detail || !event.detail.powerData) {
-    //         console.error("loadPower event triggered without powerData.", event.detail);
-    //         return;
-    //     }
-    //
-    //     const powerData = event.detail.powerData;
-    //     const mode = event.detail.mode;
-    //
-    //     console.log(`Received power to load: '${powerData.name}' in '${mode}' mode.`);
-    //
-    //     if (!powerData.blockly_json || !powerData.blockly_json.blocks || !Array.isArray(powerData.blockly_json.blocks.blocks)) {
-    //         alert(`Error: The power '${powerData.name}' has no saved block data.`);
-    //         return;
-    //     }
-    //
-    //     try {
-    //         if (mode === 'replace') {
-    //             if (workspace.getAllBlocks(false).length > 0) {
-    //                 if (!confirm("This will replace your current workspace. Are you sure?")) {
-    //                     return;
-    //                 }
-    //             }
-    //             workspace.clear();
-    //             Blockly.serialization.workspaces.load(powerData.blockly_json, workspace);
-    //             console.log("Workspace replaced successfully.");
-    //
-    //         } else { // mode === 'add'
-    //
-    //             // --- CORRECTED APPEND AND POSITIONING LOGIC ---
-    //             console.log("Appending blocks to workspace...");
-    //
-    //             // Get the array of top-level block definitions from the JSON.
-    //             const topBlocksJson = powerData.blockly_json.blocks.blocks;
-    //
-    //             // 1. Get the metrics of the visible workspace area.
-    //             const metrics = workspace.getMetrics();
-    //
-    //             // 2. Define a starting position for the new blocks, e.g., top-left of the view.
-    //             //    Add a small offset to avoid placing blocks right at the edge.
-    //             const PADDING = 20;
-    //             let cursorX = metrics.viewLeft + PADDING;
-    //             let cursorY = metrics.viewTop + PADDING;
-    //
-    //             // 3. Iterate through each top-level block definition in the array.
-    //             for (const blockJson of topBlocksJson) {
-    //                 // Set the position for the new block stack.
-    //                 blockJson.x = cursorX;
-    //                 blockJson.y = cursorY;
-    //
-    //                 // 4. Use blocks.append to add the block structure.
-    //                 Blockly.serialization.blocks.append(blockJson, workspace);
-    //
-    //                 // 5. Update the cursor position for the next block stack to avoid overlap.
-    //                 //    This creates a cascading effect.
-    //                 cursorY += PADDING * 2;
-    //             }
-    //             console.log(`Appended ${topBlocksJson.length} new block stack(s) to the workspace.`);
-    //             // --- END OF CORRECTED LOGIC ---
-    //         }
-    //
-    //         // After loading, update the autosave with this new combined state
-    //         autosaveWorkspace();
-    //
-    //     } catch (e) {
-    //         console.error("Error deserializing or loading workspace:", e);
-    //         alert("Could not load the power. The file may be corrupted.");
-    //     }
-    // });
 
     // --- Logic to handle resizing Blockly when panels collapse ---
 
