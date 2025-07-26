@@ -210,7 +210,6 @@ function controlPanel() {
           this.layout.widgets = this.layout.widgets.filter(w => w.power_id !== powerId);
           console.log(`Removed widget for power: ${powerId}`);
       }
-        // ... (your other component methods: addWidget, removeWidget, etc.) ...
       }
 }
 
@@ -218,4 +217,3 @@ window.controlPanel = controlPanel;
 
 window.Alpine = Alpine;
 Alpine.start();
-// In src/control.js
