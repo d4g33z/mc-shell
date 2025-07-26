@@ -10,13 +10,11 @@ This guide will get you running in just a few minutes. Each step is linked to a 
 
 1.  **[Install the Software](#installation)**:
     ```bash
-    git clone [https://github.com/d4g33z/mc-shell.git](https://github.com/d4g33z/mc-shell.git)
-    cd mc-shell
-    poetry install
+    [coming soon via pip!]
     ```
 2.  **[Enter the Shell](#entering-the-shell)**:
     ```bash
-    poetry run mcshell start
+    mcshell start
     ```
 3.  **[Create Your First World](#creating-and-listing-worlds)**:
     ```bash
@@ -37,15 +35,11 @@ This guide will get you running in just a few minutes. Each step is linked to a 
 
 Before you begin, you will need a few things installed on your system (Linux, macOS, or Windows Subsystem for Linux):
 * **Python** (version 3.9 or higher)
-* **Poetry** (a Python packaging tool)
-* **Node.js** and **npm** (for building the user interface)
 
 Once the prerequisites are met, run the following commands in your terminal to download and install the project and all its dependencies. The `poetry install` command will automatically create a virtual environment to keep your project's libraries separate.
 
 ```bash
-git clone [https://github.com/d4g33z/mc-shell.git](https://github.com/d4g33z/mc-shell.git)
-cd mc-shell
-poetry install
+[coming soon via pip!]
 ````
 
 ### Running and Updating
@@ -53,17 +47,9 @@ poetry install
 To run the application, use the following command from the `mc-shell` directory:
 
 ```bash
-poetry run mcshell start
+mcshell start
 ```
 
-To update the software to the latest version in the future, you can use `git` to pull the latest changes and then have Poetry sync your dependencies:
-
-```bash
-git pull
-poetry install
-```
-
-If Poetry complains about the lock file, do what it says and remove it. Then run `poetry install` again 
 ### Entering the Shell
 
 Running the application will drop you into `mc-shell`, an enhanced IPython terminal. From here, you can manage your Minecraft worlds and the `mc-ed` application using special "magic commands" that start with a `%` symbol.
