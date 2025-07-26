@@ -19,21 +19,8 @@ def execute_ipython_magic():
     if not shell:
         return jsonify({"error": "IPython shell not available in server."}), 500
 
-    # --- Capture stdout to send back to the client ---
-    # old_stdout = sys.stdout
-    # redirected_output = sys.stdout = StringIO()
-
     try:
         # Use run_line_magic to execute the command
-        # It takes the magic name (without %) and the rest of the line as an argument string
-        # magic_name = command.lstrip('%')
-        # shell.run_line_magic(magic_name, arguments)
-        #
-        # # Get the output that was printed to the console
-        # output = redirected_output.getvalue()
-        # old_stdout.write(output)
-        # return jsonify({"success": True, "output": output})
-     # --- THIS IS THE FIX for STDOUT ---
         # Use IPython's own capture_output context manager.
         # It reliably captures all output generated within the 'with' block.
         with capture_output() as captured:
@@ -55,7 +42,4 @@ def execute_ipython_magic():
         # If the magic itself throws an error, capture it
         print(f"Error executing magic command '{command}': {e}")
         return jsonify({"error": str(e)}), 500
-    # finally:
-    #     # ALWAYS restore stdout
-    #     sys.stdout = old_stdout
 

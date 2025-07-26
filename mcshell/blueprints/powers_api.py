@@ -39,23 +39,6 @@ def save_new_power():
         print(f"Error saving power for player {player_id}: {e}")
         return jsonify({"error": "An internal error occurred while saving the power."}), 500
 
-# # THIS ENDPOINT NOW RETURNS PURE JSON
-# @powers_bp.route('/powers', methods=['GET'])
-# def get_powers_as_json():
-#     player_id = current_app.config.get('MINECRAFT_PLAYER_NAME')
-#     power_repo = current_app.config.get('POWER_REPO')
-#     # ... error checking ...
-#
-#     # Fetch the full power data, as the control UI will need the parameters
-#     all_powers = power_repo.list_powers() # Assuming this returns the full list for now
-#
-#     # Re-key the list into a dictionary for easy lookup on the client
-#     powers_dict = {p['power_id']: p for p in all_powers}
-#
-#     # Return as JSON
-#     return jsonify(powers_dict)
-#
-
 # NEW ENDPOINT TO SERVE THE LAYOUT DEFINITION
 @powers_bp.route('/control/layout', methods=['GET'])
 def get_control_layout():
@@ -224,7 +207,6 @@ def delete_power_by_id(power_id):
     try:
         success = power_repo.delete_power(power_id)
         if success:
-            # --- THIS IS THE FIX ---
             # Instead of an empty response, we now trigger the 'library-changed' event.
             trigger_data = {"library-changed": f"Power {power_id} was deleted."}
             headers = {"HX-Trigger": json.dumps(trigger_data)}
