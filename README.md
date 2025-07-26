@@ -124,4 +124,3 @@ The interface has two modes:
 
   * **Run Mode:** The main grid displays your power "widgets." If a power has parameters, the widget will have interactive controls like sliders or pickers. Simply set the parameters and click "Execute."
   * **Edit Mode:** Click "Edit Layout" to customize your grid. You can open a library of all your saved powers, add them as new widgets to your grid, and drag-and-drop them to arrange your layout.
-:canada:
