@@ -6,8 +6,10 @@
   "scripts": {
     "start": "parcel src/index.html",
     "start:control": "parcel src/control.html",
-    "build:blocks": "poetry run mcshell build",
-    "build": "npm run build:blocks && parcel build --dist-dir ../mcshell/data/app src/index.html src/control.html "
+    "process:all": "poetry run python ../process.py",
+    "build:all": "node ../mcshell/data/materials/generate_material_blocks.mjs && node ../mcshell/data/entities/generate_entity_blocks.mjs",
+    "build:toolbox": "poetry run python ../build.py",
+    "build": "npm run process:all && npm run build:all && npm run build:toolbox && parcel build --dist-dir ../mcshell/data/app src/index.html src/control.html "
   },
   "dependencies": {
     "alpinejs": "^3.14.9",

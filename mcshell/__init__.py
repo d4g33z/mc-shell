@@ -17,7 +17,6 @@ from mcshell.ppmanager import *
 from mcshell.ppdownloader import *
 
 from mcshell.mcserver import stop_app_server
-from mcshell.mcblockly import build_app
 
 #pycraft.settings
 SHOW_DEBUG=False

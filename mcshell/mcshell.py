@@ -81,14 +81,3 @@ def start():
 
     import IPython
     IPython.start_ipython(config=c, argv=[])
-
-@cli.command(
-    help_priority=25,
-    cls=click.Command,
-    help="""
-build the application server
-""")
-def build():
-    process_entities()
-    process_materials()
-    build_final_toolbox()
