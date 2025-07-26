@@ -263,22 +263,27 @@ def build_final_toolbox():
     except Exception as e:
         print(f"Error writing final toolbox file: {e}")
 
-def build_app():
-
-    process_materials()
-    _out = os.system(f"node {MC_DATA_DIR.joinpath('materials/generate_material_blocks.mjs')}")
-
+if __name__ == '__main__':
     process_entities()
-    os.system(f"node {MC_DATA_DIR.joinpath('entities/generate_entity_blocks.mjs')}")
+    process_materials()
 
-
-    build_final_toolbox()
-
-    os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
-    os.system(f"cp {MC_DATA_DIR.joinpath('materials/python/materials.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
-
-    os.system(f"cp {MC_DATA_DIR.joinpath('entities/blocks/entities.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
-    os.system(f"cp {MC_DATA_DIR.joinpath('entities/python/entities.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
+# this is all node by npm now
+# def build_app():
+#
+#     process_materials()
+#     _out = os.system(f"node {MC_DATA_DIR.joinpath('materials/generate_material_blocks.mjs')}")
+#
+#     process_entities()
+#     os.system(f"node {MC_DATA_DIR.joinpath('entities/generate_entity_blocks.mjs')}")
+#
+#
+#     build_final_toolbox()
+#
+#     os.system(f"cp {MC_DATA_DIR.joinpath('materials/blocks/materials.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
+#     os.system(f"cp {MC_DATA_DIR.joinpath('materials/python/materials.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
+#
+#     os.system(f"cp {MC_DATA_DIR.joinpath('entities/blocks/entities.mjs')} {MC_APP_SRC_DIR.joinpath('blocks')}")
+#     os.system(f"cp {MC_DATA_DIR.joinpath('entities/python/entities.mjs')} {MC_APP_SRC_DIR.joinpath('generators/python')}")
 
     # os.system(f"cd {MC_APP_SRC_DIR}; npm install")
     # os.system(f"cd {MC_APP_SRC_DIR}; npm run build")
