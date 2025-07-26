@@ -1,4 +1,3 @@
-import json
 from flask import Blueprint, current_app, render_template_string, make_response
 
 # 1. Create a Blueprint instance.
