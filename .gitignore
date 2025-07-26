@@ -28,6 +28,7 @@ mced/src/blocks/entities.mjs
 mced/src/generators/python/entities.mjs
 
 mcshell/data/materials/blocks/materials.mjs
+mcshell/data/materials/python/entities.mjs
 mcshell/data/materials/colourables.json
 mcshell/data/materials/pickers.json
 mcshell/data/materials/singles.json
